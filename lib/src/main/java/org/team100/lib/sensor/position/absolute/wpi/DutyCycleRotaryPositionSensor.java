@@ -60,14 +60,6 @@ public abstract class DutyCycleRotaryPositionSensor extends RoboRioRotaryPositio
         m_log_frequency = log.intLogger(Level.TRACE, "frequency");
         m_log_connected = log.booleanLogger(Level.TRACE, "connected");
         log.intLogger(Level.COMP, "channel").log(() -> channel.channel);
-        waitForDutyCycleBug();
-    }
-
-    void waitForDutyCycleBug() {
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-        }
     }
 
     @Override
