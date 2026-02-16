@@ -1,5 +1,6 @@
 package org.team100.frc2026.auton;
 
+import static edu.wpi.first.wpilibj2.command.Commands.parallel;
 import static edu.wpi.first.wpilibj2.command.Commands.sequence;
 import static edu.wpi.first.wpilibj2.command.Commands.waitSeconds;
 
@@ -120,7 +121,9 @@ public class Auton1 implements AnnotatedCommand {
         return sequence(
                 n1.until(n1::isDone),
                 waitSeconds(1),
-                n2.until(n2::isDone),
+                parallel(
+                    n2.until(n2::isDone),
+                    machinery.m_intake.intake()),
                 waitSeconds(1),
                 n3.until(n3::isDone),
                 waitSeconds(1),
