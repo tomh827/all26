@@ -30,7 +30,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 
 /** An example of a simple sequence */
-public class Auton1 implements AnnotatedCommand {
+public class Auton2 implements AnnotatedCommand {
     private final LoggerFactory log;
     private final ControllerSE2 controller;
     private final Machinery machinery;
@@ -39,7 +39,7 @@ public class Auton1 implements AnnotatedCommand {
     private final PathSE2Factory pathFactory;
     private final TrajectorySE2Planner planner;
 
-    public Auton1(
+    public Auton2(
             LoggerFactory parent,
             SwerveKinodynamics kinodynamics,
             ControllerSE2 controller,
@@ -63,7 +63,7 @@ public class Auton1 implements AnnotatedCommand {
 
     @Override
     public String name() {
-        return "Auton 1";
+        return "Auton 2";
     }
 
     TrajectorySE2 t1(Pose2d startingPose) {
@@ -79,7 +79,7 @@ public class Auton1 implements AnnotatedCommand {
         List<WaypointSE2> waypoints = List.of(
                 new WaypointSE2(startingPose,
                         new DirectionSE2(0, -1, 0), 1),
-                new WaypointSE2(AutonPositions.MIDDLE_BALL_FIELD,
+                new WaypointSE2(AutonPositions.BELOW_BALL_FIELD,
                         new DirectionSE2(0, -1, 0), 1));
         return planner.restToRest(waypoints);
     }
@@ -88,18 +88,11 @@ public class Auton1 implements AnnotatedCommand {
         List<WaypointSE2> waypoints = List.of(
                 new WaypointSE2(startingPose,
                         new DirectionSE2(-1, 1, 0), 1),
+                new WaypointSE2(new Pose2d(5.25, 5.5, Rotation2d.kZero), 
+                        new DirectionSE2(-1, 0, 0), 1),
                 new WaypointSE2(StartingPositions.LEFT_BUMP,
                         new DirectionSE2(-1, 0, 0), 1),
                 new WaypointSE2(AutonPositions.SHOOT_LEFT,
-                        new DirectionSE2(-1, -1, 0), 1));
-        return planner.restToRest(waypoints);
-    }
-
-    TrajectorySE2 t4(Pose2d startingPose) {
-        List<WaypointSE2> waypoints = List.of(
-                new WaypointSE2(startingPose,
-                        new DirectionSE2(-1, -1, 0), 1),
-                new WaypointSE2(AutonPositions.CLIMB_LEFT,
                         new DirectionSE2(-1, -1, 0), 1));
         return planner.restToRest(waypoints);
     }
@@ -115,9 +108,6 @@ public class Auton1 implements AnnotatedCommand {
         DriveWithTrajectoryFunction ScoreSetUp = new DriveWithTrajectoryFunction(
                 log, machinery.m_drive, controller,
                 machinery.m_trajectoryViz, this::t3);
-        DriveWithTrajectoryFunction ClimbSetUp = new DriveWithTrajectoryFunction(
-                log, machinery.m_drive, controller,
-                machinery.m_trajectoryViz, this::t4);
 
         // Intake, score, climb.         
         return sequence(
@@ -140,9 +130,7 @@ public class Auton1 implements AnnotatedCommand {
                 ScoreSetUp.until(ScoreSetUp::isDone),
                 machinery.m_shooter.shoot().withTimeout(1),
                 waitSeconds(2),
-                machinery.m_shooter.stop().withTimeout(1),
-
-                ClimbSetUp.until(ClimbSetUp::isDone));
+                machinery.m_shooter.stop().withTimeout(1));
     }
 
     @Override
