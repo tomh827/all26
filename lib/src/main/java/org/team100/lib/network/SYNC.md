@@ -15,20 +15,20 @@ an idea so simple that it's hard to believe it has a name:
 5. The difference is the round-trip-time (RTT):
 
 ```math
-RTT = c_1 - c_0
+RTT = 2 * delay = c_1 - c_0
 ```
 
 6. The client can surmise that $s_0$ happened exactly between $c_0$ and $c_1$.
 7. In Network Tables the offset is added to the localtime to obtain the server time:
 
 ```math
-s_0 = c_1 - \frac{RTT}{2} + offset
+s_0 = c_1 - delay + offset
 ```
 
 or
 
 ```math
-offset = s_0 + \frac{RTT}{2} - c_1 
+offset = s_0 + delay - c_1 
 ```
 
 This offset was used to compute the server time for each data frame, which appears in the `timestamp` field.
@@ -55,6 +55,9 @@ what seemed like "extra delay".  These magic numbers have been "hard to tune"
 because, of course, the correct "extra delay" depends on how long the robot has
 been turned on!  It's not extra delay at all, it's drift.
 
+Another problem with the implementation above is that it assumes the turnaround
+time at the server is zero.
+
 ## Solution
 
 IMHO the main problem with the initial design is not periodicity, it's that each
@@ -68,6 +71,44 @@ this change in offset is meaningful to the camera pipeline.
 
 So the solution is to model the estimated quantities more realistically:
 
-1. Offset is a constant with a low bias
-2. RTT is lognormal noise
+1. Exclude RTT from the measurement of offset
+2. Model the offset as a slowly-varying, so noisy updates don't affect it much.
 
+To achieve the first goal, we collect timing information a little differently,
+more like the way the [Precision Time Protocol](https://en.wikipedia.org/wiki/Precision_Time_Protocol) works:
+
+1. client sends $c_0$
+2. server records $c_0$ and the receipt time, $s_0$ 
+3. server sends $c_0$ and $s_0$ back to the client, with the sending time, $s_1$
+4. client records $c_0$, $s_0$, $s_1$, and the receipt time, $c_1$.
+
+We can describe the packet timings:
+
+```math
+s_0 = c_0 + offset + delay
+
+\\[10pt]
+
+c_1 = s_1 - offset + delay
+```
+
+So we can take the difference, eliminating the delay term (assuming a constant delay)
+
+```math
+s_0 - c_1 = c_0 - s_1 + 2 * offset
+
+```
+
+or
+
+```math
+offset = \frac{1}{2}\left( s_0 + s_1 - c_1 - c_0 \right)
+```
+
+This measurement of offset will include noise produced by the difference in delay -- note this noise is not really gaussian,
+but we can pretend it is.
+
+
+## References
+
+* https://sequencediagram.org/
