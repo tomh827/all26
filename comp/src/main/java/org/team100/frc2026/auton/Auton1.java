@@ -49,9 +49,15 @@ public class Auton1 implements AnnotatedCommand {
         double maxBumpVelocity = 1;
         List<TimingConstraint> new_constraints = new ArrayList<>(constraints);
          
-        // create a new VelocityRegionContstraint `slow_bu  mp_zone`
+        // create a new VelocityRegionContstraint `slow_bump_zone`
         VelocityLimitRegionConstraint slow_bump_zone = new VelocityLimitRegionConstraint(log, BumpZones.BLUE_BUMP_LEFT, maxBumpVelocity);
+        VelocityLimitRegionConstraint slow_bump_zone2 = new VelocityLimitRegionConstraint(log, BumpZones.BLUE_BUMP_RIGHT, maxBumpVelocity);
+        VelocityLimitRegionConstraint slow_bump_zone3 = new VelocityLimitRegionConstraint(log, BumpZones.RED_BUMP_LEFT, maxBumpVelocity);
+        VelocityLimitRegionConstraint slow_bump_zone4 = new VelocityLimitRegionConstraint(log, BumpZones.RED_BUMP_RIGHT, maxBumpVelocity);
         new_constraints.add(slow_bump_zone);
+        new_constraints.add(slow_bump_zone2);
+        new_constraints.add(slow_bump_zone3);
+        new_constraints.add(slow_bump_zone4);
         // constraints.add(slow_bump_zone);
         trajectoryFactory = new TrajectorySE2Factory(new_constraints);
         pathFactory = new PathSE2Factory();
@@ -103,30 +109,44 @@ public class Auton1 implements AnnotatedCommand {
     
     @Override
     public Command command() {
-        DriveWithTrajectoryFunction n1 = new DriveWithTrajectoryFunction(
+        DriveWithTrajectoryFunction IntakeSetUp = new DriveWithTrajectoryFunction(
                 log, machinery.m_drive, controller,
                 machinery.m_trajectoryViz, this::t1);
-        DriveWithTrajectoryFunction n2 = new DriveWithTrajectoryFunction(
+        DriveWithTrajectoryFunction IntakeBalls = new DriveWithTrajectoryFunction(
                 log, machinery.m_drive, controller,
                 machinery.m_trajectoryViz, this::t2);
-        DriveWithTrajectoryFunction n3 = new DriveWithTrajectoryFunction(
+        DriveWithTrajectoryFunction ScoreSetUp = new DriveWithTrajectoryFunction(
                 log, machinery.m_drive, controller,
                 machinery.m_trajectoryViz, this::t3);
-        DriveWithTrajectoryFunction n4 = new DriveWithTrajectoryFunction(
+        DriveWithTrajectoryFunction ClimbSetUp = new DriveWithTrajectoryFunction(
                 log, machinery.m_drive, controller,
                 machinery.m_trajectoryViz, this::t4);
+
+        // Intake, score, climb.         
         return sequence(
-                n1.until(n1::isDone),
-                waitSeconds(1),
                 parallel(
-                    n2,
-                   machinery.m_intake.intake()
-                ).until(n2::isDone),
+                IntakeSetUp.until(IntakeSetUp::isDone),
+                // Assumed that the intake shouldn't deploy over the bump
+                waitSeconds(1).andThen(machinery.m_extender.goToExtendedPosition())), 
                 waitSeconds(1),
-                n3.until(n3::isDone),
+
+                parallel(
+                    IntakeBalls,
+                    machinery.m_intake.intake()
+                ).until(IntakeBalls::isDone),
+                // Without telling it to, the intake would only stop spinning
+                // at the end of the auton. Without the timeout, the robot
+                // would not continue the rest of the auton
+                machinery.m_intake.stop().withTimeout(1),
                 waitSeconds(1),
-                n4.until(n4::isDone));
-    }
+
+                ScoreSetUp.until(ScoreSetUp::isDone),
+                machinery.m_shooter.shoot().withTimeout(1),
+                waitSeconds(2),
+                machinery.m_shooter.stop().withTimeout(1),
+
+                ClimbSetUp.until(ClimbSetUp::isDone));
+        }
 
     @Override
     public Pose2d start() {

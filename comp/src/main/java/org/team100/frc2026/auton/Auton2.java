@@ -1,5 +1,6 @@
 package org.team100.frc2026.auton;
 
+import static edu.wpi.first.wpilibj2.command.Commands.parallel;
 import static edu.wpi.first.wpilibj2.command.Commands.sequence;
 import static edu.wpi.first.wpilibj2.command.Commands.waitSeconds;
 
@@ -23,11 +24,10 @@ import org.team100.lib.trajectory.constraint.VelocityLimitRegionConstraint;
 import org.team100.lib.trajectory.path.PathSE2Factory;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 
 /** An example of a simple sequence */
-public class AutonTest implements AnnotatedCommand {
+public class Auton2 implements AnnotatedCommand {
     private final LoggerFactory log;
     private final ControllerSE2 controller;
     private final Machinery machinery;
@@ -36,7 +36,7 @@ public class AutonTest implements AnnotatedCommand {
     private final PathSE2Factory pathFactory;
     private final TrajectorySE2Planner planner;
 
-    public AutonTest(
+    public Auton2(
             LoggerFactory parent,
             SwerveKinodynamics kinodynamics,
             ControllerSE2 controller,
@@ -45,8 +45,11 @@ public class AutonTest implements AnnotatedCommand {
         this.controller = controller;
         this.machinery = machinery;
         constraints = new TimingConstraintFactory(kinodynamics).auto(log.type(this));
-        double maxBumpVelocity = 0.2;
+       // In meters/second
+        double maxBumpVelocity = 1;
         List<TimingConstraint> new_constraints = new ArrayList<>(constraints);
+         
+        // create a new VelocityRegionContstraint `slow_bump_zone`
         VelocityLimitRegionConstraint slow_bump_zone = new VelocityLimitRegionConstraint(log, BumpZones.BLUE_BUMP_LEFT, maxBumpVelocity);
         VelocityLimitRegionConstraint slow_bump_zone2 = new VelocityLimitRegionConstraint(log, BumpZones.BLUE_BUMP_RIGHT, maxBumpVelocity);
         VelocityLimitRegionConstraint slow_bump_zone3 = new VelocityLimitRegionConstraint(log, BumpZones.RED_BUMP_LEFT, maxBumpVelocity);
@@ -55,6 +58,7 @@ public class AutonTest implements AnnotatedCommand {
         new_constraints.add(slow_bump_zone2);
         new_constraints.add(slow_bump_zone3);
         new_constraints.add(slow_bump_zone4);
+        // constraints.add(slow_bump_zone);
         trajectoryFactory = new TrajectorySE2Factory(new_constraints);
         pathFactory = new PathSE2Factory();
         planner = new TrajectorySE2Planner(pathFactory, trajectoryFactory);
@@ -62,42 +66,75 @@ public class AutonTest implements AnnotatedCommand {
 
     @Override
     public String name() {
-        return "Auton Test";
+        return "Auton 2";
     }
 
     TrajectorySE2 t1(Pose2d startingPose) {
         List<WaypointSE2> waypoints = List.of(
                 new WaypointSE2(startingPose,
                         new DirectionSE2(1, 0, 0), 1),
-                new WaypointSE2(new Pose2d(6, 5.5, Rotation2d.k180deg),
-                        new DirectionSE2(1, 0, 0), 1));
+                new WaypointSE2(AutonPositions.ABOVE_BALL_FIELD,
+                        new DirectionSE2(1, 1, 0), 1));
         return planner.restToRest(waypoints);
     }
 
     TrajectorySE2 t2(Pose2d startingPose) {
         List<WaypointSE2> waypoints = List.of(
                 new WaypointSE2(startingPose,
-                        new DirectionSE2(-1, 0, 0), 1),
-                new WaypointSE2(StartingPositions.LEFT_BUMP,
-                        new DirectionSE2(-1, 0, 0), 1));
-                 new WaypointSE2(AutonPositions.LEFT_BUMP_PAST,
-                  new DirectionSE2(1, 0, 0), 1);
+                        new DirectionSE2(0, -1, 0), 1),
+                new WaypointSE2(AutonPositions.BELOW_BALL_FIELD,
+                        new DirectionSE2(0, -1, 0), 1));
         return planner.restToRest(waypoints);
     }
 
+    TrajectorySE2 t3(Pose2d startingPose) {
+        List<WaypointSE2> waypoints = List.of(
+                new WaypointSE2(startingPose,
+                        new DirectionSE2(-1, 1, 0), 1),
+                new WaypointSE2(AutonPositions.LEFT_BUMP_MID, 
+                        new DirectionSE2(-1, 0, 0), 1),
+                new WaypointSE2(StartingPositions.LEFT_BUMP,
+                        new DirectionSE2(-1, 0, 0), 1),
+                new WaypointSE2(AutonPositions.SHOOT_LEFT,
+                        new DirectionSE2(-1, -1, 0), 1));
+        return planner.restToRest(waypoints);
+    }
+    
     @Override
     public Command command() {
-        DriveWithTrajectoryFunction n1 = new DriveWithTrajectoryFunction(
+        DriveWithTrajectoryFunction IntakeSetUp = new DriveWithTrajectoryFunction(
                 log, machinery.m_drive, controller,
                 machinery.m_trajectoryViz, this::t1);
-        DriveWithTrajectoryFunction n2 = new DriveWithTrajectoryFunction(
+        DriveWithTrajectoryFunction IntakeBalls = new DriveWithTrajectoryFunction(
                 log, machinery.m_drive, controller,
                 machinery.m_trajectoryViz, this::t2);
+        DriveWithTrajectoryFunction ScoreSetUp = new DriveWithTrajectoryFunction(
+                log, machinery.m_drive, controller,
+                machinery.m_trajectoryViz, this::t3);
+
+        // Intake, score, climb.         
         return sequence(
-                n1.until(n1::isDone),
+                parallel(
+                IntakeSetUp.until(IntakeSetUp::isDone),
+                // Assumed that the intake shouldn't deploy while going over the bump
+                waitSeconds(1).andThen(machinery.m_extender.goToExtendedPosition())), 
                 waitSeconds(1),
-                n2.until(n2::isDone));
-    }
+
+                parallel(
+                    IntakeBalls,
+                    machinery.m_intake.intake()
+                ).until(IntakeBalls::isDone),
+                // Without telling it to, the intake would only stop spinning
+                // at the end of the auton. Without the timeout, the robot
+                // would not continue the rest of the auton
+                machinery.m_intake.stop().withTimeout(1),
+                waitSeconds(1),
+
+                ScoreSetUp.until(ScoreSetUp::isDone),
+                machinery.m_shooter.shoot().withTimeout(1),
+                waitSeconds(2),
+                machinery.m_shooter.stop().withTimeout(1));    
+        }
 
     @Override
     public Pose2d start() {

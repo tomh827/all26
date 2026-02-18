@@ -47,6 +47,11 @@ public class AllAutons {
                 machinery.m_swerveKinodynamics,
                 controller,
                 machinery));
+        m_autonChooser.add(new Auton2(
+                log,
+                machinery.m_swerveKinodynamics,
+                controller,
+                machinery));
     }
 
     public Command get() {
