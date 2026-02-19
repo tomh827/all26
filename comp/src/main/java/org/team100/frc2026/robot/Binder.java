@@ -120,6 +120,8 @@ public class Binder {
                 m_machinery.m_intake.stop());
         m_machinery.m_extender.setDefaultCommand(
                 m_machinery.m_extender.stop());
+        m_machinery.m_shooterHood.setDefaultCommand(
+                m_machinery.m_shooterHood.stop());
 
         ///////////////////////////
         //
@@ -138,19 +140,26 @@ public class Binder {
         ///
         /// SUBSYSTEMS
         ///
+         
         whileTrue(driver::b, m_machinery.m_shooter.shoot());
 
-        whileTrue(driver::x, m_machinery.m_intake.intake());
+       // whileTrue(driver::x, m_machinery.m_intake.intake());
 
-        whileTrue(driver::y, m_machinery.m_serializer.serialize());
+     //   whileTrue(driver::y, m_machinery.m_serializer.serialize());
 
         // Test bindings
         whileTrue(driver::leftBumper, m_machinery.m_extender.goToExtendedPosition());
         whileTrue(driver::rightBumper, m_machinery.m_extender.goToRetractedPosition());
         whileTrue(driver::rightTrigger, m_machinery.m_ClimberExtension.setPosition());
-        whileTrue(driver::x, m_machinery.m_Climber.setClimb0());
-        whileTrue(driver::y, m_machinery.m_Climber.setClimb1());
-        whileTrue(driver::b, m_machinery.m_Climber.setClimb3());
+        whileTrue(driver::x,
+                     m_machinery.m_ClimberExtension.setPosition()
+                         .andThen(m_machinery.m_Climber.setClimb1()));
+        whileTrue(driver::b,
+                 m_machinery.m_ClimberExtension.setPosition()
+                          .andThen(m_machinery.m_Climber.setClimb3()));
+        whileTrue(driver::a,
+                    m_machinery.m_Climber.setClimb0()
+                        .andThen(m_machinery.m_ClimberExtension.setHomePosition()));
 
         // The real bindings
         whileTrue(driver::leftBumper, m_machinery.m_extender.goToRetractedPosition());
