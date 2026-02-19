@@ -93,7 +93,7 @@ Since the components have width 20 ms, the triangle has width 40 ms: $\mathcal{T
 ### Measurement
 
 We'll collect timing information a little differently,
-more like the way the [Precision Time Protocol](https://en.wikipedia.org/wiki/Precision_Time_Protocol) works:
+more like the way the [Network Time Protocol](https://en.wikipedia.org/wiki/Network_Time_Protocol) works:
 
 1. client sends $c_0$
 2. server records $c_0$ and the receipt time, $s_0$ 
@@ -158,13 +158,39 @@ measurement is *far* from the previous estimate.
 
 ### Messages
 
+We'll use the NTP terminology.
+
+These "messages" could be
+* Network Tables updates, read
+using `NetworkTableListenerPoller.readQueue()`
+* UDP datagrams, more like actual NTP packets (but not exactly).  For these, we could revive the "log" code from 2024.
+
+<img src="ntp.png" width=500/>
+
+Each NTP packet is the same, with four time fields.  Each timestamp is 64-bit integer microseconds.
+
+* T1, Origin (org): Time at the client when the request departed for the server.
+
+* T2, Receive (rec): Time at the server when the request arrived from the client.
+
+* T3, Transmit (xmt): Time at the server when the reply left for the client.
+
+* T4, Destination (dst): Time at the client when the reply arrived from the server.
+
+The "empty" fields are zero.
+
+Sequence:
+
+* The client (pi) sends a REQUEST containing T1.
+* The server (rio) replies (eventually) with a REPLY containing T1, T2, and T3
+* The client (pi) receives the REPLY and fills in T4
+
+
+
 There are two messages: one from the pi to the rio ("sync1"), and
 the second from the rio to the pi ("sync2").
 
-These "messages" are really Network Tables updates, read
-using `NetworkTableListenerPoller.readQueue()` 
 
-<img src="sync.png" />
 
 sync1:
 
@@ -172,6 +198,8 @@ sync1:
 /vision/IDENTITY/sync1:
   c_0: int
 ```
+
+The rio responds with 
 
 sync2:
 ```
@@ -257,23 +285,4 @@ pub.set(blips)
 
 ## References
 
-* https://sequencediagram.org/
-
-
-```
-participant pi
-participant rio
-participant delay
-
-
-note left of pi: c_0
-activate delay
-pi->(4)rio:blips
-note right of rio: s_0
-deactivate delay
-note right of rio: s_1
-activate delay
-pi(4)<-rio:repl
-note left of pi: c_1
-deactivate delay
-```
+* NTP v4 [RFC 5905](https://datatracker.ietf.org/doc/html/rfc5905)
