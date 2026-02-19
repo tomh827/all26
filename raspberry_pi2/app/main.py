@@ -1,4 +1,4 @@
-""" This is the coprocessor main loop.
+"""This is the coprocessor main loop.
 
 Each task is run by its own Looper, in its own thread.
 
@@ -11,7 +11,23 @@ use the script called "runapp.py" in the raspberry_pi directory
 
 import time
 import ntcore
-from typing import cast
+from app.network.network import SyncRequest, SyncReply
+
+estimate: int = 0
+
+
+def offset(org: int, rec: int, xmt: int, dst: int) -> int:
+    return (rec + xmt - dst - org) // 2
+
+
+def fuse(measurement: int) -> None:
+    global estimate
+    diff = estimate - measurement
+    if abs(diff) > 1000000:
+        # large change, step right to the measurement
+        estimate = measurement
+    else:
+        estimate = (estimate * 99 + measurement) // 100
 
 
 def main() -> None:
@@ -21,40 +37,35 @@ def main() -> None:
     inst.startClient4("sync_client")
     inst.setServer("10.1.0.2")
 
-    servernow_sub = inst.getIntegerTopic("servernow").subscribe(0)
- 
-    nowpi_pub = inst.getIntegerTopic("/nowpi").publish()
-    servernowtime_pub = inst.getIntegerTopic("/servernowtime").publish()
-    nowdiff_pub = inst.getIntegerTopic("/nowdiff").publish()
-    offset_pub = inst.getIntegerTopic("/offset").publish()
+    request_pub = inst.getStructTopic("syncrequest", SyncRequest).publish()
 
-    poller = ntcore.NetworkTableListenerPoller(inst)
-    poller.addTimeSyncListener(False)
+    reply_sub = inst.getStructTopic("syncreply", SyncReply).subscribe(
+        SyncReply(0, 0, 0)
+    )
+
+    estimate_pub = inst.getIntegerTopic("estimate").publish()
+
+    drift_pub = inst.getDoubleTopic("drift (us)").publish()
+
+    first_estimate = 0
 
     while True:
-        # the value and the servertime are the same
-        servernow = servernow_sub.getAtomic()
 
-        now = ntcore._now()
-        nowpi_pub.set(now)
+        request_pub.set(SyncRequest(ntcore._now()))
 
-        # local time of the message
-        servernowtime_pub.set(servernow.time)
+        queue: list[ntcore.TimestampedStruct] = reply_sub.readQueue()
+        if queue:
+            syncreply: SyncReply = queue[-1].value
+            now = ntcore._now()
+            measurement = offset(syncreply.org, syncreply.rec, syncreply.xmt, now)
+            fuse(measurement)
+            estimate_pub.set(estimate)
 
-        # difference between *local* time and the pi "now" measurement
-        nowdiff_pub.set(servernow.time - now)
+            if first_estimate == 0:
+                first_estimate = estimate
 
-        # offset is never observed to change  
-        offset = ntcore.NetworkTableInstance.getDefault().getServerTimeOffset()
-        if offset is not None:
-            offset_pub.set(offset)
-
-        for e in poller.readQueue():
-            if isinstance(e, ntcore.TimeSyncEventData):
-                tsed = cast(ntcore.TimeSyncEventData, e.data)
-                print(f"Time Sync Event: {tsed.serverTimeOffset} {tsed.rtt2} {tsed.valid}")
-            else:
-                print("weird type")
+            drift = estimate - first_estimate
+            drift_pub.set(drift)
 
         # avoid spinning too fast
         time.sleep(0.02)

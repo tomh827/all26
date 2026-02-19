@@ -8,27 +8,27 @@ As originally [designed](https://github.com/wpilibsuite/allwpilib/blob/main/ntco
 periodic timestamp synchronization using an implementation of [Cristian's_algorithm]( https://en.wikipedia.org/wiki/Cristian%27s_algorithm),
 an idea so simple that it's hard to believe it has a name:
 
-1. The client sends the current client time, $c_0$.
-2. The server notes the time at receipt, $s_0$.
-3. The server sends $s_0$ and $c_0$ to the client. 
-4. The client notes the time at receipt, $c_1$
+1. The client sends the current client time, $org$.
+2. The server notes the time at receipt, $rec$.
+3. The server sends $rec$ and $org$ to the client. 
+4. The client notes the time at receipt, $dst$
 5. The difference is the round-trip-time (RTT):
 
 ```math
-RTT = 2 * delay = c_1 - c_0
+RTT = 2 * delay = dst - org
 ```
 
-6. The client can surmise that $s_0$ happened exactly between $c_0$ and $c_1$.
+6. The client can surmise that $rec$ happened exactly between $org$ and $dst$.
 7. In Network Tables the offset is added to the localtime to obtain the server time:
 
 ```math
-s_0 = c_1 - delay + offset
+rec = dst - delay + offset
 ```
 
 or
 
 ```math
-offset = s_0 + delay - c_1 
+offset = rec + delay - dst 
 ```
 
 This offset was used to compute the server time for each data frame, which appears in the `timestamp` field.
@@ -85,48 +85,60 @@ For user code in Network Tables, delay is made up of several components:
 3. Latency due to Ethernet retransmits.  The backoff algorithm will add random increments of 50 microseconds in case of collision.
 4. Receiver delay.  The time between the message arriving and user code reading it, $\mathcal{U}(0, 20 ms)$
 
-The main components of delay are the two uniform distributions, which are independent,
-so their sum is an [Irwin-Hall distribution](https://en.wikipedia.org/wiki/Irwin%E2%80%93Hall_distribution)
+The main components of delay are the two uniform distributions.  If these
+are independent, their sum is an [Irwin-Hall distribution](https://en.wikipedia.org/wiki/Irwin%E2%80%93Hall_distribution)
 of two components, i.e. a [trianglular distribution](https://en.wikipedia.org/wiki/Triangular_distribution).
 Since the components have width 20 ms, the triangle has width 40 ms: $\mathcal{T}(-20, 20, 0)$
+
+Note that in our measurement scheme (below), the two delay components are **not** independent,
+they are somewhat anticorrelated:
+
+* the first delay includes the time between the message
+arrival and the FPGA interrupt firing, and whatever code runs between the interrupt and
+the message handler.
+* the second delay includes the time between the message handler's completion and the outgoing
+buffer flush in Network Tables, which is roughly aligned with the interrupt clock.
+
+If these delays were perfectly anticorrelated then the resulting noise would be uniform,
+$\mathcal{U}(-10, 10)$.
 
 ### Measurement
 
 We'll collect timing information a little differently,
 more like the way the [Network Time Protocol](https://en.wikipedia.org/wiki/Network_Time_Protocol) works:
 
-1. client sends $c_0$
-2. server records $c_0$ and the receipt time, $s_0$ 
-3. server sends $c_0$ and $s_0$ back to the client, with the sending time, $s_1$
-4. client records $c_0$, $s_0$, $s_1$, and the receipt time, $c_1$.
+1. client sends $org$
+2. server records $org$ and the receipt time, $rec$ 
+3. server sends $org$ and $rec$ back to the client, with the sending time, $xmt$
+4. client records $org$, $rec$, $xmt$, and the receipt time, $dst$.
 
 We can describe the packet timings:
 
 ```math
-s_0 = c_0 + offset + \mathcal{U}(0, 20)
+rec = org + offset + \mathcal{U}(0, 20)
 
 \\[10pt]
 
-c_1 = s_1 - offset + \mathcal{U}(0, 20)
+dst = xmt - offset + \mathcal{U}(0, 20)
 ```
 
 So we can take the difference.  The difference of two $\mathcal{U}$ distributions yields $\mathcal{T}$ with a mean of zero:
 
 ```math
-s_0 - c_1 = c_0 - s_1 + 2 * offset + \mathcal{T}(-20, 20, 0)
+rec - dst = org - xmt + 2 * offset + \mathcal{T}(-20, 20, 0)
 
 ```
 
 or
 
 ```math
-offset = \frac{1}{2}\left( s_0 + s_1 - c_1 - c_0 \right) + + \mathcal{T}(-10, 10, 0)
+offset = \frac{1}{2}\left( rec + xmt - dst - org \right) + + \mathcal{T}(-10, 10, 0)
 ```
 
-If $s_0$ and $s_1$ are the same, this can be simplified:
+If $rec$ and $xmt$ are the same, this can be simplified:
 
 ```math
-offset = s_0 - \frac{c_1 + c_0}{2} + \mathcal{T}(-10, 10, 0)
+offset = rec - \frac{dst + org}{2} + \mathcal{T}(-10, 10, 0)
 ```
 which is similar to the formulation used in Network Tables.
 
@@ -169,96 +181,108 @@ using `NetworkTableListenerPoller.readQueue()`
 
 Each NTP packet is the same, with four time fields.  Each timestamp is 64-bit integer microseconds.
 
-* T1, Origin (org): Time at the client when the request departed for the server.
-
-* T2, Receive (rec): Time at the server when the request arrived from the client.
-
-* T3, Transmit (xmt): Time at the server when the reply left for the client.
-
-* T4, Destination (dst): Time at the client when the reply arrived from the server.
+* T1, Origin ($org$): Time at the client when the request departed for the server.
+* T2, Receive ($rec$): Time at the server when the request arrived from the client.
+* T3, Transmit ($xmt$): Time at the server when the reply left for the client.
+* T4, Destination ($dst$): Time at the client when the reply arrived from the server.
 
 The "empty" fields are zero.
 
 Sequence:
 
-* The client (pi) sends a REQUEST containing T1.
-* The server (rio) replies (eventually) with a REPLY containing T1, T2, and T3
-* The client (pi) receives the REPLY and fills in T4
+* The client (pi) sends a REQUEST containing the sending time, $org$.
+* The server (rio) records the receipt time, $rec$.
+* The server eventually sends a REPLY containing $org$, $rec$, and the sending time, $xmt$.
+* The client (pi) receives the REPLY and records the arrival time, $dst$
+* The client computes the offset, and updates its offset estimate using some filtering methods.
 
+In Python:
+```python
+@dataclass
+class SyncRequest():
+    org: int
 
-
-There are two messages: one from the pi to the rio ("sync1"), and
-the second from the rio to the pi ("sync2").
-
-
-
-sync1:
-
+@dataclass
+class SyncReply():
+    org: int
+    rec: int
+    xmt: int
 ```
-/vision/IDENTITY/sync1:
-  c_0: int
+
+In Java:
+```java
+record SyncRequest(long org){}
+record SyncReply(long org, long rec, long xmt){}
 ```
 
-The rio responds with 
-
-sync2:
+In Network Tables:
 ```
-/vision/IDENTITY/sync2:
-  c_0: int
-  s_0: int
+/vision/{IDENTITY}/syncrequest
+/vision/{IDENTITY}/syncreply
 ```
 
 ### Code
 
-First, the python code sends sync1:
+First, the python code sends a request:
 
 ```python
-@dataclass
-class Sync1():
-    c0: int
-
-pub = inst.getStructTopic("/vision/IDENTITY/sync1", Sync1).publish()    
-pub.set(Sync1(ntcore._now()))
+pub = inst.getStructTopic("/vision/{IDENTITY}/syncrequest", SyncRequest).publish()    
+pub.set(SyncRequest(ntcore._now()))
 ```
 
-Then, the Java code receives sync1:
+Then, the Java code receives the request, and sends a reply.  This code can
+run in the normal 50 Hz loop.
 
 ```java
-record Sync1(int c0){}
-record Sync2(int c0, int s0){}
-var sub = inst.getStructTopic<Sync1>("/vision/IDENTITY/sync1", struct).subscribe();
-var pub = inst.getStructTopic<Sync2>("/vision/IDENTITY/sync2", struct).publish();
+var sub = inst.getStructTopic<SyncRequest>(
+    "/vision/{IDENTITY}/syncrequest", SyncRequest.struct).subscribe();
+var pub = inst.getStructTopic<SyncReply>(
+    "/vision/{IDENTITY}/syncreply", SyncReply.struct).publish();
 
 // only pick up new values
-TimestampedObject<Sync1>[] queue = sub.readQueue();
+TimestampedObject<SyncRequest>[] queue = sub.readQueue();
 int n = queue.length;
-if (n > 0)
-    pub.set(new Sync2(queue[n-1].value.c0(), RobotController.getFPGATime()));
+if (n > 0) {
+    var org = queue[n-1].value.org();
+    var now = RobotController.getFPGATime();
+    pub.set(new SyncReply(org, now, now));
+}
 ```
 
-And then the python receives sync2:
+And then the python receives the reply:
 
 ```python
-sub = inst.getStructTopic("/vision/IDENTITY/sync2", Sync2).subscribe()
+sub = inst.getStructTopic("/vision/IDENTITY/syncreply", SyncReply).subscribe()
 queue: list[TimestampedStruct] = sub.readQueue()
 if queue:
-    sync2: Sync2 = queue[-1]
-    offset = offset(sync2.c0, sync2.s0, ntcore._now())
+    syncreply = queue[-1]
+    now = ntcore._now()
+    offset = offset(syncreply.org, syncreply.rec, syncreply.xmt, now)
 ```
 
 compute the measurement:
 
 ```python
-def compute(c0: int s0: int c1: int) -> float:
-    return s0 - (c0 + c1)/2
+def offset(org: int, rec: int, xmt: int, dst: int) -> int:
+    return (rec + xmt - dst - org) // 2
 ```
 
 and then fuse the measurement with the average:
 
 ```python
-def fuse(offset: float) -> None:
-    self._measurement = self._measurement * 0.9 + offset * 0.1
+def fuse(measurement: int) -> None:
+    global estimate
+    diff = estimate - measurement
+    if abs(diff) > 1000000:
+        # large change, step right to the measurement
+        estimate = measurement
+    else:
+        # small change, average it
+        estimate = (estimate * 99 + measurement) // 100
 ```
+
+We could borrow other kinds of filtering from NTP, for example, if the
+difference between the estimate and measurement is high, just use the measurement.
 
 For outgoing telemetry, we can't use the Network Tables timestamps
 at all, because the publisher end expects "local" time -- there's
@@ -269,16 +293,16 @@ Because the `Struct` serialization is intended for fixed-length encoding only
 (i.e. no internal arrays), we'll repeat the timestamp in each message.
 
 ```java
-public class Blip24 {
+public class Blip26 {
     private final long timestamp;    // server timestamp, microseconds
     private final int id;            // tag id
     private final Transform3d pose;  // camera-relative tag transform
 ```
 
 ```python
-pub = inst.getStructArrayTopic(name, Blip24).publish()
+pub = inst.getStructArrayTopic(name, Blip26).publish()
 blips = [
-    Blip(ntcore._now() + self._measurement, id, pose)
+    Blip26(ntcore._now() + self._measurement, id, pose)
 ]
 pub.set(blips)
 ```

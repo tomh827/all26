@@ -8,7 +8,10 @@ import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.NetworkTableEvent;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableListenerPoller;
+import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.networktables.StructSubscriber;
 import edu.wpi.first.networktables.TimeSyncEventData;
+import edu.wpi.first.networktables.TimestampedObject;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
 
@@ -16,6 +19,8 @@ public class Robot extends TimedRobot {
 
     IntegerPublisher servernowpub;
     NetworkTableListenerPoller poller;
+    StructSubscriber<SyncRequest> sub;
+    StructPublisher<SyncReply> pub;
 
     public Robot() {
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
@@ -23,10 +28,25 @@ public class Robot extends TimedRobot {
         servernowpub = inst.getIntegerTopic("servernow").publish();
         poller = new NetworkTableListenerPoller(inst);
         poller.addTimeSyncListener(false);
+
+        sub = inst.getStructTopic("syncrequest", SyncRequest.struct).subscribe(
+                new SyncRequest(0));
+        pub = inst.getStructTopic("syncreply", SyncReply.struct).publish();
+
     }
 
     @Override
     public void robotPeriodic() {
+
+        // only pick up new values
+        TimestampedObject<SyncRequest>[] queue = sub.readQueue();
+        int n = queue.length;
+        if (n > 0) {
+            long org = queue[n - 1].value.org();
+            long now = RobotController.getFPGATime();
+            pub.set(new SyncReply(org, now, now));
+        }
+
         servernowpub.set(RobotController.getFPGATime());
         for (NetworkTableEvent e : poller.readQueue()) {
             TimeSyncEventData tsed = e.timeSyncData;
