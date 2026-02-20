@@ -10,7 +10,6 @@ import org.team100.lib.mechanism.RotaryMechanism;
 import org.team100.lib.motor.MotorPhase;
 import org.team100.lib.motor.NeutralMode100;
 import org.team100.lib.motor.ctre.KrakenX44Motor;
-import org.team100.lib.motor.ctre.KrakenX60Motor;
 import org.team100.lib.motor.sim.SimulatedBareMotor;
 import org.team100.lib.profile.r1.IncrementalProfile;
 import org.team100.lib.profile.r1.TrapezoidIncrementalProfile;
@@ -54,7 +53,7 @@ public class IntakeExtend extends SubsystemBase {
                 );
                 Talon6Encoder encoder = m_motor.encoder();
 
-                TrapezoidIncrementalProfile profile = new TrapezoidIncrementalProfile(log, 2, 4, 0.05);
+                TrapezoidIncrementalProfile profile = new TrapezoidIncrementalProfile(log, 8, 8, 0.05);
                 ProfileReferenceR1 ref = new IncrementalProfileReferenceR1(log, () -> profile, 0.05, 0.05);
                 double initialPosition = 0;
                 RotaryMechanism climberMech = new RotaryMechanism(
@@ -67,7 +66,7 @@ public class IntakeExtend extends SubsystemBase {
             default -> {
                 SimulatedBareMotor m_motor = new SimulatedBareMotor(log, 600);
 
-                IncrementalProfile profile = new TrapezoidIncrementalProfile(log, 1, 2, 0.05);
+                IncrementalProfile profile = new TrapezoidIncrementalProfile(log, 100, 100, 0.05);
                 ProfileReferenceR1 ref = new IncrementalProfileReferenceR1(log, () -> profile, 0.05, 0.05);
                 PIDFeedback feedback = new PIDFeedback(log, 5, 0, 0, false, 0.05, 0.1);
 
@@ -118,7 +117,7 @@ public class IntakeExtend extends SubsystemBase {
 
     /** Use a profile to set the position. */
     private void setAngle(double value) {
-        m_servo.setPositionProfiled(value, 0);
+        m_servo.actuateWithProfile(value, 0);
     }
 
 }

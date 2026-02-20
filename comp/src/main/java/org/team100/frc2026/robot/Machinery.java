@@ -4,13 +4,7 @@ import java.io.IOException;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
-import org.team100.frc2026.Climber;
-import org.team100.frc2026.ClimberExtension;
-import org.team100.frc2026.Intake;
 import org.team100.frc2026.IntakeExtend;
-import org.team100.frc2026.Serializer;
-import org.team100.frc2026.Shooter;
-import org.team100.frc2026.ShooterHood;
 import org.team100.lib.coherence.Takt;
 import org.team100.lib.indicator.Beeper;
 import org.team100.lib.localization.AprilTagFieldLayoutWithCorrectOrientation;
