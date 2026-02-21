@@ -31,6 +31,9 @@ public class CoalescingCollection<T> {
         m_combine = combine;
     }
 
+    /**
+     * @param time seconds
+     */
     public void add(double time, T value) {
         List<T> neighbors = new ArrayList<>();
         neighbors.add(value);

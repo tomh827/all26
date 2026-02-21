@@ -224,14 +224,14 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip> {
         Alliance alliance = optAlliance.get();
         m_log_alliance.log(() -> alliance);
 
-        // Add the extra delay. TODO: remove this correction.
-        double correctedTimestamp = getCorrectedTimestamp(valueTimestamp);
 
         // Sample the history.
-        Pose2d samplePose = sample(correctedTimestamp);
 
         for (int i = 0; i < blips.length; ++i) {
             Blip blip = blips[i];
+            double timeSec = (double) blip.getTimestamp() / 1e6;
+            m_log_lag.log(() -> Takt.get() - timeSec);
+            Pose2d samplePose = sample(timeSec);
 
             printBlip(blip);
 
@@ -257,14 +257,14 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip> {
 
             // Estimate the tag pose in the field frame.
             Pose3d estimatedTagInField = estimatedTagInField(cameraOffset, samplePose, tagInCamera);
-            m_allTags.add(correctedTimestamp, estimatedTagInField);
+            m_allTags.add(timeSec, estimatedTagInField);
             logTagError(tagInField, estimatedTagInField);
 
             // Compute the pose implied by the vision input.
             Pose2d robotPose2d = robotPose2d(samplePose, cameraOffset, tagInField, tagInCamera);
 
             // Clean the used-tags collection in case we don't end up writing to it.
-            m_usedTags.cleanup(correctedTimestamp);
+            m_usedTags.cleanup(timeSec);
 
             //////////////////////////////////////////////////////////////////
             ///
@@ -296,7 +296,7 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip> {
             ///
             //////////////////////////////////////////////////////////////////
 
-            m_usedTags.add(correctedTimestamp, estimatedTagInField);
+            m_usedTags.add(timeSec, estimatedTagInField);
 
             NoisyPose2d noisyMeasurement = new NoisyPose2d(
                     robotPose2d,
@@ -304,32 +304,9 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip> {
                             tagInCamera.getTranslation().getNorm(),
                             Metrics.offAxisAngleRad(tagInCamera)));
 
-            m_visionUpdater.put(correctedTimestamp, noisyMeasurement);
+            m_visionUpdater.put(timeSec, noisyMeasurement);
             m_prevPose = robotPose2d;
         }
-    }
-
-    /**
-     * Vasili added this extra delay after some experimentation, but
-     * it breaks simulation, so I set it back to zero.
-     * 
-     * The effect is to make the received sight appear as if it were from further in
-     * the past than the timestamp says it is, which would be required if there were
-     * delay (a lot of delay) not included in the timestamp.
-     * 
-     * TODO: figure out what this does and describe it describe here.
-     * TODO: remove this correction
-     */
-    private double getCorrectedTimestamp(double valueTimestamp) {
-
-        // final double IMPORTANT_MAGIC_NUMBER = 0.027;
-        final double IMPORTANT_MAGIC_NUMBER = 0.0;
-        double correctedTimestamp = valueTimestamp - IMPORTANT_MAGIC_NUMBER;
-
-        // this seems to always be 1. ????
-        // TODO: look more closely at this
-        m_log_lag.log(() -> Takt.get() - correctedTimestamp);
-        return correctedTimestamp;
     }
 
     /**

@@ -29,13 +29,21 @@ public class TrailingHistory<T> {
         m_entries = new ArrayList<ValueRecord<T>>();
     }
 
-    /** Remove stale entries and add the new value. */
+    /**
+     * Remove stale entries and add the new value.
+     * 
+     * @param time seconds
+     */
     public void add(double time, T value) {
         cleanup(time);
         m_entries.add(new ValueRecord<>(time, value));
     }
 
-    /** Remove stale entries and add all the values. */
+    /**
+     * Remove stale entries and add all the values.
+     * 
+     * @param time seconds
+     */
     public void addAll(double time, Collection<T> values) {
         cleanup(time);
         m_entries.addAll(
@@ -59,7 +67,11 @@ public class TrailingHistory<T> {
         return m_entries.size();
     }
 
-    /** Remove stale entries. */
+    /**
+     * Remove stale entries.
+     * 
+     * @param time seconds
+     */
     public void cleanup(double time) {
         double horizon = time - m_timeout;
         m_entries.removeIf(x -> x.time < horizon);

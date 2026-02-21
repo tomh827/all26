@@ -14,6 +14,7 @@ from app.config.identity import Identity
 from app.network.structs import (
     Blip,
     PoseEstimate25,
+    Target
 )
 
 # global singleton
@@ -56,6 +57,15 @@ class NoteSender:
         self.pub = pub
 
     def send(self, val: list[Rotation3d], delay_us: int) -> None:
+        self.drift.get()
+        self.pub.set(val, int(ntcore._now() - delay_us))
+
+class TargetSender:
+    def __init__(self, drift: Drift, pub: ntcore.StructArrayPublisher) -> None:
+        self.drift = drift
+        self.pub = pub
+
+    def send(self, val: list[Target], delay_us: int) -> None:
         self.drift.get()
         self.pub.set(val, int(ntcore._now() - delay_us))
 
@@ -118,6 +128,11 @@ class Network:
     def get_note_sender(self, name: str) -> NoteSender:
         return NoteSender(
             self._drift, self._inst.getStructArrayTopic(name, Rotation3d).publish()
+        )
+    
+    def get_target_sender(self, name: str) -> TargetSender:
+        return TargetSender(
+            self._drift, self._inst.getStructArrayTopic(name, Target).publish()
         )
 
     def get_pose_sender(self, name: str) -> PoseSender:

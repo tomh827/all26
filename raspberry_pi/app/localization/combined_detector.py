@@ -16,7 +16,7 @@ from app.camera.camera_protocol import Camera, Request, Size
 from app.camera.interpreter_protocol import Interpreter
 from app.config.identity import Identity
 from app.dashboard.display import Display
-from app.network.network import Blip, Network
+from app.network.network import Blip, Network, Target
 
 Mat = NDArray[np.uint8]
 
@@ -82,7 +82,7 @@ class CombinedDetector(Interpreter):
         tag_path = "vision/" + identity.value + "/" + str(camera_num)
         note_path = "objectVision/" + identity.value + "/" + str(camera_num)
         self._blips = network.get_blip_sender(tag_path + "/blips")
-        self._notes = network.get_note_sender(note_path + "/Rotation3d")
+        self._targets = network.get_target_sender(note_path + "/targets")
 
     def undistort_points(self, points):
         """Undistort image points using camera matrix and distortion coefficients."""
@@ -90,7 +90,7 @@ class CombinedDetector(Interpreter):
         undistorted = cv2.undistortPoints(points, self.mtx, self.dist, P=self.mtx)
         return undistorted.reshape(-1, 2)
 
-    def detect_tags(self, img_bgr, img_display, delay_us: int, servertime:int) -> None:
+    def detect_tags(self, img_bgr, img_display, delay_us: int, servertime: int) -> None:
         """Detect AprilTags in a BGR image by converting to grayscale internally."""
         # Convert BGR to grayscale for tag detection
         img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
@@ -127,7 +127,9 @@ class CombinedDetector(Interpreter):
 
         self._blips.send(blips, delay_us)
 
-    def detect_objects(self, img_bgr: Mat, img_display: Mat, delay_us: int) -> None:
+    def detect_objects(
+        self, img_bgr: Mat, img_display: Mat, delay_us: int, servertime: int
+    ) -> None:
         """Detect colored objects in a BGR image."""
         img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
         img_hsv = np.ascontiguousarray(img_hsv)
@@ -145,7 +147,7 @@ class CombinedDetector(Interpreter):
 
         # Find contours
         contours, _ = cv2.findContours(median, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        objects: list[Rotation3d] = []
+        targets: list[Target] = []
         points_to_undistort = []
         contour_info = []
 
@@ -178,10 +180,10 @@ class CombinedDetector(Interpreter):
                 final = np.array([1, xNormalized, yNormalized], dtype=np.float64)
                 rotation = Rotation3d(initial=initial, final=final)
 
-                objects.append(rotation)
+                targets.append(Target(servertime, rotation))
                 self.display.note(img_display, c, orig_cX, orig_cY)
 
-        self._notes.send(objects, delay_us)
+        self._targets.send(targets, delay_us)
         # self.display.put(img_range)
 
     @override
@@ -193,7 +195,7 @@ class CombinedDetector(Interpreter):
             img_bgr = img_bgr.reshape((self.height, self.width, 3))
             img_display = img_bgr.copy()
 
-              # microsecond age of frame
+            # microsecond age of frame
             delay_us = req.delay_us()
 
             # localtime in microseconds
@@ -202,7 +204,7 @@ class CombinedDetector(Interpreter):
 
             # Run both detectors on the BGR image
             self.detect_tags(img_bgr, img_display, delay_us, servertime)
-            self.detect_objects(img_bgr, img_display, delay_us)
+            self.detect_objects(img_bgr, img_display, delay_us, servertime)
 
             # Network flush and display
             self.network.flush()

@@ -89,7 +89,8 @@
               ],
               "id": "NT:log/sensor minus camera/rad"
             }
-          ]
+          ],
+          "viewTime": 60.0
         }
       ]
     },
@@ -139,7 +140,7 @@
               "id": "NT:log/diff (ms)"
             }
           ],
-          "viewTime": 20.000038146972656
+          "viewTime": 60.0
         }
       ]
     }

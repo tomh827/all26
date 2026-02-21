@@ -23,7 +23,7 @@ public class RawTags extends CameraReader<Blip> {
             double valueTimestamp,
             Blip[] value) {
         for (Blip b : value) {
-            m_sink.accept(b.blipToTransform(), valueTimestamp);
+            m_sink.accept(b.blipToTransform(), (double) b.getTimestamp() / 1e6);
         }
     }
 

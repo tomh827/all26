@@ -4,7 +4,7 @@
 
 import dataclasses
 
-from wpimath.geometry import Transform3d
+from wpimath.geometry import Rotation3d, Transform3d
 from wpiutil import wpistruct
 
 
@@ -14,11 +14,20 @@ F = ".3f"
 @wpistruct.make_wpistruct  # type:ignore
 @dataclasses.dataclass
 class Blip:
-    """AprilTag target pose used in 2024"""
+    """AprilTag pose"""
 
     timestamp: wpistruct.int64  # server time
     id: int  # tag id
     pose: Transform3d  # camera-relative
+
+
+@wpistruct.make_wpistruct  # type:ignore
+@dataclasses.dataclass
+class Target:
+    """game piece target"""
+
+    timestamp: wpistruct.int64  # server time
+    sight: Rotation3d  # camera-relative
 
 
 @wpistruct.make_wpistruct
