@@ -17,6 +17,7 @@ import org.team100.lib.logging.primitive.TestPrimitiveLogger;
 import org.team100.lib.state.ModelSE2;
 import org.team100.lib.testing.Timeless;
 import org.team100.lib.uncertainty.NoisyPose2d;
+import org.team100.lib.util.StrUtil;
 
 import edu.wpi.first.hal.AllianceStationID;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -276,25 +277,21 @@ class AprilTagRobotLocalizerTest implements Timeless {
 
     @Test
     void testCase2() throws IOException {
-
-        // 1m in front of tag 4
-        // field is 16.54 m long, 8.21 m wide
-        // tag 4 is at 16.579, 5.547, 1.451 in blue so
-        // -0.039, 2.662, 1.451 in red.
-        // so the robot pose should be 1, 2.662, 1.451
-
         AprilTagFieldLayoutWithCorrectOrientation layout = new AprilTagFieldLayoutWithCorrectOrientation(
                 "2025-reefscape.json");
         Pose3d tag4pose = layout.getTagPose(Alliance.Red, 4).get();
         assertEquals(8.272, tag4pose.getX(), DELTA);
         assertEquals(1.914, tag4pose.getY(), DELTA);
         assertEquals(1.868, tag4pose.getZ(), DELTA);
+        System.out.println(StrUtil.poseStr(tag4pose));
 
-        DoubleFunction<ModelSE2> history = t -> new ModelSE2(new Rotation2d(Math.PI));
+        DoubleFunction<ModelSE2> history = t -> new ModelSE2(new Rotation2d(0));
         VisionUpdater visionUpdater = new VisionUpdater() {
             @Override
             public void put(double t, NoisyPose2d p) {
-                assertEquals(9.272, p.pose().getX(), DELTA);
+                System.out.println(p);
+                // if the camera is 1m away at 30 deg down then the x dimension is sqrt(3)/2
+                assertEquals(8.272 - Math.sqrt(3) / 2, p.pose().getX(), DELTA);
                 assertEquals(1.914, p.pose().getY(), DELTA);
             }
         };
@@ -308,7 +305,9 @@ class AprilTagRobotLocalizerTest implements Timeless {
 
         final Blip[] tags = new Blip[] { tag4 };
 
-        Transform3d cameraOffset = new Transform3d();
+        // if the tag is on bore then the camera is pretty high and also tilted up
+        // the tag is tilted 30 degrees so the height is 0.5 meters lower than the tag
+        Transform3d cameraOffset = new Transform3d(new Translation3d(0, 0, 1.368), new Rotation3d(0, -0.523, 0));
         Optional<Alliance> alliance = Optional.of(Alliance.Red);
         localizer.estimateRobotPose(cameraOffset, tags, alliance);
         localizer.estimateRobotPose(cameraOffset, tags, alliance);

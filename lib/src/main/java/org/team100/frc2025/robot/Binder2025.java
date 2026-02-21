@@ -25,11 +25,9 @@ import org.team100.lib.subsystems.prr.commands.FollowJointProfiles;
 import org.team100.lib.subsystems.se2.commands.DriveWithTrajectoryFunction;
 import org.team100.lib.subsystems.se2.commands.FloorPickSequence2;
 import org.team100.lib.subsystems.se2.commands.ManualPosition;
-import org.team100.lib.subsystems.swerve.commands.SetRotation;
 import org.team100.lib.subsystems.swerve.commands.manual.DriveManuallySimple;
 import org.team100.lib.subsystems.swerve.kinodynamics.limiter.SwerveLimiter;
 
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -100,12 +98,12 @@ public class Binder2025 {
         // DRIVETRAIN
         //
         // Reset pose estimator so the current gyro rotation corresponds to zero.
-        onTrue(driver::back,
-                new SetRotation(m_machinery.m_drive, Rotation2d.kZero));
+        // onTrue(driver::back,
+        // new SetRotation(m_machinery.m_drive, Rotation2d.kZero));
 
-        // Reset pose estimator so the current gyro rotation corresponds to 180.
-        onTrue(driver::start,
-                new SetRotation(m_machinery.m_drive, Rotation2d.kPi));
+        // // Reset pose estimator so the current gyro rotation corresponds to 180.
+        // onTrue(driver::start,
+        // new SetRotation(m_machinery.m_drive, Rotation2d.kPi));
 
         ////////////////////////////////////////////////////////////
         //

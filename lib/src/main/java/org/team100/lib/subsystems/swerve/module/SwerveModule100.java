@@ -110,7 +110,7 @@ public abstract class SwerveModule100 implements Player {
         actuate(desired);
     }
 
-    /** Make sure the setpoint and measurement are the same. */
+    /** Set turning setpoint to measurement, zero drive encoder. */
     void reset() {
         m_turningServo.reset();
         m_driveServo.reset();

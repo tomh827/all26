@@ -13,6 +13,7 @@ import org.team100.lib.music.Player;
  * A ball-shooter is a wheel, but the important thing is its surface speed.
  */
 public interface LinearVelocityServo extends Player {
+    /** Reset encoder to zero */
     void reset();
 
     void setDutyCycle(double dutyCycle);

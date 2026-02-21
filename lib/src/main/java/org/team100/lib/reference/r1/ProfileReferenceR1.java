@@ -13,6 +13,7 @@ public interface ProfileReferenceR1 {
 
     void setGoal(ModelR1 goal);
 
+    /** Set setpoint to measurement. */
     void init(ModelR1 measurement);
 
     SetpointsR1 get();

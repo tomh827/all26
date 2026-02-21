@@ -42,7 +42,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
  * past (and replays up to the present).
  */
 public class AprilTagRobotLocalizer extends CameraReader<Blip> {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     /** Maximum age of the sights we publish for diagnosis. */
     private static final double HISTORY_DURATION = 1.0;
@@ -247,8 +247,9 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip> {
 
             printForCalibration(cameraOffset, blip, tagInCamera);
 
-            // TODO: replace this with mixing?
-            tagInCamera = maybeOverrideRotation(cameraOffset, samplePose, tagInField, tagInCamera);
+            // Do not override tag rotation
+            // tagInCamera = maybeOverrideRotation(cameraOffset, samplePose, tagInField,
+            // tagInCamera);
 
             // Estimate the tag pose in the field frame.
             Pose3d estimatedTagInField = estimatedTagInField(cameraOffset, samplePose, tagInCamera);
@@ -334,6 +335,7 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip> {
      * If the tag is too far, replace the blip-derived tag rotation with a
      * gyro-derived tag rotation.
      */
+    @SuppressWarnings("unused")
     private Transform3d maybeOverrideRotation(
             Transform3d cameraOffset, Pose2d historicalPose, Pose3d tagInField, Transform3d tagInCamera) {
         if (tagInCamera.getTranslation().getNorm() > m_tagRotationBeliefThreshold) {
@@ -387,7 +389,7 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip> {
         if (!DEBUG)
             return;
         Transform3d tagInRobot = cameraOffset.plus(tagInCamera);
-        System.out.printf("tagInRobot id %d X %5.2f Y %5.2f Z %5.2f R %5.2f P %5.2f Y %5.2f\n",
+        System.out.printf("tagInRobot id %d X %5.3f Y %5.3f Z %5.3f R %5.3f P %5.3f Y %5.3f\n",
                 blip.getId(), tagInRobot.getTranslation().getX(), tagInRobot.getTranslation().getY(),
                 tagInRobot.getTranslation().getZ(), tagInRobot.getRotation().getX(),
                 tagInRobot.getRotation().getY(), tagInRobot.getRotation().getZ());

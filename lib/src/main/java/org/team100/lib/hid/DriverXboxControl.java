@@ -52,10 +52,12 @@ public class DriverXboxControl {
         return ControlUtil.pov(m_controller::getPOV);
     }
 
+    /** Button 7 */
     public boolean back() {
         return m_controller.getBackButton();
     }
 
+    /** Button 8 */
     public boolean start() {
         return m_controller.getStartButton();
     }
@@ -70,10 +72,12 @@ public class DriverXboxControl {
         return m_controller.getRightTriggerAxis() > 0.9;
     }
 
+    /** Button 5 */
     public boolean leftBumper() {
         return m_controller.getLeftBumperButton();
     }
 
+    /** Button 6 */
     public boolean rightBumper() {
         return m_controller.getRightBumperButton();
     }
