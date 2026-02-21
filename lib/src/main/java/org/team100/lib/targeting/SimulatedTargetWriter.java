@@ -35,7 +35,7 @@ public class SimulatedTargetWriter {
     // camera frame is from 85 ms ago
     private static final double DELAY = 0.085;
 
-    private final Map<Camera, StructArrayPublisher<Rotation3d>> m_publishers;
+    private final Map<Camera, StructArrayPublisher<Target>> m_publishers;
     private final DoubleLogger m_log_poseTimestamp;
     private final List<Camera> m_cameras;
     private final DoubleFunction<ModelSE2> m_history;
@@ -62,11 +62,12 @@ public class SimulatedTargetWriter {
         m_inst.startClient4("tag_finder24");
         for (Camera camera : m_cameras) {
             String name = "objectVision/"
-                    + camera.getSerial() + "/0/Rotation3d";
+                    + camera.getSerial() + "/0/targets";
             m_publishers.put(
                     camera,
                     m_inst.getStructArrayTopic(
-                            name, Rotation3d.struct).publish(PubSubOption.keepDuplicates(true), PubSubOption.periodic(0.01), PubSubOption.sendAll(true)));
+                            name, Target.struct).publish(PubSubOption.keepDuplicates(true), PubSubOption.periodic(0.01),
+                                    PubSubOption.sendAll(true)));
         }
     }
 
@@ -100,9 +101,9 @@ public class SimulatedTargetWriter {
         m_log_poseTimestamp.log(() -> timestampS);
         Pose2d pose = m_history.apply(timestampS).pose();
 
-        for (Map.Entry<Camera, StructArrayPublisher<Rotation3d>> entry : m_publishers.entrySet()) {
+        for (Map.Entry<Camera, StructArrayPublisher<Target>> entry : m_publishers.entrySet()) {
             Camera camera = entry.getKey();
-            StructArrayPublisher<Rotation3d> publisher = entry.getValue();
+            StructArrayPublisher<Target> publisher = entry.getValue();
             List<Rotation3d> rot = SimulatedObjectDetector.getRotations(
                     pose, camera.getOffset(), m_targets);
             if (DEBUG) {
@@ -110,7 +111,7 @@ public class SimulatedTargetWriter {
             }
             // tilt down 45
             // Rotation3d[] rots = new Rotation3d[] { new Rotation3d(0, Math.PI / 4, 0) };
-            Rotation3d[] rots = rot.toArray(new Rotation3d[0]);
+            Target[] rots = rot.stream().map(x -> new Target(0, x)).toArray(Target[]::new);
 
             // Use exactly the timestamp used in this history lookup.
             long time = (long) (timestampS * 1000000.0);

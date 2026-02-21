@@ -26,7 +26,6 @@ class SyncLoop(Looper):
         self._inst = inst
         self._queue = queue
         self._offset: int = 0
-        # TODO: use raspberry pi identity
         self._request_pub = inst.getStructTopic(
             "sync/" + identity.value + "/request", SyncRequest
         ).publish()

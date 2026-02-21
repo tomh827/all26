@@ -18,10 +18,7 @@ public class RawTags extends CameraReader<Blip> {
     }
 
     @Override
-    protected void perValue(
-            Transform3d cameraOffset,
-            double valueTimestamp,
-            Blip[] value) {
+    protected void perValue(Transform3d cameraOffset, Blip[] value) {
         for (Blip b : value) {
             m_sink.accept(b.blipToTransform(), (double) b.getTimestamp() / 1e6);
         }

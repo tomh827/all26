@@ -1,7 +1,5 @@
 package org.team100.lib.targeting;
 
-import org.team100.lib.localization.BlipStruct;
-
 import edu.wpi.first.math.geometry.Rotation3d;
 
 public class Target {

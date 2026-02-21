@@ -171,12 +171,10 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip> {
     @Override
     protected void perValue(
             Transform3d cameraOffset,
-            double valueTimestamp,
             Blip[] blips) {
         estimateRobotPose(
                 cameraOffset,
                 blips,
-                valueTimestamp,
                 DriverStation.getAlliance());
     }
 
@@ -204,17 +202,15 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip> {
     /**
      * Compute the robot pose and put it in the pose estimator.
      * 
-     * @param cameraOffset   Camera pose in robot coordinates. This is not an
-     *                       estimate, it's configured in the Camera class.
-     * @param blips          The targets in the current camera frame
-     * @param valueTimestamp Camera frame timestamp
-     * @param optAlliance    From the driver station, it's here to make testing
-     *                       easier.
+     * @param cameraOffset Camera pose in robot coordinates. This is not an
+     *                     estimate, it's configured in the Camera class.
+     * @param blips        The targets in the current camera frame
+     * @param optAlliance  From the driver station, it's here to make testing
+     *                     easier.
      */
     void estimateRobotPose(
-            final Transform3d cameraOffset,
+            Transform3d cameraOffset,
             Blip[] blips,
-            double valueTimestamp,
             Optional<Alliance> optAlliance) {
 
         // Fetch the alliance (not available immediately after startup).
@@ -223,7 +219,6 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip> {
         }
         Alliance alliance = optAlliance.get();
         m_log_alliance.log(() -> alliance);
-
 
         // Sample the history.
 

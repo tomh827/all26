@@ -3,7 +3,6 @@ package org.team100.lib.targeting;
 import java.nio.ByteBuffer;
 
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.util.struct.Struct;
 
 public class TargetStruct implements Struct<Target> {

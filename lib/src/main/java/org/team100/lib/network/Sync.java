@@ -17,18 +17,13 @@ import edu.wpi.first.wpilibj.RobotController;
 
 /**
  * The server end of the Sync prototcol.
- * 
- * TODO: reply to each raspberry pi individually
  */
 public class Sync implements Runnable {
     private static final int QUEUE_DEPTH = 10;
     private final NetworkTableInstance inst;
     private final StructBuffer<SyncRequest> m_buf;
     private final NetworkTableListenerPoller m_poller;
-
-    // private final StructSubscriber<SyncRequest> sub;
     private final Map<String, StructPublisher<SyncReply>> m_pubmap;
-    // private final StructPublisher<SyncReply> pub;
 
     public Sync(NetworkTableInstance i) {
         inst = i;
@@ -43,10 +38,7 @@ public class Sync implements Runnable {
                         PubSubOption.pollStorage(QUEUE_DEPTH)),
                 EnumSet.of(NetworkTableEvent.Kind.kValueAll));
         m_pubmap = new HashMap<>();
-        // sub = inst.getStructTopic("syncrequest", SyncRequest.struct).subscribe(
-        // new SyncRequest(0));
-        // TODO: map of these
-        // pub = inst.getStructTopic("sync/reply", SyncReply.struct).publish();
+
     }
 
     /**
@@ -94,15 +86,5 @@ public class Sync implements Runnable {
                 inst.flush();
             }
         }
-
-        // TimestampedObject<SyncRequest>[] queue = sub.readQueue();
-        // int n = queue.length;
-        // if (n > 0) {
-        // // reply to the most recent, ignore stale entries
-        // long org = queue[n - 1].value.org();
-        // long now = RobotController.getFPGATime();
-        // pub.set(new SyncReply(org, now, now));
-        // inst.flush();
-        // }
     }
 }

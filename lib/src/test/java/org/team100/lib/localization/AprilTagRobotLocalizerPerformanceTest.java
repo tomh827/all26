@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.function.DoubleFunction;
 
 import org.junit.jupiter.api.Test;
-import org.team100.lib.coherence.Takt;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.TestLoggerFactory;
 import org.team100.lib.logging.primitive.TestPrimitiveLogger;
@@ -71,7 +70,7 @@ class AprilTagRobotLocalizerPerformanceTest {
         // run forever so i can use the profiler
         while (true)
             localizer.estimateRobotPose(
-                    new Transform3d(), blips, Takt.get(), Optional.of(Alliance.Red));
+                    new Transform3d(), blips, Optional.of(Alliance.Red));
     }
 
     @Test
