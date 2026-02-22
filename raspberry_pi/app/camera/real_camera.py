@@ -1,4 +1,4 @@
-""" This is a wrapper for Picamera2.
+"""This is a wrapper for Picamera2.
 
 It handles configuration of each camera according to the Pi identity.
 
@@ -11,6 +11,9 @@ and the source:
 https://github.com/raspberrypi/picamera2/
 """
 
+# pylint: disable=E0401
+
+
 from contextlib import AbstractContextManager
 from enum import Enum, unique
 from pprint import pprint
@@ -18,7 +21,7 @@ from typing import Any, cast
 
 import numpy as np
 from numpy.typing import NDArray
-from picamera2 import CompletedRequest, Picamera2, libcamera   # type: ignore
+from picamera2 import CompletedRequest, Picamera2, libcamera  # type: ignore
 from picamera2.request import _MappedBuffer  # type: ignore
 from typing_extensions import Buffer, override
 
@@ -48,14 +51,22 @@ class RealRequest(Request):
     @override
     def delay_us(self) -> int:
         metadata = self._req.get_metadata()  # type: ignore
-        # Time of first row received
+        # Time of first row received, this is roughly the "readout timestamp"
         sensor_timestamp_ns = cast(int, metadata["SensorTimestamp"])
 
-        # The actual exposure is slightly before the data arrives
-        # Take the midpoint of the exposure duration.
-        exposure_duration_us = cast(int, metadata["ExposureTime"])
-        exposure_duration_ns = exposure_duration_us * 1000
-        exposure_timestamp_ns = sensor_timestamp_ns - exposure_duration_ns // 2
+        # Half the exposure time.
+        exposure_term_us = cast(int, metadata["ExposureTime"] * 0.5)
+        exposure_term_ns = exposure_term_us * 1000
+
+        # Extra constant delay.
+        # 2/21/26 using a real robot.  I think this is correcting for
+        # roborio loop delay, not just camera delay.
+        frame_term_ms = 30
+        # 2/20/26 this from the "camera_delay" project
+        # frame_term_ms = 2
+        frame_term_ns = cast(int, frame_term_ms * 1000000)
+
+        exposure_timestamp_ns = sensor_timestamp_ns - frame_term_ns - exposure_term_ns
 
         if self._rolling:
             # For a global shutter, the whole frame is exposed at once,
@@ -140,9 +151,9 @@ class Model(Enum):
     @staticmethod
     def get(cam: Picamera2) -> "Model":
         model_str: str = cam.camera_properties["Model"]  # type:ignore
-        print(f"Camera model string: {model_str}")
+        print(f"\n*** Camera model string: {model_str}")
         model: Model = Model(model_str)
-        print(f"Camera model: {model.name}")
+        print(f"\n*** Camera model: {model.name}")
         return model
 
 
@@ -157,21 +168,28 @@ class RealCamera(Camera):
         )
         self.mtx = RealCamera.__mtx_from_model(identity, model)
         self.dist = RealCamera.__dist_from_model(identity, model)
-        print("MTX")
+        print("\n*** MTX")
         print(self.mtx)
-        print("DIST")
+        print("\n*** DIST")
         print(self.dist)
-        print("SENSOR MODES AVAILABLE")
+        print("\n*** SENSOR MODES AVAILABLE")
         pprint(self.cam.sensor_modes)  # type:ignore
-        if (identity == Identity.FLIPPED or identity == Identity.FUNNEL  or identity == Identity.SWERVE_LEFT or identity == Identity.SWERVE_RIGHT):
+        if (
+            identity == Identity.FLIPPED
+            or identity == Identity.FUNNEL
+            or identity == Identity.SWERVE_LEFT
+            or identity == Identity.SWERVE_RIGHT
+        ):
             # see libcamera/src/libcamera/transform.cpp
-            self.camera_config["transform"] = libcamera.Transform(rotation = 0, hflip = True, vflip = True, transpose = False)
+            self.camera_config["transform"] = libcamera.Transform(
+                rotation=0, hflip=True, vflip=True, transpose=False
+            )
 
-        print("\nREQUESTED CONFIG")
+        print("\n*** REQUESTED CONFIG")
         print(self.camera_config)
         # optimal alignment makes the ISP a little faster
         self.cam.align_configuration(self.camera_config, optimal=True)  # type:ignore
-        print("\nALIGNED CONFIG")
+        print("\n*** ALIGNED CONFIG")
         print(self.camera_config)
         self.cam.configure(self.camera_config)  # type:ignore
         if (
@@ -183,7 +201,7 @@ class RealCamera(Camera):
                 self.camera_config["sensor"]["output_size"],
                 self.cam.camera_config["sensor"]["output_size"],  # type:ignore
             )
-        print("\nCONTROLS")
+        print("\n*** CONTROLS")
         print(self.cam.camera_controls)  # type:ignore
         self.cam.start()  # type:ignore
         self.frame_time = Timer.time_ns()
@@ -246,6 +264,8 @@ class RealCamera(Camera):
         camera_config: dict[str, Any] = cam.create_still_configuration(  # type:ignore
             # more buffers seem to make the pipeline a little smoother
             buffer_count=5,
+            # chasing the lag issue...
+            # buffer_count=1,
             queue=True,
             sensor={
                 "output_size": (size.sensor_width, size.sensor_height),
@@ -253,7 +273,7 @@ class RealCamera(Camera):
             },
             main={
                 "format": "RGB888",
-                "size": (size.width, size.height),  
+                "size": (size.width, size.height),
             },
             lores={
                 "format": "YUV420",
@@ -267,8 +287,9 @@ class RealCamera(Camera):
                 "AeEnable": True,
                 "AwbEnable": False,
                 "ExposureTime": RealCamera.__get_exposure_time(identity),
-                # The first argument is the red gain, second is blue gain, values are from testing in the new gym lighting(1.2,2.2)
-                #"ColourGains": (1.2,2.0),
+                # The first argument is the red gain, second is blue gain.
+                # values are from testing in the new gym lighting(1.2,2.2)
+                # "ColourGains": (1.2,2.0),
                 # limit auto: go as fast as possible but no slower than 30fps
                 # without a duration limit, we slow down in the dark, which is fine
                 # "FrameDurationLimits": (5000, 33333),  # 41 fps
@@ -282,13 +303,19 @@ class RealCamera(Camera):
     @staticmethod
     def __get_exposure_time(identity: Identity) -> int:
         """exposure time in microseconds"""
-        return 1500
+        # 2/15/26 joel reduced exposure from 1500 to 500 us.
+        # requires pretty good light, minimizes blur
+        return 500
+        # works in less light
+        # return 2000
+
+        # 2/15/26 this is the old value
+        # return 1500
         # match identity:
         #     case Identity.GLOBAL_RIGHT | Identity.GLOBAL_LEFT:
         #         return 500  # from b5879a6, works with GS cameras
         #     case _:
         #         return 500  # the old value, works with v2 cameras
-
 
     @staticmethod
     def __mtx_from_model(identity: Identity, model: Model) -> Mat:
@@ -317,27 +344,48 @@ class RealCamera(Camera):
                         # this is for the 3.2 mm lens
                         return np.array(
                             [
-                                [944.3507484, 0, 693.7105365],  # 728 = 1456/2, not actually in the center
-                                [0, 943.8611003, 498.1103206],  # 544 = 1088/2, actually center :-)
+                                [
+                                    944.3507484,
+                                    0,
+                                    693.7105365,
+                                ],  # 728 = 1456/2, not actually in the center
+                                [
+                                    0,
+                                    943.8611003,
+                                    498.1103206,
+                                ],  # 544 = 1088/2, actually center :-)
                                 [0, 0, 1],
                             ]
                         )
                     case Identity.CORAL_LEFT:
                         return np.array(
                             [
-                                [935.4403554, 0, 676.3779953],  # 728 = 1456/2, not actually in the center
-                                [0, 934.6111779, 537.0691437],  # 544 = 1088/2, actually center :-)
+                                [
+                                    935.4403554,
+                                    0,
+                                    676.3779953,
+                                ],  # 728 = 1456/2, not actually in the center
+                                [
+                                    0,
+                                    934.6111779,
+                                    537.0691437,
+                                ],  # 544 = 1088/2, actually center :-)
                                 [0, 0, 1],
-                                
                             ]
-
-
                         )
                     case Identity.CORAL_RIGHT:
                         return np.array(
                             [
-                                [938.0364397, 0, 674.7133631],  # 728 = 1456/2, not actually in the center
-                                [0, 937.4685798, 548.7346201],  # 544 = 1088/2, actually center :-)
+                                [
+                                    938.0364397,
+                                    0,
+                                    674.7133631,
+                                ],  # 728 = 1456/2, not actually in the center
+                                [
+                                    0,
+                                    937.4685798,
+                                    548.7346201,
+                                ],  # 544 = 1088/2, actually center :-)
                                 [0, 0, 1],
                             ]
                         )
@@ -381,20 +429,53 @@ class RealCamera(Camera):
                 return np.array([[0.01, -0.0365, 0, 0]])
             case Model.V2:
                 return np.array([[-0.003, 0.04, 0, 0]])
-            
+
             case Model.GS:
                 match identity:
                     case Identity.CORAL_LEFT:
                         # this is for the 3.2 mm lens from 9/15/25 testing
-                        return np.array([[-0.2883685917, 0.08640059653, -0.0003167335742, 0.0004112607248 ]])
+                        return np.array(
+                            [
+                                [
+                                    -0.2883685917,
+                                    0.08640059653,
+                                    -0.0003167335742,
+                                    0.0004112607248,
+                                ]
+                            ]
+                        )
                     case Identity.CORAL_RIGHT:
-                        return np.array([[-0.3057497651, 0.1211648432, 0.0003595528879, -0.0002945429981]])
+                        return np.array(
+                            [
+                                [
+                                    -0.3057497651,
+                                    0.1211648432,
+                                    0.0003595528879,
+                                    -0.0002945429981,
+                                ]
+                            ]
+                        )
                     case _:
                         # this is for the 3.2 mm lens from 9/15/25 testing
-                        return np.array([[-0.280215963, 0.1410181344, -0.0004975099487, -0.0003688145196, -0.008688430095, 0.03172761625, -0.001268540923, 0.04303604588]])
+                        return np.array(
+                            [
+                                [
+                                    -0.280215963,
+                                    0.1410181344,
+                                    -0.0004975099487,
+                                    -0.0003688145196,
+                                    -0.008688430095,
+                                    0.03172761625,
+                                    -0.001268540923,
+                                    0.04303604588,
+                                ]
+                            ]
+                        )
                 # if identity == Identity.DIST_TEST:
                 #     # this is for the 3.2 mm lens from 9/15/25 testing
-                #     return np.array([[-0.280215963, 0.1410181344, -0.0004975099487, -0.0003688145196, -0.008688430095, 0.03172761625, -0.001268540923, 0.04303604588]])
+                #     return np.array([[-0.280215963, 0.1410181344,
+                #  -0.0004975099487, -0.0003688145196, -0.008688430095,
+                #  0.03172761625, -0.001268540923, 0.04303604588]])
                 # # this is for the 6 mm lens from 2/1/25 testing
                 #     return np.array([[-0.510, 0.335, 0, 0]])
                 # else:

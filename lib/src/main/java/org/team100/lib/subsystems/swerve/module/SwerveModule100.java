@@ -5,8 +5,6 @@ import java.util.Optional;
 
 import org.team100.lib.coherence.Takt;
 import org.team100.lib.config.Identity;
-import org.team100.lib.experiments.Experiment;
-import org.team100.lib.experiments.Experiments;
 import org.team100.lib.music.Player;
 import org.team100.lib.servo.AngularPositionServo;
 import org.team100.lib.servo.LinearVelocityServo;
@@ -110,7 +108,7 @@ public abstract class SwerveModule100 implements Player {
         actuate(desired);
     }
 
-    /** Make sure the setpoint and measurement are the same. */
+    /** Set turning setpoint to measurement, zero drive encoder. */
     void reset() {
         m_turningServo.reset();
         m_driveServo.reset();
@@ -197,34 +195,15 @@ public abstract class SwerveModule100 implements Player {
         double dt = dt();
         double nextOmega = omega(nextWrappedAngle, dt);
 
-        if (Experiments.instance.enabled(Experiment.CorrectSpeedForSteering)) {
-            // help drive motors overcome steering.
-            nextSpeed = correctSpeedForSteering(nextSpeed, nextOmega, dt);
-        }
-        if (Experiments.instance.enabled(Experiment.ReduceCrossTrackError)) {
-            double measuredAngleRad = m_turningServo.getWrappedPositionRad();
-            nextSpeed = reduceCrossTrackError(measuredAngleRad, nextSpeed, nextWrappedAngle);
-
-        }
-
-        if (Experiments.instance.enabled(Experiment.SwerveModuleDeadband)) {
-            if (nextSpeed < 0.001) {
-                nextSpeed = 0;
-                nextWrappedAngle = m_previousDesiredWrappedAngle;
-                nextOmega = 0;
-            }
-        }
+        // help drive motors overcome steering.
+        nextSpeed = correctSpeedForSteering(nextSpeed, nextOmega, dt);
 
         m_driveServo.setVelocity(nextSpeed);
 
-        if (Experiments.instance.enabled(Experiment.UnprofiledSteering)) {
-            // no profile, just low-level position. Note the omega here may show up as
-            // noise.
-            m_turningServo.setPositionDirect(nextWrappedAngle.getRadians(), nextOmega, 0);
-        } else {
-            // use the profile
-            m_turningServo.setPositionProfiled(nextWrappedAngle.getRadians(), 0);
-        }
+        // Don't use a profile. This uses more current, but only briefly,
+        // and it's crisper.
+        m_turningServo.setPositionDirect(nextWrappedAngle.getRadians(), nextOmega, 0);
+
         m_previousDesiredWrappedAngle = nextWrappedAngle;
     }
 
@@ -260,6 +239,8 @@ public abstract class SwerveModule100 implements Player {
      * @returns rad/s
      */
     private double omega(Rotation2d desiredWrappedAngle, double dt) {
+        if (dt < 1e-6)
+            return 0;
         // dtheta is definitely a lot less than 2pi so wrapped is fine.
         Rotation2d dthetaWrapped = desiredWrappedAngle.minus(m_previousDesiredWrappedAngle);
         return dthetaWrapped.getRadians() / dt;
@@ -270,7 +251,6 @@ public abstract class SwerveModule100 implements Player {
      */
     private double correctPositionForSteering(double drive_M, double unwrappedAngleRad) {
         // steering opposes driving.
-        // TODO: double-check that.
         return drive_M - m_wheelRadiusM * unwrappedAngleRad / m_finalDriveRatio;
     }
 

@@ -23,7 +23,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
  * SwerveDriveSubsystem, and by tests.
  */
 public class SwerveLocal implements Player {
-    private static final boolean DEBUG = false;
     private final SwerveKinodynamics m_swerveKinodynamics;
     private final SwerveModuleCollection m_modules;
 
@@ -106,9 +105,8 @@ public class SwerveLocal implements Player {
         m_modules.close();
     }
 
+    /** Set turning setpoint to measurement, zero drive encoder. */
     void reset() {
-        if (DEBUG)
-            System.out.println("WARNING: make sure resetting in SwerveLocal doesn't break anything");
         m_modules.reset();
     }
 

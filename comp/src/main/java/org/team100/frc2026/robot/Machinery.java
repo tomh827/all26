@@ -34,6 +34,8 @@ import org.team100.lib.visualization.TrajectoryVisualization;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 
 /**
  * This should contain all the hardware of the robot: all the subsystems etc
@@ -65,19 +67,16 @@ public class Machinery {
     final AprilTagRobotLocalizer m_localizer;
     public final SwerveDriveSubsystem m_drive;
     final Beeper m_beeper;
-    //public final Shooter m_shooter;
-    //public final Intake m_intake;
+    // public final Shooter m_shooter;
+    // public final Intake m_intake;
     public final IntakeExtend m_extender;
-    //final Serializer m_serializer;
+    // final Serializer m_serializer;
 
-    //public final ClimberExtension m_ClimberExtension;
-    //public final Climber m_Climber;  
-   // final ShooterHood m_shooterHood;
-  
+    // public final ClimberExtension m_ClimberExtension;
+    // public final Climber m_Climber;
+    // final ShooterHood m_shooterHood;
+
     public Machinery() {
-
-        final LoggerFactory driveLog = logger.name("Drive");
-        m_swerveKinodynamics = SwerveKinodynamicsFactory.get(driveLog);
 
         ////////////////////////////////////////////////////////////
         //
@@ -85,13 +84,13 @@ public class Machinery {
         //
 
         // Subsystem initializers go here.
-        //m_shooter = new Shooter(driveLog);
-        //m_intake = new Intake(driveLog, new CanId(14));
-        m_extender = new IntakeExtend(driveLog, new CanId(20));
-        //m_serializer = new Serializer(driveLog);
-        //m_ClimberExtension = new ClimberExtension(driveLog);
-        //m_shooterHood = new ShooterHood(driveLog, null);
-        //m_Climber = new Climber(driveLog, new CanId(32));
+        // m_shooter = new Shooter(driveLog);
+        // m_intake = new Intake(driveLog, new CanId(14));
+        m_extender = new IntakeExtend(logger, new CanId(20));
+        // m_serializer = new Serializer(driveLog);
+        // m_ClimberExtension = new ClimberExtension(driveLog);
+        // m_shooterHood = new ShooterHood(driveLog, null);
+        // m_Climber = new Climber(driveLog, new CanId(32));
 
         ////////////////////////////////////////////////////////////
         //
@@ -104,6 +103,9 @@ public class Machinery {
         //
         // POSE ESTIMATION
         //
+        LoggerFactory driveLog = logger.name("Drive");
+        m_swerveKinodynamics = SwerveKinodynamicsFactory.get(driveLog);
+
         m_modules = SwerveModuleCollection.get(
                 driveLog,
                 DRIVE_SUPPLY_LIMIT,
@@ -244,11 +246,23 @@ public class Machinery {
     }
 
     /**
-     * Purge the history and assert the given pose as the current estimate.
+     * Purge the history and assert the given pose as the current estimate, with
+     * high variance, so that the robot immediately listens to the cameras to get a
+     * new pose.
      */
     public void resetPose(Pose2d p) {
         m_drive.resetPose(p, IsotropicNoiseSE2.high());
+        // also reset the ground truth, otherwise the cameras retain the old pose
         m_groundTruthResetter.accept(p);
+    }
+
+    /** Erase the pose history, use high variance for pose estimate. */
+    public Command disorient() {
+        return Commands.runOnce(() -> {
+            Pose2d p = m_drive.getPose();
+            System.out.printf("*** DISORIENT: %s\n", p);
+            resetPose(p);
+        }, m_drive);
     }
 
     public void periodic() {

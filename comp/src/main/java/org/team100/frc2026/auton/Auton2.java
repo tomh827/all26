@@ -50,10 +50,11 @@ public class Auton2 implements AnnotatedCommand {
         List<TimingConstraint> new_constraints = new ArrayList<>(constraints);
          
         // create a new VelocityRegionContstraint `slow_bump_zone`
-        VelocityLimitRegionConstraint slow_bump_zone = new VelocityLimitRegionConstraint(log, BumpZones.BLUE_BUMP_LEFT, maxBumpVelocity);
-        VelocityLimitRegionConstraint slow_bump_zone2 = new VelocityLimitRegionConstraint(log, BumpZones.BLUE_BUMP_RIGHT, maxBumpVelocity);
-        VelocityLimitRegionConstraint slow_bump_zone3 = new VelocityLimitRegionConstraint(log, BumpZones.RED_BUMP_LEFT, maxBumpVelocity);
-        VelocityLimitRegionConstraint slow_bump_zone4 = new VelocityLimitRegionConstraint(log, BumpZones.RED_BUMP_RIGHT, maxBumpVelocity);
+        // the "name" values here separate the "Mutables" inside.
+        VelocityLimitRegionConstraint slow_bump_zone = new VelocityLimitRegionConstraint(log.name("bumpzone"), BumpZones.BLUE_BUMP_LEFT, maxBumpVelocity);
+        VelocityLimitRegionConstraint slow_bump_zone2 = new VelocityLimitRegionConstraint(log.name("bumpzone2"), BumpZones.BLUE_BUMP_RIGHT, maxBumpVelocity);
+        VelocityLimitRegionConstraint slow_bump_zone3 = new VelocityLimitRegionConstraint(log.name("bumpzone3"), BumpZones.RED_BUMP_LEFT, maxBumpVelocity);
+        VelocityLimitRegionConstraint slow_bump_zone4 = new VelocityLimitRegionConstraint(log.name("bumpzone4"), BumpZones.RED_BUMP_RIGHT, maxBumpVelocity);
         new_constraints.add(slow_bump_zone);
         new_constraints.add(slow_bump_zone2);
         new_constraints.add(slow_bump_zone3);

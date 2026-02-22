@@ -19,12 +19,10 @@ import org.team100.lib.subsystems.swerve.commands.manual.ManualWithFullStateHead
 import org.team100.lib.subsystems.swerve.commands.manual.ManualWithProfiledHeading;
 import org.team100.lib.subsystems.swerve.commands.manual.ManualWithTargetLock;
 import org.team100.lib.subsystems.swerve.commands.manual.SimpleManualModuleStates;
-import org.team100.lib.subsystems.swerve.kinodynamics.limiter.SwerveLimiter;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -59,17 +57,17 @@ public class Binder {
         // DEFAULT COMMANDS
         //
 
-        SwerveLimiter limiter = new SwerveLimiter(
-                m_log,
-                m_machinery.m_swerveKinodynamics,
-                RobotController::getBatteryVoltage);
-        limiter.updateSetpoint(m_machinery.m_drive.getVelocity());
+        // SwerveLimiter limiter = new SwerveLimiter(
+        //         m_log,
+        //         m_machinery.m_swerveKinodynamics,
+        //         RobotController::getBatteryVoltage);
+        // limiter.updateSetpoint(m_machinery.m_drive.getVelocity());
 
         final DriveManually driveManually = new DriveManually(
                 driver::velocity,
                 m_machinery.m_localizer::setHeedRadiusM,
                 m_machinery.m_drive,
-                limiter);
+                m_machinery.m_drive.getLimiter());
         m_machinery.m_drive.setDefaultCommand(driveManually.withName("drive default"));
         final LoggerFactory manLog = m_log.type(driveManually);
 
@@ -114,19 +112,22 @@ public class Binder {
                         () -> new Translation2d(6, 4),
                         thetaFeedback));
 
-       // m_machinery.m_shooter.setDefaultCommand(
-               // m_machinery.m_shooter.stop());
-       // m_machinery.m_intake.setDefaultCommand(
-              //  m_machinery.m_intake.stop());
+        // m_machinery.m_shooter.setDefaultCommand(
+        // m_machinery.m_shooter.stop());
+        // m_machinery.m_intake.setDefaultCommand(
+        // m_machinery.m_intake.stop());
         m_machinery.m_extender.setDefaultCommand(
                 m_machinery.m_extender.stop());
-        //m_machinery.m_shooterHood.setDefaultCommand(
-        //        m_machinery.m_shooterHood.stop());
+        // m_machinery.m_shooterHood.setDefaultCommand(
+        // m_machinery.m_shooterHood.stop());
 
         ///////////////////////////
         //
         // DRIVETRAIN
         //
+
+        // Become very unsure of location, so that camera authority is high for awhile.
+        onTrue(driver::back, m_machinery.disorient());
 
         // This is for testing pose estimation accuracy and drivetrain positioning
         // accuracy.
@@ -140,32 +141,34 @@ public class Binder {
         ///
         /// SUBSYSTEMS
         ///
-         
-       // whileTrue(driver::b, m_machinery.m_shooter.shoot());
 
-       // whileTrue(driver::x, m_machinery.m_intake.intake());
+        // whileTrue(driver::b, m_machinery.m_shooter.shoot());
 
-     //   whileTrue(driver::y, m_machinery.m_serializer.serialize());
+        // whileTrue(driver::x, m_machinery.m_intake.intake());
+
+        // whileTrue(driver::y, m_machinery.m_serializer.serialize());
 
         // Test bindings
-        //whileTrue(driver::leftBumper, m_machinery.m_extender.goToExtendedPosition());
-        //whileTrue(driver::rightBumper, m_machinery.m_extender.goToRetractedPosition());
-       // whileTrue(driver::rightTrigger, m_machinery.m_ClimberExtension.setPosition());
-        //whileTrue(driver::x,
-          //           m_machinery.m_ClimberExtension.setPosition()
-            //             .andThen(m_machinery.m_Climber.setClimb1()));
-       // whileTrue(driver::b,
-         //        m_machinery.m_ClimberExtension.setPosition()
-         //                 .andThen(m_machinery.m_Climber.setClimb3()));
-        //whileTrue(driver::a,
-          //          m_machinery.m_Climber.setClimb0()
-            //            .andThen(m_machinery.m_ClimberExtension.setHomePosition()));
+        // whileTrue(driver::leftBumper, m_machinery.m_extender.goToExtendedPosition());
+        // whileTrue(driver::rightBumper,
+        // m_machinery.m_extender.goToRetractedPosition());
+        // whileTrue(driver::rightTrigger,
+        // m_machinery.m_ClimberExtension.setPosition());
+        // whileTrue(driver::x,
+        // m_machinery.m_ClimberExtension.setPosition()
+        // .andThen(m_machinery.m_Climber.setClimb1()));
+        // whileTrue(driver::b,
+        // m_machinery.m_ClimberExtension.setPosition()
+        // .andThen(m_machinery.m_Climber.setClimb3()));
+        // whileTrue(driver::a,
+        // m_machinery.m_Climber.setClimb0()
+        // .andThen(m_machinery.m_ClimberExtension.setHomePosition()));
 
         // The real bindings
         whileTrue(driver::leftBumper, m_machinery.m_extender.goToRetractedPosition());
         whileTrue(driver::leftTrigger,
                 m_machinery.m_extender.goToExtendedPosition());
-                        //.andThen(m_machinery.m_intake.intake()));
+        // .andThen(m_machinery.m_intake.intake()));
 
         ///////////////////////////////////////////////////////////
         //

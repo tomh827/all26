@@ -77,6 +77,10 @@ public class SwerveDriveSubsystem extends SubsystemBase implements VelocitySubsy
     // ACTUATORS
     //
 
+    public SwerveLimiter getLimiter() {
+        return m_limiter;
+    }
+
     /**
      * Skip all scaling, limits generator, etc.
      * 
@@ -121,23 +125,15 @@ public class SwerveDriveSubsystem extends SubsystemBase implements VelocitySubsy
         m_swerveLocal.setRawModuleStates(states);
     }
 
-    /** Use raw mode to set modules driving ahead */
-    public Command aheadSlow() {
-        return run(() -> setRawModuleStates(SwerveModuleStates.aheadSlow))
-                .finallyDo(() -> stop());
-    }
-
-    /** Use robot-relative mode to set modules driving to the right */
-    public Command rightwardSlow() {
-        return run(() -> setChassisSpeeds(new ChassisSpeeds(0, -1.0, 0)))
-                .finallyDo(() -> stop());
-    }
-
     @Override
     public void stop() {
         m_swerveLocal.stop();
     }
 
+    /**
+     * Empty the pose history, reset the servos, add the given pose, and flush the
+     * cache.
+     */
     public void resetPose(Pose2d robotPose, IsotropicNoiseSE2 noise) {
         if (DEBUG)
             System.out.println("WARNING: Make sure resetting the swerve module collection doesn't break anything");
@@ -195,6 +191,72 @@ public class SwerveDriveSubsystem extends SubsystemBase implements VelocitySubsy
         m_swerveLocal.close();
     }
 
+    /** Return cached pose. */
+    public Pose2d getPose() {
+        return m_stateCache.get().pose();
+    }
+
+    /** Return cached velocity. */
+    public VelocitySE2 getVelocity() {
+        return m_stateCache.get().velocity();
+    }
+
+    /** Return cached speeds. */
+    public ChassisSpeeds getChassisSpeeds() {
+        return m_stateCache.get().chassisSpeeds();
+    }
+
+    @Override
+    public List<Player> players() {
+        return m_players;
+    }
+
+    ///////////////////////////////////////////////////////////////
+    //
+    // Commands
+    //
+
+    public Command stopCommand() {
+        return runOnce(this::stop);
+    }
+
+    /** Use raw mode to set modules driving ahead. */
+    public Command aheadSlow() {
+        return run(() -> setRawModuleStates(SwerveModuleStates.aheadSlow));
+    }
+
+    /** Use robot-relative mode to set modules driving to the right. */
+    public Command rightwardSlow() {
+        return run(() -> setChassisSpeeds(new ChassisSpeeds(0, -1.0, 0)));
+    }
+
+    /**
+     * This can conflict with the apriltag input and cause the robot to lose its
+     * mind. Do not use it without understanding it and testing it in a safe
+     * environment.
+     */
+    public Command resetPoseCommand(Pose2d pose) {
+        return runOnce(() -> resetPose(pose, IsotropicNoiseSE2.high()));
+    }
+
+    /**
+     * This can conflict with the apriltag input and cause the robot to lose its
+     * mind. Do not use it without understanding it and testing it in a safe
+     * environment.
+     */
+    public Command setRotationCommand(Rotation2d rotation) {
+        return runOnce(() -> resetPose(
+                new Pose2d(getPose().getTranslation(), rotation),
+                IsotropicNoiseSE2.high()));
+    }
+
+    @Override
+    public Command play(double freq) {
+        return run(() -> {
+            m_swerveLocal.play(freq);
+        });
+    }
+
     /////////////////////////////////////////////////////////////////
 
     /**
@@ -212,33 +274,6 @@ public class SwerveDriveSubsystem extends SubsystemBase implements VelocitySubsy
             System.out.printf("update() positions %s estimated pose: %s\n", positions, swerveModel);
         }
         return swerveModel;
-    }
-
-    /** Return cached pose. */
-    public Pose2d getPose() {
-        return m_stateCache.get().pose();
-    }
-
-    /** Return cached velocity. */
-    public VelocitySE2 getVelocity() {
-        return m_stateCache.get().velocity();
-    }
-
-    /** Return cached speeds. */
-    public ChassisSpeeds getChassisSpeeds() {
-        return m_stateCache.get().chassisSpeeds();
-    }
-
-    @Override
-    public Command play(double freq) {
-        return run(() -> {
-            m_swerveLocal.play(freq);
-        });
-    }
-
-    @Override
-    public List<Player> players() {
-        return m_players;
     }
 
 }

@@ -204,6 +204,7 @@ public class SwerveModuleCollection implements Player {
         m_rearRight.stop();
     }
 
+    /** Set turning setpoint to measurement, zero drive encoders. */
     public void reset() {
         m_frontLeft.reset();
         m_frontRight.reset();

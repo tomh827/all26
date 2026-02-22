@@ -3,9 +3,7 @@ package org.team100.lib.network;
 import java.util.EnumSet;
 
 import org.team100.lib.config.Camera;
-import org.team100.lib.logging.Level;
 import org.team100.lib.logging.LoggerFactory;
-import org.team100.lib.logging.LoggerFactory.DoubleLogger;
 
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.networktables.MultiSubscriber;
@@ -16,7 +14,6 @@ import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.networktables.ValueEventData;
 import edu.wpi.first.util.struct.StructBuffer;
-import edu.wpi.first.wpilibj.Timer;
 
 /**
  * Reads camera input from network tables, which is always a StructArray.
@@ -31,8 +28,6 @@ public abstract class CameraReader<T> {
      */
     private static final int QUEUE_DEPTH = 10;
 
-    private final DoubleLogger m_log_timestamp;
-    private final DoubleLogger m_log_age;
     /** e.g. "blips" or "Rotation3d" */
     private final String m_ntValueName;
     /** Manages the queue of incoming messages. */
@@ -45,9 +40,6 @@ public abstract class CameraReader<T> {
             String ntRootName,
             String ntValueName,
             StructBuffer<T> buf) {
-        LoggerFactory log = parent.type(this);
-        m_log_timestamp = log.doubleLogger(Level.TRACE, "timestamp (s)");
-        m_log_age = log.doubleLogger(Level.TRACE, "age (s)");
         m_ntValueName = ntValueName;
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         m_poller = new NetworkTableListenerPoller(inst);
@@ -86,6 +78,10 @@ public abstract class CameraReader<T> {
             }
             // key is "rootName/cameraId/cameraNumber/valueName"
             String cameraId = fields[1];
+            if (fields[3].equals("fps"))
+                continue;
+            if (fields[3].equals("temp"))
+                continue;
             if (!fields[3].equals(m_ntValueName)) {
                 System.out.println("WARNING: weird key: " + name);
                 continue;
@@ -114,19 +110,7 @@ public abstract class CameraReader<T> {
                 System.out.printf("camera %s offset %s\n", cameraId, cameraOffset);
             }
 
-            // time is in microseconds
-            // https://docs.wpilib.org/en/stable/docs/software/networktables/networktables-intro.html#timestamps
-            // NT provides a local time comparable to FPGATime, which is what the history
-            // uses.
-            double valueTimestamp = ((double) ntValue.getTime()) / 1000000.0;
-            double age = Timer.getFPGATimestamp() - valueTimestamp;
-            m_log_timestamp.log(() -> valueTimestamp);
-            m_log_age.log(() -> age);
-            if (DEBUG) {
-                System.out.printf("reader timestamp %f\n", valueTimestamp);
-            }
-
-            perValue(cameraOffset, valueTimestamp, valueArray);
+            perValue(cameraOffset, valueArray);
         }
         finishUpdate();
     }
@@ -138,14 +122,10 @@ public abstract class CameraReader<T> {
     /**
      * Called for each StructArray received.
      * 
-     * @param cameraOffset   camera pose in robot coordinates
-     * @param valueTimestamp network tables local time in seconds
-     * @param valueArray     payload array
+     * @param cameraOffset camera pose in robot coordinates
+     * @param valueArray   payload array
      */
-    protected abstract void perValue(
-            Transform3d cameraOffset,
-            double valueTimestamp,
-            T[] value);
+    protected abstract void perValue(Transform3d cameraOffset, T[] value);
 
     /** Called when update() ends. */
     protected void finishUpdate() {

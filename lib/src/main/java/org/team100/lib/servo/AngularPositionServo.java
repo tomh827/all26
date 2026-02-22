@@ -10,7 +10,7 @@ import org.team100.lib.music.Player;
  */
 public interface AngularPositionServo extends Player {
     /**
-     * Zeros controller errors, sets setpoint to current position.
+     * Zeros controller errors, sets setpoint and goal to current measurement.
      *
      * It is essential to call this after a period of disuse, to prevent transients.
      * 

@@ -1,23 +1,22 @@
-""" A wrapper for the AprilTag detector. """
+"""A wrapper for the AprilTag detector."""
 
-# pylint: disable=E0611,R0902,R0903,R0913,R0914,W0212
+# pylint: disable=E0611,R0902,R0903,R0913,R0914,R0917,W0212
 
 import os
 from typing import cast
 
 import ntcore
 import numpy as np
-from cv2 import imwrite, undistort, undistortImagePoints
+from cv2 import imwrite, undistort, undistortImagePoints  # pylint: disable=W0611
 from numpy.typing import NDArray
-from robotpy_apriltag import (AprilTagDetection, AprilTagDetector,
-                              AprilTagPoseEstimator)
+from robotpy_apriltag import AprilTagDetection, AprilTagDetector, AprilTagPoseEstimator
 from typing_extensions import override
 
 from app.camera.camera_protocol import Camera, Request, Size
 from app.camera.interpreter_protocol import Interpreter
 from app.config.identity import Identity
 from app.dashboard.display import Display
-from app.network.network import Blip24, Network
+from app.network.network import Blip, Network
 
 Mat = NDArray[np.uint8]
 
@@ -34,13 +33,18 @@ class TagDetector(Interpreter):
         network: Network,
         debug: bool = False,
     ) -> None:
-        """debug is very slow, writes apriltag detector debug images into the same filenames over and over, and also writes timestamped images for later analysis"""
+        """Debug is very slow.  It writes apriltag detector debug images
+        into the same filenames over and over, and also writes
+        timestamped images for later analysis.
+        """
         self.identity = identity
         self.cam = cam
         self.camera_num = camera_num
         self.display = display
         self.network = network
         self.debug = debug
+
+        print("\n*** Interpreter: TagDetector")
 
         self.mtx: Mat = cam.get_intrinsic()
         self.dist: Mat = cam.get_dist()
@@ -60,8 +64,18 @@ class TagDetector(Interpreter):
         # sharpening kernel is [0,-1,0;-1,4,-1;0,-1,0], see apriltag.c
         # this makes adjacent pixels more different.
         config.decodeSharpening = 0.0
+        # this doesn't make much difference in FPS
+        # config.decodeSharpening = 0.25
+
         # do not decimate: improves far-away (small) detections
-        config.quadDecimate = 1.0
+        # config.quadDecimate = 1.0
+        # this makes a huge difference in FPS
+        # 1.0: 13 FPS
+        # 2.0: 40 FPS
+        # 4.0: 60 FPS
+        config.quadDecimate = 4.0
+        config.refineEdges = True
+
         # stddev of the blur kernel in pixels: seems to help with small tags
         config.quadSigma = 0.0
         if self.debug:
@@ -71,6 +85,8 @@ class TagDetector(Interpreter):
         # The apriltag default is 5.  WPI overrides this
         # with 300, which prevents far-away detections.
         # So set it back to 5.
+        # it seems not to make much difference in FPS
+        # qtp.minClusterPixels = 300
         qtp.minClusterPixels = 5
         self.at_detector.setQuadThresholdParameters(qtp)
         self.at_detector.addFamily("tag36h11")
@@ -78,6 +94,9 @@ class TagDetector(Interpreter):
         if identity == Identity.DIST_TEST:
             # the distortion rig uses a 33 mm, 20% scale, tag.
             tag_size = 0.033
+        elif identity == Identity.FUNNEL:
+            # for rotation testing rig
+            tag_size = 0.059
         else:
             # normal tag size is 6.5 inches
             tag_size = 0.1651
@@ -91,9 +110,15 @@ class TagDetector(Interpreter):
             )
         )
 
-        # TODO: move the identity part of this path to the Network object
         path = "vision/" + identity.value + "/" + str(camera_num)
+
+        # network output for the tag sightings
         self._blips = network.get_blip_sender(path + "/blips")
+
+        # network output for camera FPS
+        self._fps = network.get_double_sender(path + "/fps")
+        self._temp = network.get_double_sender(path + "/temp")
+
         # to keep track of images to write
         self.img_ts_sec = 0
         if self.debug:
@@ -133,9 +158,19 @@ class TagDetector(Interpreter):
             #
             #######
 
+            # is detection the slow part?
+            # result: list[AprilTagDetection] = []
+
             result: list[AprilTagDetection] = self.at_detector.detect(img.data)
 
-            blips: list[Blip24] = []
+            # microsecond age of frame
+            delay_us = req.delay_us()
+
+            # localtime in microseconds
+            localtime: int = int(ntcore._now() - delay_us)
+            servertime: int = self.network.server_time(localtime)
+
+            blips: list[Blip] = []
             result_item: AprilTagDetection
             for result_item in result:
                 if result_item.getHamming() > 0:
@@ -172,18 +207,36 @@ class TagDetector(Interpreter):
                 homography = result_item.getHomography()
                 pose = self.estimator.estimate(homography, corners)
 
-                blips.append(Blip24(result_item.getId(), pose))
+                blips.append(Blip(servertime, result_item.getId(), pose))
                 self.display.tag(img, result_item, pose)
 
-            delay_us = req.delay_us()
+            # send sightings to network
+            self._blips.send(blips)
 
-            self._blips.send(blips, delay_us)
+            # send camera FPS to network
+            fps = req.fps()
+            self._fps.send(fps)
+
             # must flush!  otherwise 100ms update rate.
             self.network.flush()
 
+            # log the CPU temperature in C
+            # raspberry pi throttles at 80
+            try:
+                with open(
+                    "/sys/class/thermal/thermal_zone0/temp", "r", encoding="ascii"
+                ) as f:
+                    raw_temp = int(f.read().strip())
+                    temp_c = raw_temp / 1000
+                    self._temp.send(temp_c)
+            except IOError:
+                # if this file does not exist
+                pass
+
             # do the drawing (after the NT payload is written)
+            # to minimize latency
             # none of this is particularly fast or important for prod.
-            fps = req.fps()
+
             self.display.text(img, f"FPS {fps:2.0f}", (10, 80))
             self.display.text(img, f"DELAY (ms) {delay_us/1000:2.0f}", (10, 160))
             self.display.put(img)

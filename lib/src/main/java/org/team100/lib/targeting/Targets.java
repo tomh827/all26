@@ -21,7 +21,6 @@ import org.team100.lib.util.CoalescingCollection;
 import org.team100.lib.util.TrailingHistory;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.util.struct.StructBuffer;
@@ -30,18 +29,19 @@ import edu.wpi.first.util.struct.StructBuffer;
  * Listen for updates from the object-detector camera and remember them for
  * awhile.
  */
-public class Targets extends CameraReader<Rotation3d> {
+public class Targets extends CameraReader<Target> {
     private static final boolean DEBUG = false;
+
+    /** Forget sights older than this. */
+    private static final double HISTORY_DURATION = 1.0;
+    /** Targets closer than this to each other are combined */
+    private static final double NEARNESS_THRESHOLD = 0.15;
 
     /**
      * Ignore incoming sights older than this, because they're stale.
      * This shouldn't happen if the camera is working well.
      */
-    private static final double MAX_SIGHT_AGE = 0.2;
-    /** Forget sights older than this. */
-    private static final double HISTORY_DURATION = 1.0;
-    /** Targets closer than this to each other are combined */
-    private static final double NEARNESS_THRESHOLD = 0.15;
+    private final double m_maxSightAgeS;
 
     public final DoubleArrayLogger m_log_allTargets;
     public final DoubleArrayLogger m_log_coalescedTargets;
@@ -61,9 +61,11 @@ public class Targets extends CameraReader<Rotation3d> {
     public Targets(
             LoggerFactory parent,
             LoggerFactory fieldLogger,
+            double maxSightAge,
             DoubleFunction<ModelSE2> history) {
-        super(parent, "objectVision", "Rotation3d", StructBuffer.create(Rotation3d.struct));
+        super(parent, "objectVision", "targets", StructBuffer.create(Target.struct));
         LoggerFactory log = parent.type(this);
+        m_maxSightAgeS = maxSightAge;
         m_log_historySize = log.intLogger(Level.TRACE, "history size");
         m_log_allTargets = fieldLogger.doubleArrayLogger(Level.TRACE, "all targets");
         m_log_coalescedTargets = fieldLogger.doubleArrayLogger(Level.TRACE, "coalesced targets");
@@ -79,46 +81,33 @@ public class Targets extends CameraReader<Rotation3d> {
     }
 
     @Override
-    protected void perValue(
-            Transform3d cameraOffset,
-            double valueTimestamp,
-            Rotation3d[] sights) {
-        double age = Takt.get() - valueTimestamp;
-        m_log_age.log(() -> age);
-        if (age > MAX_SIGHT_AGE) {
-            if (DEBUG) {
-                System.out.printf("WARNING: ignoring stale sight %f %f\n", Takt.get(), valueTimestamp);
-            }
-            return;
-        }
-        // ALERT!
-        //
-        // Vasili added this while testing target interception, but I have no idea why.
-        // It breaks all the simulations. The effect is to make the received sight
-        // appear as if it were from further in the past than the timestamp says it is,
-        // which would be required if there were delay (a lot of delay) not included
-        // in the timestamp.
-        //
-        // TODO: explore the issue of time synchronization in more depth.
-        //
-        // TODO: maybe add this extra delay to the python code; maybe the computation
-        // there is wrong somehow.
-        //
-        // double SOME_SORT_OF_OFFSET = 0.05;
-        double SOME_SORT_OF_OFFSET = 0.0;
-        double poseTimestamp = valueTimestamp - SOME_SORT_OF_OFFSET;
-        m_log_poseTimestamp.log(() -> poseTimestamp);
-        Pose2d robotPose = m_history.apply(poseTimestamp).pose();
+    protected void perValue(Transform3d cameraOffset, Target[] sights) {
 
         // Tranform sights to field targets.
-        List<Translation2d> targets = TargetLocalizer.cameraRotsToFieldRelativeArray(
-                robotPose, cameraOffset, sights);
-        if (DEBUG) {
-            System.out.printf("targets %d\n", targets.size());
-        }
+        for (Target sight : sights) {
+            // server timestamp in sec
+            double timeSec = (double) sight.getTimestamp() / 1e6;
 
-        m_allTargets.addAll(valueTimestamp, targets);
-        m_targets.addAll(valueTimestamp, targets);
+            double age = Takt.get() - timeSec;
+            m_log_age.log(() -> age);
+
+            if (age > m_maxSightAgeS) {
+                if (DEBUG) {
+                    System.out.printf("WARNING: ignoring stale sight %f\n", age);
+                }
+                continue;
+            }
+
+            m_log_poseTimestamp.log(() -> timeSec);
+            Pose2d robotPose = m_history.apply(timeSec).pose();
+            TargetLocalizer.cameraRotToFieldRelative(
+                    robotPose,
+                    cameraOffset,
+                    sight.sight()).ifPresent((t) -> {
+                        m_allTargets.add(timeSec, t);
+                        m_targets.add(timeSec, t);
+                    });
+        }
     }
 
     /**

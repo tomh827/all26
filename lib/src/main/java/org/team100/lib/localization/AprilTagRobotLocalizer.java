@@ -41,7 +41,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
  * *estimate*. The camera input doesn't require fresh odometry, it modifies the
  * past (and replays up to the present).
  */
-public class AprilTagRobotLocalizer extends CameraReader<Blip24> {
+public class AprilTagRobotLocalizer extends CameraReader<Blip> {
     private static final boolean DEBUG = false;
 
     /** Maximum age of the sights we publish for diagnosis. */
@@ -139,7 +139,7 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip24> {
             DoubleFunction<ModelSE2> history,
             VisionUpdater visionUpdater,
             double tagRotationBeliefThreshold) {
-        super(parent, "vision", "blips", StructBuffer.create(Blip24.struct));
+        super(parent, "vision", "blips", StructBuffer.create(Blip.struct));
         m_tagRotationBeliefThreshold = tagRotationBeliefThreshold;
         LoggerFactory log = parent.type(this);
         m_layout = layout;
@@ -171,12 +171,10 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip24> {
     @Override
     protected void perValue(
             Transform3d cameraOffset,
-            double valueTimestamp,
-            Blip24[] blips) {
+            Blip[] blips) {
         estimateRobotPose(
                 cameraOffset,
                 blips,
-                valueTimestamp,
                 DriverStation.getAlliance());
     }
 
@@ -204,17 +202,15 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip24> {
     /**
      * Compute the robot pose and put it in the pose estimator.
      * 
-     * @param cameraOffset   Camera pose in robot coordinates. This is not an
-     *                       estimate, it's configured in the Camera class.
-     * @param blips          The targets in the current camera frame
-     * @param valueTimestamp Camera frame timestamp
-     * @param optAlliance    From the driver station, it's here to make testing
-     *                       easier.
+     * @param cameraOffset Camera pose in robot coordinates. This is not an
+     *                     estimate, it's configured in the Camera class.
+     * @param blips        The targets in the current camera frame
+     * @param optAlliance  From the driver station, it's here to make testing
+     *                     easier.
      */
     void estimateRobotPose(
-            final Transform3d cameraOffset,
-            Blip24[] blips,
-            double valueTimestamp,
+            Transform3d cameraOffset,
+            Blip[] blips,
             Optional<Alliance> optAlliance) {
 
         // Fetch the alliance (not available immediately after startup).
@@ -224,14 +220,13 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip24> {
         Alliance alliance = optAlliance.get();
         m_log_alliance.log(() -> alliance);
 
-        // Add the extra delay. TODO: remove this correction.
-        double correctedTimestamp = getCorrectedTimestamp(valueTimestamp);
-
         // Sample the history.
-        Pose2d samplePose = sample(correctedTimestamp);
 
         for (int i = 0; i < blips.length; ++i) {
-            Blip24 blip = blips[i];
+            Blip blip = blips[i];
+            double timeSec = (double) blip.getTimestamp() / 1e6;
+            m_log_lag.log(() -> Takt.get() - timeSec);
+            Pose2d samplePose = sample(timeSec);
 
             printBlip(blip);
 
@@ -252,19 +247,22 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip24> {
 
             printForCalibration(cameraOffset, blip, tagInCamera);
 
-            // TODO: replace this with mixing?
-            tagInCamera = maybeOverrideRotation(cameraOffset, samplePose, tagInField, tagInCamera);
+            // Do not override tag rotation
+            // tagInCamera = maybeOverrideRotation(cameraOffset, samplePose, tagInField,
+            // tagInCamera);
 
             // Estimate the tag pose in the field frame.
             Pose3d estimatedTagInField = estimatedTagInField(cameraOffset, samplePose, tagInCamera);
-            m_allTags.add(correctedTimestamp, estimatedTagInField);
+            m_allTags.add(timeSec, estimatedTagInField);
             logTagError(tagInField, estimatedTagInField);
 
             // Compute the pose implied by the vision input.
             Pose2d robotPose2d = robotPose2d(samplePose, cameraOffset, tagInField, tagInCamera);
+            if (DEBUG)
+                System.out.printf("robotPose2d %s\n", robotPose2d);
 
             // Clean the used-tags collection in case we don't end up writing to it.
-            m_usedTags.cleanup(correctedTimestamp);
+            m_usedTags.cleanup(timeSec);
 
             //////////////////////////////////////////////////////////////////
             ///
@@ -296,7 +294,7 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip24> {
             ///
             //////////////////////////////////////////////////////////////////
 
-            m_usedTags.add(correctedTimestamp, estimatedTagInField);
+            m_usedTags.add(timeSec, estimatedTagInField);
 
             NoisyPose2d noisyMeasurement = new NoisyPose2d(
                     robotPose2d,
@@ -304,32 +302,9 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip24> {
                             tagInCamera.getTranslation().getNorm(),
                             Metrics.offAxisAngleRad(tagInCamera)));
 
-            m_visionUpdater.put(correctedTimestamp, noisyMeasurement);
+            m_visionUpdater.put(timeSec, noisyMeasurement);
             m_prevPose = robotPose2d;
         }
-    }
-
-    /**
-     * Vasili added this extra delay after some experimentation, but
-     * it breaks simulation, so I set it back to zero.
-     * 
-     * The effect is to make the received sight appear as if it were from further in
-     * the past than the timestamp says it is, which would be required if there were
-     * delay (a lot of delay) not included in the timestamp.
-     * 
-     * TODO: figure out what this does and describe it describe here.
-     * TODO: remove this correction
-     */
-    private double getCorrectedTimestamp(double valueTimestamp) {
-
-        // final double IMPORTANT_MAGIC_NUMBER = 0.027;
-        final double IMPORTANT_MAGIC_NUMBER = 0.0;
-        double correctedTimestamp = valueTimestamp - IMPORTANT_MAGIC_NUMBER;
-
-        // this seems to always be 1. ????
-        // TODO: look more closely at this
-        m_log_lag.log(() -> Takt.get() - correctedTimestamp);
-        return correctedTimestamp;
     }
 
     /**
@@ -362,6 +337,7 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip24> {
      * If the tag is too far, replace the blip-derived tag rotation with a
      * gyro-derived tag rotation.
      */
+    @SuppressWarnings("unused")
     private Transform3d maybeOverrideRotation(
             Transform3d cameraOffset, Pose2d historicalPose, Pose3d tagInField, Transform3d tagInCamera) {
         if (tagInCamera.getTranslation().getNorm() > m_tagRotationBeliefThreshold) {
@@ -398,7 +374,7 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip24> {
         return historicalPose;
     }
 
-    private void printBlip(Blip24 blip) {
+    private void printBlip(Blip blip) {
         if (!DEBUG)
             return;
         Translation3d t = blip.getRawPose().getTranslation();
@@ -411,11 +387,11 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip24> {
      * This is used for camera offset calibration. Place a tag at a known position,
      * observe the offset, and add it to Camera.java, inverted.
      */
-    private void printForCalibration(Transform3d cameraOffset, Blip24 blip, Transform3d tagInCamera) {
+    private void printForCalibration(Transform3d cameraOffset, Blip blip, Transform3d tagInCamera) {
         if (!DEBUG)
             return;
         Transform3d tagInRobot = cameraOffset.plus(tagInCamera);
-        System.out.printf("tagInRobot id %d X %5.2f Y %5.2f Z %5.2f R %5.2f P %5.2f Y %5.2f\n",
+        System.out.printf("tagInRobot id %d X %5.3f Y %5.3f Z %5.3f R %5.3f P %5.3f Y %5.3f\n",
                 blip.getId(), tagInRobot.getTranslation().getX(), tagInRobot.getTranslation().getY(),
                 tagInRobot.getTranslation().getZ(), tagInRobot.getRotation().getX(),
                 tagInRobot.getRotation().getY(), tagInRobot.getRotation().getZ());
@@ -436,7 +412,7 @@ public class AprilTagRobotLocalizer extends CameraReader<Blip24> {
     }
 
     /** Camera-to-tag, as it appears in the camera frame. */
-    private Transform3d tagInCamera(Blip24 blip) {
+    private Transform3d tagInCamera(Blip blip) {
         Transform3d blipTransform = blip.blipToTransform();
         m_log_tag_in_camera.log(() -> blipTransform);
         return blipTransform;
