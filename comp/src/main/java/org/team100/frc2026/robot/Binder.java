@@ -67,8 +67,8 @@ public class Binder {
 
         // m_machinery.m_shooter.setDefaultCommand(
         // m_machinery.m_shooter.stop());
-        // m_machinery.m_intake.setDefaultCommand(
-        // m_machinery.m_intake.stop());
+        m_machinery.m_intake.setDefaultCommand(
+                m_machinery.m_intake.stop());
         m_machinery.m_extender.setDefaultCommand(
                 m_machinery.m_extender.stop());
         // m_machinery.m_shooterHood.setDefaultCommand(
@@ -97,7 +97,7 @@ public class Binder {
 
         // whileTrue(driver::b, m_machinery.m_shooter.shoot());
 
-        // whileTrue(driver::x, m_machinery.m_intake.intake());
+         whileTrue(driver::x, m_machinery.m_intake.intake());
 
         // whileTrue(driver::y, m_machinery.m_serializer.serialize());
 
@@ -118,9 +118,9 @@ public class Binder {
         // .andThen(m_machinery.m_ClimberExtension.setHomePosition()));
 
         // The real bindings
-        whileTrue(driver::leftBumper, m_machinery.m_extender.goToRetractedPosition());
-        whileTrue(driver::leftTrigger,
-                m_machinery.m_extender.goToExtendedPosition());
+       // whileTrue(driver::leftBumper, m_machinery.m_extender.goToRetractedPosition());
+      //  whileTrue(driver::leftTrigger,
+        //        m_machinery.m_extender.goToExtendedPosition()
         // .andThen(m_machinery.m_intake.intake()));
 
         ///////////////////////////////////////////////////////////
