@@ -8,11 +8,13 @@ from numpy.typing import NDArray
 import ntcore
 from wpimath.geometry import Rotation3d
 from cv2.typing import MatLike, Moments
+from typing_extensions import Buffer
 
 from app.camera.camera_protocol import Camera, Request, Size
 from app.camera.interpreter_protocol import Interpreter
 from app.dashboard.display import Display
-from app.network.network import Network, Target
+from app.network.network_protocol import Network
+from app.network.structs import Target
 
 
 class TargetDetector(Interpreter):
@@ -59,6 +61,7 @@ class TargetDetector(Interpreter):
         return undistorted.reshape(-1, 2)
 
     def analyze(self, req: Request) -> None:
+        buffer: Buffer
         with req.rgb() as buffer:
             # microsecond age of frame
             delay_us = req.delay_us()
@@ -69,7 +72,7 @@ class TargetDetector(Interpreter):
 
             img: NDArray[np.uint8] = np.frombuffer(buffer, dtype=np.uint8)
 
-            img_bgr = img.reshape((self._height, self._width, 3))
+            img_bgr: NDArray[np.uint8] = img.reshape((self._height, self._width, 3))
 
             img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
             img_hsv = np.ascontiguousarray(img_hsv)
@@ -120,7 +123,9 @@ class TargetDetector(Interpreter):
                     contour_info, undistorted_points
                 ):
 
-                    yNormalized: float = (self._height / 2 - undist_cY) / self._mtx[1, 1]
+                    yNormalized: float = (self._height / 2 - undist_cY) / self._mtx[
+                        1, 1
+                    ]
                     xNormalized: float = (self._width / 2 - undist_cX) / self._mtx[0, 0]
 
                     initial = np.array([1, 0, 0], dtype=np.float64)

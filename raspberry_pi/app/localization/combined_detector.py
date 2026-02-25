@@ -15,7 +15,8 @@ from app.camera.camera_protocol import Camera, Request, Size
 from app.camera.interpreter_protocol import Interpreter
 from app.config.identity import Identity
 from app.dashboard.display import Display
-from app.network.network import Blip, Network, Target
+from app.network.structs import Blip, Target
+from app.network.network_protocol import Network
 
 
 class CombinedDetector(Interpreter):
@@ -227,5 +228,7 @@ class CombinedDetector(Interpreter):
 
             fps = req.fps()
             self._display.text(img_display, f"FPS {fps:2.0f}", (5, 65))
-            self._display.text(img_display, f"delay (ms) {delay_us/1000:2.0f}", (5, 105))
+            self._display.text(
+                img_display, f"delay (ms) {delay_us/1000:2.0f}", (5, 105)
+            )
             self._display.put(img_display)

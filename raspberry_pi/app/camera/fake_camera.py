@@ -111,7 +111,6 @@ class FakeCamera(Camera):
             ]
         )
 
-
     @override
     def get_dist(self) -> NDArray[np.float32]:
         k1 = self.k1  # radial quadratic term

@@ -1,18 +1,16 @@
 # pylint: disable=E1101
 import unittest
 
-from threading import Event
-import ntcore
 import numpy as np
 import cv2
 
 from numpy.typing import NDArray
 
 from app.camera.fake_camera import FakeCamera
-from app.config.identity import Identity
 from app.dashboard.fake_display import FakeDisplay
 from app.localization.target_detector import TargetDetector
-from app.network.network import Network, Target
+from app.network.structs import Target
+from app.network.fake_network import FakeNetwork
 
 
 class TargetDetectorTest(unittest.TestCase):
@@ -20,12 +18,7 @@ class TargetDetectorTest(unittest.TestCase):
 
     def test_one_note_found(self) -> None:
 
-        inst = ntcore.NetworkTableInstance.getDefault()
-        inst.startServer()
-        sub = inst.getStructArrayTopic(self.KEY, Target).subscribe([])
-
-        identity = Identity.UNKNOWN
-        network = Network(identity, Event())
+        network = FakeNetwork()
         # this has an orange blob that matches the
         # HSV range in the note detector
         # the blob is in the lower right quadrant, so the result
@@ -55,7 +48,7 @@ class TargetDetectorTest(unittest.TestCase):
         self.assertEqual(498, display.circles[0][0])
         self.assertEqual(414, display.circles[0][1])
 
-        rots = sub.get()
+        rots: list[Target] = network.targets
         self.assertEqual(1, len(rots))
         rot = rots[0].sight
         # NOTE: 0.01 rad resolution is all that can be expected.
@@ -103,16 +96,11 @@ class TargetDetectorTest(unittest.TestCase):
         self.assertAlmostEqual(393.4, p[1], 1)
 
     def test_target_undistort(self) -> None:
-        # change this to use the fake network
-        inst = ntcore.NetworkTableInstance.getDefault()
-        inst.startServer()
-        sub = inst.getStructArrayTopic(self.KEY, Target).subscribe([])
-
         # includes a lot of distortion; in this case it's
         # "barrel" to keep the blob in the frame
         camera = FakeCamera("green_blob.jpg", None, -7, 11.875)
         display = FakeDisplay()
-        network = Network(Identity.UNKNOWN, Event())
+        network = FakeNetwork()
 
         object_lower = np.array((40, 50, 100))
         object_higher = np.array((70, 255, 255))
@@ -135,7 +123,7 @@ class TargetDetectorTest(unittest.TestCase):
 
         # the extracted rotation should be undistorted.
 
-        rots = sub.get()
+        rots: list[Target] = network.targets
         self.assertEqual(1, len(rots))
         rot = rots[0].sight
         # NOTE: 0.01 rad resolution is all that can be expected.
@@ -155,12 +143,7 @@ class TargetDetectorTest(unittest.TestCase):
         self.assertAlmostEqual(1.0, q.W(), 2)
 
     def test_zero_notes_found(self) -> None:
-        inst = ntcore.NetworkTableInstance.getDefault()
-        inst.startServer()
-        sub = inst.getStructArrayTopic(self.KEY, Target).subscribe([])
-
-        identity = Identity.UNKNOWN
-        network = Network(identity, Event())
+        network = FakeNetwork()
 
         # nothing in this image
         camera = FakeCamera("white_square.jpg")
@@ -183,6 +166,6 @@ class TargetDetectorTest(unittest.TestCase):
 
         ## always publish even if empty
 
-        rots = sub.get()
+        rots: list[Target] = network.targets
 
         self.assertEqual(0, len(rots))

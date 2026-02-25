@@ -9,7 +9,7 @@ from app.dashboard.display import Display
 from app.localization.combined_detector import CombinedDetector
 from app.localization.target_detector import TargetDetector
 from app.localization.tag_detector import TagDetector
-from app.network.network import Network
+from app.network.network_protocol import Network
 
 
 class InterpreterFactory:

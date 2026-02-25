@@ -5,40 +5,44 @@
 
 from threading import Event, Thread
 from queue import Queue
+from typing_extensions import override
 
 import ntcore
 from app.network.sync_loop import SyncLoop
 from app.network.drift import Drift
 from app.config.identity import Identity
 from app.network.structs import Blip, Target
+from app.network.network_protocol import DoubleSender, BlipSender, TargetSender, Network
 
 
-class DoubleSender:
+class RealDoubleSender(DoubleSender):
     def __init__(self, pub: ntcore.DoublePublisher) -> None:
         self.pub = pub
 
+    @override
     def send(self, val: float) -> None:
         self.pub.set(val)
 
 
-class BlipSender:
+class RealBlipSender(BlipSender):
     def __init__(self, pub: ntcore.StructArrayPublisher) -> None:
         self.pub = pub
 
+    @override
     def send(self, val: list[Blip]) -> None:
         self.pub.set(val)
 
 
-class TargetSender:
+class RealTargetSender(TargetSender):
     def __init__(self, pub: ntcore.StructArrayPublisher) -> None:
         self.pub = pub
 
+    @override
     def send(self, val: list[Target]) -> None:
         self.pub.set(val)
 
 
-class Network:
-    # TODO: make a protocol and a fake
+class RealNetwork(Network):
     """Wraps Network Tables, and also handles clock sync
     with a separate thread (to minimize jitter and aliasing
     in the sync measurement).
@@ -67,23 +71,28 @@ class Network:
         self._drift = Drift(self._inst, self._queue, identity)
         Thread(target=syncloop.run).start()
 
+    @override
     def server_time(self, localtime: int) -> int:
         return localtime + self._drift.get()
 
-    def get_double_sender(self, leaf: str) -> DoubleSender:
+    @override
+    def get_double_sender(self, leaf: str) -> RealDoubleSender:
         """For logging, using a different root so the listener doesn't hear it."""
         name: str = "pi/" + self._identity.value + "/" + leaf
-        return DoubleSender(self._inst.getDoubleTopic(name).publish())
+        return RealDoubleSender(self._inst.getDoubleTopic(name).publish())
 
-    def get_blip_sender(self) -> BlipSender:
+    @override
+    def get_blip_sender(self) -> RealBlipSender:
         """Send blips to the Rio."""
         name: str = "vision/" + self._identity.value + "/blips"
-        return BlipSender(self._inst.getStructArrayTopic(name, Blip).publish())
+        return RealBlipSender(self._inst.getStructArrayTopic(name, Blip).publish())
 
-    def get_target_sender(self) -> TargetSender:
+    @override
+    def get_target_sender(self) -> RealTargetSender:
         """Send targets to the rio."""
         name: str = "objectVision/" + self._identity.value + "/targets"
-        return TargetSender(self._inst.getStructArrayTopic(name, Target).publish())
+        return RealTargetSender(self._inst.getStructArrayTopic(name, Target).publish())
 
+    @override
     def flush(self) -> None:
         self._inst.flush()

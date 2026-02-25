@@ -16,7 +16,8 @@ from app.camera.camera_protocol import Camera, Request, Size
 from app.camera.interpreter_protocol import Interpreter
 from app.config.identity import Identity
 from app.dashboard.display import Display
-from app.network.network import Blip, Network
+from app.network.network_protocol import Network
+from app.network.structs import Blip
 
 
 class TagDetector(Interpreter):

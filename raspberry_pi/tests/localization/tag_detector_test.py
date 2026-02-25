@@ -1,12 +1,9 @@
 import unittest
-
-from threading import Event
-
 from app.camera.fake_camera import FakeCamera
 from app.config.identity import Identity
 from app.dashboard.fake_display import FakeDisplay
 from app.localization.tag_detector import TagDetector
-from app.network.network import Network
+from app.network.fake_network import FakeNetwork
 
 
 class TagDetectorTest(unittest.TestCase):
@@ -16,7 +13,7 @@ class TagDetectorTest(unittest.TestCase):
 
     def test_big_sharp(self) -> None:
         identity = Identity.UNKNOWN
-        network = Network(identity, Event())
+        network = FakeNetwork()
         camera = FakeCamera("big_sharp.png")
         display = FakeDisplay()
         tag_detector = TagDetector(identity, camera, display, network, False)
@@ -37,7 +34,7 @@ class TagDetectorTest(unittest.TestCase):
 
     def test_scale1(self) -> None:
         identity = Identity.UNKNOWN
-        network = Network(identity, Event())
+        network = FakeNetwork()
         camera = FakeCamera("scale1.png")
         display = FakeDisplay()
         tag_detector = TagDetector(identity, camera, display, network, False)
@@ -58,7 +55,7 @@ class TagDetectorTest(unittest.TestCase):
 
     def test_scale2(self) -> None:
         identity = Identity.UNKNOWN
-        network = Network(identity, Event())
+        network = FakeNetwork()
         camera = FakeCamera("scale2.png")
         display = FakeDisplay()
         tag_detector = TagDetector(identity, camera, display, network, False)
@@ -79,7 +76,7 @@ class TagDetectorTest(unittest.TestCase):
 
     def test_scale3(self) -> None:
         identity = Identity.UNKNOWN
-        network = Network(identity, Event())
+        network = FakeNetwork()
         camera = FakeCamera("scale3.pnm")
         display = FakeDisplay()
         tag_detector = TagDetector(identity, camera, display, network, False)
@@ -101,7 +98,7 @@ class TagDetectorTest(unittest.TestCase):
 
     def test_scale4(self) -> None:
         identity = Identity.UNKNOWN
-        network = Network(identity, Event())
+        network = FakeNetwork()
         camera = FakeCamera("scale4.pnm")
         display = FakeDisplay()
         tag_detector = TagDetector(identity, camera, display, network, False)
@@ -125,7 +122,7 @@ class TagDetectorTest(unittest.TestCase):
         # it's kind of amazing that this one works
         # this does not work when quadDecimate is set to 4.
         identity = Identity.UNKNOWN
-        network = Network(identity, Event())
+        network = FakeNetwork()
         camera = FakeCamera("scale5.pnm")
         display = FakeDisplay()
         tag_detector = TagDetector(identity, camera, display, network, False)
@@ -150,7 +147,7 @@ class TagDetectorTest(unittest.TestCase):
     def test_scale6(self) -> None:
         # now finally too small
         identity = Identity.UNKNOWN
-        network = Network(identity, Event())
+        network = FakeNetwork()
         camera = FakeCamera("scale6.pnm")
         display = FakeDisplay()
         tag_detector = TagDetector(identity, camera, display, network, False)
@@ -165,7 +162,7 @@ class TagDetectorTest(unittest.TestCase):
 
     def test_one_tag_found(self) -> None:
         identity = Identity.UNKNOWN
-        network = Network(identity, Event())
+        network = FakeNetwork()
         camera = FakeCamera("tag_and_board.jpg", (1100, 620))
         display = FakeDisplay()
         tag_detector = TagDetector(identity, camera, display, network)
@@ -186,7 +183,7 @@ class TagDetectorTest(unittest.TestCase):
 
     def test_zero_tags_found(self) -> None:
         identity = Identity.UNKNOWN
-        network = Network(identity, Event())
+        network = FakeNetwork()
         # nothing in this image
         camera = FakeCamera("white_square.jpg")
         display = FakeDisplay()
@@ -203,7 +200,7 @@ class TagDetectorTest(unittest.TestCase):
     def test_distortion(self) -> None:
         """How much distortion can there be in the image?"""
         identity = Identity.UNKNOWN
-        network = Network(identity, Event())
+        network = FakeNetwork()
 
         # no distortion, like above
         camera = FakeCamera("tag_and_board.jpg", (1100, 620), 0, 0)

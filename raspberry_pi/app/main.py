@@ -19,7 +19,8 @@ from app.camera.camera_loop import CameraLoop
 from app.config.identity import Identity
 from app.dashboard.display import Display
 from app.dashboard.display_factory import DisplayFactory
-from app.network.network import Network
+from app.network.network_protocol import Network
+from app.network.real_network import RealNetwork
 
 
 def main() -> None:
@@ -28,7 +29,7 @@ def main() -> None:
     try:
         camera: Camera = CameraFactory.get(identity)
         display: Display = DisplayFactory.get(identity, camera)
-        network: Network = Network(identity, done)
+        network: Network = RealNetwork(identity, done)
         interpreter: Interpreter = InterpreterFactory.get(
             identity, camera, display, network
         )
