@@ -45,7 +45,7 @@ public class ShooterHood extends SubsystemBase {
         m_target = target;
         m_table = new ShooterTable();
         switch (Identity.instance) {
-            case TEST_BOARD_B0 -> {
+            case TEST_BOARD_B0, COMP_BOT -> {
                 float gearRatio = 10;
                 PIDConstants PID = PIDConstants.makePositionPID(log, 1);
                 double supplyLimit = 50;
