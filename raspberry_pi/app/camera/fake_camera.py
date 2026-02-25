@@ -1,49 +1,21 @@
-"""A camera for desktop testing."""
-
 # pylint: disable=E1101,R0903,R1732
 
-from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
 from typing import Optional
-
 import cv2
 import numpy as np
 from cv2.typing import MatLike
 from numpy.typing import NDArray
-from typing_extensions import Buffer, override
-
-from app.camera.camera_protocol import Camera, Request, Size
+from typing_extensions import override
+from app.camera.camera_protocol import Camera
+from app.camera.fake_request import FakeRequest
+from app.camera.size import Size
 from app.util.timer import Timer
 
 
-class FakeRequest(Request):
-    def __init__(self, img: MatLike, fps: float) -> None:
-        """img should be cv2 RGB (really BGR)"""
-        self.img = img
-        self._fps = fps
-
-    @override
-    def fps(self) -> float:
-        return self._fps
-
-    @override
-    def delay_us(self) -> int:
-        return 500
-
-    @override
-    def rgb(self) -> AbstractContextManager[Buffer]:
-        return nullcontext(self.img.copy().data)
-
-    @override
-    def yuv(self) -> AbstractContextManager[Buffer]:
-        return nullcontext(cv2.cvtColor(self.img, cv2.COLOR_RGB2YUV_I420).data)
-
-    @override
-    def release(self) -> None:
-        pass
-
-
 class FakeCamera(Camera):
+    """A camera for desktop testing."""
+
     def __init__(
         self,
         filename: str,
@@ -118,7 +90,3 @@ class FakeCamera(Camera):
         p1 = 0  # tangential
         p2 = 0  # tangential
         return np.array([k1, k2, p1, p2])
-
-    @override
-    def is_rolling_shutter(self) -> bool:
-        return True

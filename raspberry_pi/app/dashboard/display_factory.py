@@ -1,4 +1,5 @@
-from app.camera.camera_protocol import Camera, Size
+from app.camera.camera_protocol import Camera
+from app.camera.size import Size
 from app.config.identity import Identity
 from app.dashboard.display import Display
 from app.dashboard.fake_display import FakeDisplay

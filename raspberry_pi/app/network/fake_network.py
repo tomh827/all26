@@ -6,7 +6,7 @@ from app.network.network_protocol import DoubleSender, BlipSender, TargetSender,
 
 
 class FakeDoubleSender(DoubleSender):
-    def __init__(self, fake: 'FakeNetwork') -> None:
+    def __init__(self, fake: "FakeNetwork") -> None:
         self._net = fake
 
     @override
@@ -15,9 +15,8 @@ class FakeDoubleSender(DoubleSender):
 
 
 class FakeBlipSender(BlipSender):
-    def __init__(self, fake: 'FakeNetwork') -> None:
+    def __init__(self, fake: "FakeNetwork") -> None:
         self._net = fake
-
 
     @override
     def send(self, val: list[Blip]) -> None:
@@ -25,7 +24,7 @@ class FakeBlipSender(BlipSender):
 
 
 class FakeTargetSender(TargetSender):
-    def __init__(self, fake: 'FakeNetwork') -> None:
+    def __init__(self, fake: "FakeNetwork") -> None:
         self._net = fake
 
     @override
@@ -39,17 +38,26 @@ class FakeNetwork(Network):
         self.blips: list[Blip] = []
         self.targets: list[Target] = []
 
-    def server_time(self, localtime: int) -> int:
-        return 0
+    @override
+    def calibrate(self) -> bool:
+        return False
 
+    @override
+    def flush(self) -> None:
+        pass
+
+    @override
     def get_double_sender(self, leaf: str) -> DoubleSender:
         return FakeDoubleSender(self)
 
+    @override
     def get_blip_sender(self) -> BlipSender:
         return FakeBlipSender(self)
 
+    @override
     def get_target_sender(self) -> TargetSender:
         return FakeTargetSender(self)
 
-    def flush(self) -> None:
-        pass
+    @override
+    def server_time(self, localtime: int) -> int:
+        return 0

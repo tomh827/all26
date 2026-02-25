@@ -13,194 +13,59 @@ https://github.com/raspberrypi/picamera2/
 
 # pylint: disable=E0401
 
-
-from contextlib import AbstractContextManager
-from enum import Enum, unique
 from pprint import pprint
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 from picamera2 import CompletedRequest, Picamera2, libcamera  # type: ignore
-from picamera2.request import _MappedBuffer  # type: ignore
-from typing_extensions import Buffer, override
+from typing_extensions import override
 
-from app.camera.camera_protocol import Camera, Request, Size
+from app.camera.camera_protocol import Camera, Request
+from app.camera.distortion import Distortion
+from app.camera.intrinsic import Intrinsic
+from app.camera.model import Model
+from app.camera.real_request import RealRequest
+from app.camera.shutter import Shutter
+from app.camera.size import Size
 from app.config.identity import Identity
 from app.util.timer import Timer
-
-
-class RealRequest(Request):
-    def __init__(self, req: CompletedRequest, fps: float, rolling: bool):  # type: ignore
-        # Before we get a CompletedRequest, its constructor has used the
-        # camera allocator sync property to:
-        # * instantiate a DMA allocator sync for each buffer
-        # * tell the camera allocator to mark the buffers as 'in use'
-        # * __enter__() each buffer's DmaSync, which calls ioctl DMA_BUF_SYNC_START
-        self._req: CompletedRequest = req
-        self._fps = fps
-        self._rolling = rolling
-
-    @override
-    def fps(self) -> float:
-        # a typical value for a real camera
-        return self._fps
-
-    @override
-    def delay_us(self) -> int:
-        metadata = self._req.get_metadata()  # type: ignore
-        # Time of first row received, this is roughly the "readout timestamp"
-        sensor_timestamp_ns = cast(int, metadata["SensorTimestamp"])
-
-        # Half the exposure time.
-        exposure_term_us = cast(int, metadata["ExposureTime"] * 0.5)
-        exposure_term_ns = exposure_term_us * 1000
-
-        # Extra constant delay.
-        # 2/21/26 using a real robot.  I think this is correcting for
-        # roborio loop delay, not just camera delay.
-        frame_term_ms = 30
-        # 2/20/26 this from the "camera_delay" project
-        # frame_term_ms = 2
-        frame_term_ns = cast(int, frame_term_ms * 1000000)
-
-        exposure_timestamp_ns = sensor_timestamp_ns - frame_term_ns - exposure_term_ns
-
-        if self._rolling:
-            # For a global shutter, the whole frame is exposed at once,
-            # so the exposure timestamp applies to all the pixels.
-            # For a rolling shutter, rows are exposed over the entire
-            # frame duration (1/fps), i.e. *after* the data from the first
-            # row is received.  Take the midpoint of this period.
-            # TODO: assign a different timestamp to each tag, depending on
-            # where it is in the frame -- note since we're moving away from
-            # rolling shutters this is maybe not worth worrying about :-)
-            frame_duration_us = cast(int, metadata["FrameDuration"])
-            frame_duration_ns = frame_duration_us * 1000
-            exposure_timestamp_ns += frame_duration_ns // 2
-
-        # The delay is the difference between the exposure time and the current instant.
-        delay_ns: int = Timer.time_ns() - exposure_timestamp_ns
-        delay_us = delay_ns // 1000
-
-        return delay_us
-
-    @override
-    def rgb(self) -> AbstractContextManager[Buffer]:
-        return self._buffer("main")
-
-    @override
-    def yuv(self) -> AbstractContextManager[Buffer]:
-        return self._buffer("lores")
-
-    def _buffer(self, stream: str) -> AbstractContextManager[Buffer]:
-        # Returns AbstractContextManager[Buffer] because the flow is:
-        #
-        # During picamera2.configure(), the DmaAllocator allocates
-        # the requested (buffer_count) number of dma buffers, which
-        # are mmap.mmap objects, which are Buffers.
-        #
-        # The camera uses DmaAllocator, whose sync property
-        # is the DmaSync constructor.
-        #
-        # The _MappedBuffer constructor invokes the DmaSync constructor
-        # to get a DmaSync.  _MappedBuffer.__enter__() delegates to DmaSync to
-        # do the ioctl DMA_BUF_SYNC_START (again), and return the mmap.
-        #
-        # _MappedBuffer.__exit__() also delegates to DmaSync, which implements
-        # DMA_BUF_SYNC_END.
-        #
-        # since _MappedBuffer implements __enter__ and __exit__, we
-        # can duck-type it an AbstractContextManager.
-        #
-        # Note that when the _MappedBuffer is __exit__'ed, the DMA buffer should
-        # not be touched anymore, which means not using numpy views on it.
-        # The Picamera code addresses this in CompletedRequest.make_buffer by
-        # *copying* the buffer, but we definitely don't want to do that.  Just
-        # do all your work on the buffer within the scope of the context manager.
-        #
-        # This use of _MappedBuffer is not necessary for the buffer-reservation
-        # (it's done by the CompletedRequest), but using _MappedBuffer is, by far,
-        # the easiest way to get at the mmap buffer.
-        #
-        # To use the buffer, you can pass it to np.frombuffer().
-        return _MappedBuffer(self._req, stream)  # type: ignore
-
-    @override
-    def release(self) -> None:
-        # Calls DmaSync.__exit__() which invokes ioctl DMA_BUF_SYNC_END
-        # to release the DMA buffer, and unmark the app-level 'in use' flag.
-        # Note that the _MappedBuffer has already done the ioctl work, so this
-        # is redundant.
-        self._req.release()  # type: ignore
-
-
-@unique
-class Model(Enum):
-    V3_WIDE = "imx708_wide"
-    V2 = "imx219"
-    GS = "imx296"
-    UNKNOWN = "unknown"
-
-    @classmethod
-    def _missing_(cls, value: object) -> Any:
-        return Identity.UNKNOWN
-
-    @staticmethod
-    def get(cam: Picamera2) -> "Model":  # type:ignore
-        model_str: str = cam.camera_properties["Model"]  # type:ignore
-        print(f"\n*** Camera model string: {model_str}")
-        model: Model = Model(model_str)
-        print(f"\n*** Camera model: {model.name}")
-        return model
 
 
 class RealCamera(Camera):
     def __init__(self, identity: Identity) -> None:
         self._cam: Picamera2 = Picamera2()  # type: ignore
-        model: Model = Model.get(self._cam)  # type: ignore
-        self._rolling = RealCamera.__rolling_from_model(model)
-        self._size: Size = RealCamera.__size_from_model(model)
+
+        print("\n*** SENSOR MODES AVAILABLE")
+        pprint(self._cam.sensor_modes)  # type:ignore
+
+        print("\n*** CAMERA CONTROLS")
+        pprint(self._cam.camera_controls)  # type:ignore
+
+        model: Model = Model.get(self._cam.camera_properties)  # type: ignore
+
+        self._mtx: Intrinsic = Intrinsic(identity, model)
+        self._dist: Distortion = Distortion(identity, model)
+
+        self._rolling = Shutter(model).rolling()
+        self._size: Size = Size.from_model(model)
+
         self._camera_config: dict[str, Any] = RealCamera.__get_config(  # type: ignore
             identity, self._cam, self._size  # type: ignore
         )
-        self._mtx: NDArray[np.float32] = RealCamera.__mtx_from_model(identity, model)
-        self._dist: NDArray[np.float32] = RealCamera.__dist_from_model(identity, model)
-        print("\n*** MTX")
-        print(self._mtx)
-        print("\n*** DIST")
-        print(self._dist)
-        print("\n*** SENSOR MODES AVAILABLE")
-        pprint(self._cam.sensor_modes)  # type:ignore
-        if (
-            identity == Identity.FLIPPED
-            or identity == Identity.FUNNEL
-            or identity == Identity.SWERVE_LEFT
-            or identity == Identity.SWERVE_RIGHT
-        ):
-            # see libcamera/src/libcamera/transform.cpp
-            self._camera_config["transform"] = libcamera.Transform(  # type: ignore
-                rotation=0, hflip=True, vflip=True, transpose=False
-            )
 
         print("\n*** REQUESTED CONFIG")
         print(self._camera_config)
+
         # optimal alignment makes the ISP a little faster
         self._cam.align_configuration(self._camera_config, optimal=True)  # type:ignore
         print("\n*** ALIGNED CONFIG")
         print(self._camera_config)
+
         self._cam.configure(self._camera_config)  # type:ignore
-        if (
-            self._camera_config["sensor"]["output_size"]
-            != self._cam.camera_config["sensor"]["output_size"]  # type:ignore
-        ):
-            raise ValueError(
-                "desired sensor size must match selected sensor size",
-                self._camera_config["sensor"]["output_size"],
-                self._cam.camera_config["sensor"]["output_size"],  # type:ignore
-            )
-        print("\n*** CONTROLS")
-        print(self._cam.camera_controls)  # type:ignore
+
+        self._fail_mismatched_size()
+
         self._cam.start()  # type:ignore
         self._frame_time = Timer.time_ns()
 
@@ -211,8 +76,7 @@ class RealCamera(Camera):
         total_time_ms = (capture_start - self._frame_time) / 1000000
         self._frame_time = capture_start
         fps = 1000 / total_time_ms
-
-        return RealRequest(req, fps, self._rolling) # type: ignore
+        return RealRequest(req, fps, self._rolling)  # type: ignore
 
     @override
     def stop(self) -> None:
@@ -225,36 +89,11 @@ class RealCamera(Camera):
 
     @override
     def get_intrinsic(self) -> NDArray[np.float32]:
-        return self._mtx
+        return self._mtx.get()
 
     @override
     def get_dist(self) -> NDArray[np.float32]:
-        return self._dist
-
-    @override
-    def is_rolling_shutter(self) -> bool:
-        return self._rolling
-
-    @staticmethod
-    def __size_from_model(model: Model) -> Size:
-        match model:
-            case Model.V3_WIDE:
-                return Size(
-                    sensor_width=2304, sensor_height=1296, width=1152, height=648
-                )
-
-            case Model.V2:
-                return Size(
-                    sensor_width=1640, sensor_height=1232, width=832, height=616
-                )
-
-            case Model.GS:
-                return Size(
-                    sensor_width=1456, sensor_height=1088, width=1408, height=1088
-                )
-
-            case _:
-                return Size(sensor_width=100, sensor_height=100, width=100, height=100)
+        return self._dist.get()
 
     @staticmethod
     def __get_config(
@@ -264,213 +103,74 @@ class RealCamera(Camera):
         camera_config: dict[str, Any] = cam.create_still_configuration(  # type:ignore
             # more buffers seem to make the pipeline a little smoother
             buffer_count=5,
-            # chasing the lag issue...
-            # buffer_count=1,
             queue=True,
             sensor={
                 "output_size": (size.sensor_width, size.sensor_height),
                 "bit_depth": 10,
             },
-            main={
-                "format": "RGB888",
-                "size": (size.width, size.height),
-            },
-            lores={
-                "format": "YUV420",
-                "size": (size.width, size.height),
-            },
+            main={"format": "RGB888", "size": (size.width, size.height)},
+            lores={"format": "YUV420", "size": (size.width, size.height)},
             raw=None,
             controls={
+                # ANALOGUE GAIN
+                # To minimize blur, set this as high as possible.
+                # TODO: what is the limit here?
                 "AnalogueGain": 8,
-                # "AeEnable": False,
-                # 3/29/25: JOEL changed AUTO EXPOSURE to TRUE here because we're OUTSIDE.
+                #
+                # AUTO EXPOSURE
+                # Must be true for outside or in bright sun.
                 "AeEnable": True,
+                # "AeEnable": False,
+                #
+                # AUTO WHITE BALANCE
+                # Screws up color sensing.
                 "AwbEnable": False,
-                "ExposureTime": RealCamera.__get_exposure_time(identity),
+                #
+                # EXPOSURE TIME (microseconds)
+                # Minimizes blur.  Requires pretty good light.
+                "ExposureTime": 500,
+                # Works in less light, slightly more blur.
+                # "ExposureTime": 2000,
+                #
+                # COLOUR GAINS
                 # The first argument is the red gain, second is blue gain.
                 # values are from testing in the new gym lighting(1.2,2.2)
                 # "ColourGains": (1.2,2.0),
-                # limit auto: go as fast as possible but no slower than 30fps
+                #
+                # FRAME DURATION LIMITS
+                # limit auto exposure: go as fast as possible but no slower than 30fps
                 # without a duration limit, we slow down in the dark, which is fine
-                # "FrameDurationLimits": (5000, 33333),  # 41 fps
-                # noise reduction takes A LOT of time (about 100 ms per frame!), don't need it.
-                "NoiseReductionMode": 0,  # libcamera.controls.draft.NoiseReductionModeEnum.Off,
-                # "ScalerCrop":(0,0,width/2,height/2),
+                # "FrameDurationLimits": (500, 33333),  # 41 fps
+                #
+                # NOISE REDUCTION MODE
+                # noise reduction takes A LOT of time (100 ms per frame!), don't need it.
+                # See libcamera.controls.draft.NoiseReductionModeEnum.Off,
+                "NoiseReductionMode": 0,
             },
         )
-        return camera_config # type: ignore
 
-    @staticmethod
-    def __get_exposure_time(identity: Identity) -> int:
-        """exposure time in microseconds"""
-        # 2/15/26 joel reduced exposure from 1500 to 500 us.
-        # requires pretty good light, minimizes blur
-        return 500
-        # works in less light
-        # return 2000
+        # Flip for upside-down cameras.
+        # see libcamera/src/libcamera/transform.cpp
+        if identity in (
+            Identity.FLIPPED,
+            Identity.FUNNEL,
+            Identity.SWERVE_LEFT,
+            Identity.SWERVE_RIGHT,
+        ):
+            camera_config["transform"] = libcamera.Transform(  # type: ignore
+                rotation=0, hflip=True, vflip=True, transpose=False
+            )
 
-        # 2/15/26 this is the old value
-        # return 1500
-        # match identity:
-        #     case Identity.GLOBAL_RIGHT | Identity.GLOBAL_LEFT:
-        #         return 500  # from b5879a6, works with GS cameras
-        #     case _:
-        #         return 500  # the old value, works with v2 cameras
+        return camera_config  # type: ignore
 
-    @staticmethod
-    def __mtx_v2() -> NDArray[np.float32]:
-        return np.array(
-            [
-                [660, 0, 426],
-                [0, 660, 303],
-                [0, 0, 1],
-            ]
-        )
-
-    @staticmethod
-    def __mtx_v3() -> NDArray[np.float32]:
-        return np.array(
-            [
-                [498, 0, 584],
-                [0, 498, 316],
-                [0, 0, 1],
-            ]
-        )
-
-    @staticmethod
-    def __mtx_gs(identity: Identity) -> NDArray[np.float32]:
-        """Intrinsic matrices for 3.2 mm lens.  Do not use the 6 mm lens."""
-        match identity:
-            case Identity.DEV:
-                return np.array(
-                    [
-                        [944.3507484, 0.0, 693.7105365],
-                        [0.0, 943.8611003, 498.1103206],
-                        [0, 0, 1],
-                    ]
-                )
-            case Identity.CORAL_LEFT:
-                return np.array(
-                    [
-                        [935.4403554, 0.0, 676.3779953],
-                        [0.0, 934.6111779, 537.0691437],
-                        [0, 0, 1],
-                    ]
-                )
-            case Identity.CORAL_RIGHT:
-                return np.array(
-                    [
-                        [938.0364397, 0.0, 674.7133631],
-                        [0.0, 937.4685798, 548.7346201],
-                        [0, 0, 1],
-                    ]
-                )
-            case _:
-                # Default GS model intrinsic matrix
-                print("##########################################")
-                print("#                                        #")
-                print("#  CAMERA INTRINSIC IS NOT CALIBRATED!   #")
-                print("#                                        #")
-                print("#  YOU MUST CALIBRATE IT!!!!             #")
-                print("#                                        #")
-                print("##########################################")
-
-                return np.array(
-                    [
-                        [944.3507484, 0.0, 693.7105365],
-                        [0.0, 943.8611003, 498.1103206],
-                        [0, 0, 1],
-                    ]
-                )
-
-    @staticmethod
-    def __mtx_from_model(identity: Identity, model: Model) -> NDArray[np.float32]:
-        """Intrinsic matrix."""
-        match model:
-            case Model.V3_WIDE:
-                return RealCamera.__mtx_v3()
-            case Model.V2:
-                return RealCamera.__mtx_v2()
-            case Model.GS:
-                return RealCamera.__mtx_gs(identity)
-            case _:
-                return np.array(
-                    [
-                        [100, 0, 50],
-                        [0, 100, 50],
-                        [0, 0, 1],
-                    ]
-                )
-
-    @staticmethod
-    def __dist_v2() -> NDArray[np.float32]:
-        return np.array([[-0.003, 0.04, 0, 0]])  # type: ignore
-
-    @staticmethod
-    def __dist_v3() -> NDArray[np.float32]:
-        return np.array([[0.01, -0.0365, 0, 0]])  # type:ignore
-
-    @staticmethod
-    def __dist_gs(identity: Identity) -> NDArray[np.float32]:
-        """Distortion matrices for the 3.2 mm lens only.  Do not use the 6 mm lens."""
-        match identity:
-            case Identity.CORAL_LEFT:
-                return np.array(
-                    [
-                        [
-                            -0.2883685917,
-                            0.08640059653,
-                            -0.0003167335742,
-                            0.0004112607248,
-                        ]
-                    ]
-                )
-            case Identity.CORAL_RIGHT:
-                return np.array(
-                    [
-                        [
-                            -0.3057497651,
-                            0.1211648432,
-                            0.0003595528879,
-                            -0.0002945429981,
-                        ]
-                    ]
-                )
-            case _:
-                print("###########################################")
-                print("#                                         #")
-                print("#  CAMERA DISTORTION IS NOT CALIBRATED!   #")
-                print("#                                         #")
-                print("#  YOU MUST CALIBRATE IT!!!!              #")
-                print("#                                         #")
-                print("###########################################")
-                return np.array(
-                    [
-                        [
-                            -0.2883685917,
-                            0.08640059653,
-                            -0.0003167335742,
-                            0.0004112607248,
-                        ]
-                    ]
-                )
-
-    @staticmethod
-    def __dist_from_model(identity: Identity, model: Model) -> NDArray[np.float32]:
-        """Minimal distortion matrix with four elements, [k1, k2, p1, p2]
-        see https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html
-        see https://docs.google.com/spreadsheets/d/1x2_58wyVb5e9HJW8WgakgYcOXgPaJe0yTIHew206M-M
-        """
-        match model:
-            case Model.V3_WIDE:
-                return RealCamera.__dist_v3()
-            case Model.V2:
-                return RealCamera.__dist_v2()
-            case Model.GS:
-                return RealCamera.__dist_gs(identity)
-            case _:
-                return np.array([[0, 0, 0, 0]])
-
-    @staticmethod
-    def __rolling_from_model(model: Model) -> bool:
-        return model != Model.GS
+    def _fail_mismatched_size(self):
+        """Configured size and actual size must match."""
+        if (
+            self._camera_config["sensor"]["output_size"]
+            != self._cam.camera_config["sensor"]["output_size"]  # type:ignore
+        ):
+            raise ValueError(
+                "Desired sensor size must match selected sensor size.",
+                self._camera_config["sensor"]["output_size"],
+                self._cam.camera_config["sensor"]["output_size"],  # type:ignore
+            )

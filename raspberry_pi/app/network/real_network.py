@@ -8,6 +8,7 @@ from queue import Queue
 from typing_extensions import override
 
 import ntcore
+from app.network.calibrate import Calibrate
 from app.network.sync_loop import SyncLoop
 from app.network.drift import Drift
 from app.config.identity import Identity
@@ -66,14 +67,21 @@ class RealNetwork(Network):
 
         self._queue: Queue[int] = Queue()
 
+        # Add the calibration switch
+        self._calibrate = Calibrate(self._inst, identity)
+
         # Fill the queue at 50 hz
         syncloop = SyncLoop(self._inst, self._queue, identity, done)
         self._drift = Drift(self._inst, self._queue, identity)
         Thread(target=syncloop.run).start()
 
     @override
-    def server_time(self, localtime: int) -> int:
-        return localtime + self._drift.get()
+    def calibrate(self) -> bool:
+        return self._calibrate.get()
+
+    @override
+    def flush(self) -> None:
+        self._inst.flush()
 
     @override
     def get_double_sender(self, leaf: str) -> RealDoubleSender:
@@ -94,5 +102,5 @@ class RealNetwork(Network):
         return RealTargetSender(self._inst.getStructArrayTopic(name, Target).publish())
 
     @override
-    def flush(self) -> None:
-        self._inst.flush()
+    def server_time(self, localtime: int) -> int:
+        return localtime + self._drift.get()
