@@ -117,5 +117,9 @@ public class Serializer extends SubsystemBase {
         m_motor3.setVelocity(Velocity, 0, 0);
         m_motor4.setVelocity(Velocity, 0, 0);
     }
+    public void setSerializerSpeed() {
+
+        setSpeed(m_speed);
+    }
 
 }
