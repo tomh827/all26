@@ -50,7 +50,6 @@ public class Serializer extends SubsystemBase {
 
                 SimpleDynamics dynamics = new SimpleDynamics(log, 0.004, 0.002);
                 Friction friction = new Friction(log, 0.26, 0.26, 0.006, 0.5);
-                // TODO: set canIDs
                 BareMotor m_motor1 = new KrakenX44Motor(
                         log1, canID1, NeutralMode100.COAST, MotorPhase.REVERSE,
                         supplyLimit, statorLimit, dynamics, friction, PID);
@@ -59,7 +58,6 @@ public class Serializer extends SubsystemBase {
                         supplyLimit, statorLimit, dynamics, friction, PID);
 
                 // verify these numbers
-
                 LinearMechanism mechanism1 = new LinearMechanism(
                         log1, m_motor1, m_motor1.encoder(), gearRatio, wheelDiameterM,
                         Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);

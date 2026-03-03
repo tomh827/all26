@@ -45,7 +45,6 @@ public class SerializerUpper extends SubsystemBase {
 
         switch (Identity.instance) {
             case TEST_BOARD_B0, COMP_BOT -> {
-                //
                 PIDConstants PID = PIDConstants.makeVelocityPID(log, WHEEL_DIAMETER_M);
                 // two is too low, even for unloaded case
                 double supplyLimit = 50;
@@ -53,7 +52,6 @@ public class SerializerUpper extends SubsystemBase {
 
                 SimpleDynamics dynamics = new SimpleDynamics(log, 0.004, 0.002);
                 Friction friction = new Friction(log, 0.26, 0.26, 0.006, 0.5);
-                // TODO: set canIDs
                 BareMotor m_motor1 = new KrakenX44Motor(
                         log1, canID1, NeutralMode100.COAST, MotorPhase.FORWARD,
                         supplyLimit, statorLimit, dynamics, friction, PID);
