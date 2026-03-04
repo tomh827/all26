@@ -148,9 +148,9 @@ public class Auton1 implements AnnotatedCommand {
                 Commands.print("foo5"),
                 waitSeconds(1),
                 ScoreSetUp.until(ScoreSetUp::isDone),
-                // machinery.m_shooter.shoot().withTimeout(1),
+                machinery.m_shooter.shooterFullspeed().withTimeout(1),
                 waitSeconds(2),
-                // machinery.m_shooter.stop().withTimeout(1),
+                machinery.m_shooter.stop().withTimeout(1),
 
                 ClimbSetUp.until(ClimbSetUp::isDone));
     }
