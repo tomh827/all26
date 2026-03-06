@@ -10,7 +10,7 @@ import org.team100.lib.util.DiscreteFunction.Point;
 import edu.wpi.first.math.interpolation.Interpolator;
 
 public class DiscreteFunctionTest {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final double DELTA = 1e-12;
 
     @Test

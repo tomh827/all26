@@ -32,9 +32,14 @@ import edu.wpi.first.math.numbers.N6;
 public class NewtonsMethodTest {
     private static final boolean DEBUG = false;
 
-    /** Multivariate scalar function, f(x) = norm(x)^2 */
+    /**
+     * Multivariate scalar function, f(x) = norm(x)^2.
+     * 
+     * This is a common scalar "error" or "loss" function, but the normal matrix
+     * solver doesn't like it.
+     */
     @Test
-    void test1() {
+    void testScalar() {
         Function<Vector<N2>, Vector<N1>> f = x -> VecBuilder.fill(Math.pow(x.normF(), 2));
         Vector<N2> x = VecBuilder.fill(1, 0.5);
         Vector<N1> Y = f.apply(x);

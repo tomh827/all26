@@ -13,18 +13,18 @@ public class DiscreteFunction<V> {
     public record Point<V>(double x, double y, V p) {
     }
 
-    public class PointInterpolator<V> implements Interpolator<Point<V>> {
-        private final Interpolator<V> m_interpolator;
+    public class PointInterpolator<U> implements Interpolator<Point<U>> {
+        private final Interpolator<U> m_interpolator;
 
-        public PointInterpolator(Interpolator<V> interpolator) {
+        public PointInterpolator(Interpolator<U> interpolator) {
             m_interpolator = interpolator;
         }
 
         @Override
-        public Point<V> interpolate(Point<V> a, Point<V> b, double t) {
+        public Point<U> interpolate(Point<U> a, Point<U> b, double t) {
             double xLerp = MathUtil.interpolate(a.x, b.x, t);
             double yLerp = MathUtil.interpolate(a.y, b.y, t);
-            V pLerp = m_interpolator.interpolate(a.p, b.p, t);
+            U pLerp = m_interpolator.interpolate(a.p, b.p, t);
             return new Point<>(xLerp, yLerp, pLerp);
         }
     }
