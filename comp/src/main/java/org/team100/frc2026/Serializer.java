@@ -48,7 +48,7 @@ public class Serializer extends SubsystemBase {
                 double statorLimit = 120;
                 SimpleDynamics dynamics = new SimpleDynamics(log, 0.004, 0.002);
                 Friction friction = new Friction(log, 0.26, 0.26, 0.006, 0.5);
-                PIDConstants pid = PIDConstants.makeVelocityPID(log, 0.1);
+                PIDConstants pid = PIDConstants.makeVelocityPID(log, 0.01);
                 m1 = new KrakenX44Motor(
                         log1, canID1, NeutralMode100.COAST, MotorPhase.REVERSE,
                         supplyLimit, statorLimit, dynamics, friction, pid);
