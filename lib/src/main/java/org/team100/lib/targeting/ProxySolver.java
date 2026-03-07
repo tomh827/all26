@@ -1,6 +1,7 @@
 package org.team100.lib.targeting;
 
 import java.util.Optional;
+import java.util.function.DoubleFunction;
 
 import org.team100.frc2026.field.FieldConstants2026;
 import org.team100.lib.geometry.GlobalVelocityR2;
@@ -17,15 +18,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class ProxySolver implements Solver {
     private final SendableChooser<Solver> m_chooser;
 
-    public ProxySolver() {
+    public ProxySolver(DoubleFunction<FiringParameters> ir) {
         m_chooser = new NamedChooser<>("Target Solver");
-
-        // Shooter parameters
-        // TODO: calibrate with slo-mo video and a marked ball
-        double muzzleVelocityM_S = 7;
-        double omegaRad_S = 1;
-
-        addTOFRecursion(muzzleVelocityM_S, omegaRad_S);
+        addTOFRecursion(ir);
         addLaser();
         SmartDashboard.putData(m_chooser);
     }
@@ -40,18 +35,8 @@ public class ProxySolver implements Solver {
      * 
      * Iterates on predicted TOF using inverse map.
      */
-    private void addTOFRecursion(double muzzleVelocityM_S, double omegaRad_S) {
-        // TODO: replace this with an empirical map
-        double minElevation = 0.75;
-        double maxElevation = 2.5;
-        InverseRange ir = new InverseRange(
-                FieldConstants2026.FUEL_DRAG,
-                minElevation,
-                maxElevation,
-                FieldConstants2026.HUB.getZ(),
-                FieldConstants2026.HUB_ELEVATION,
-                muzzleVelocityM_S,
-                omegaRad_S);
+    private void addTOFRecursion(
+            DoubleFunction<FiringParameters> ir) {
         m_chooser.addOption("TOFR",
                 new TimeOfFlightRecursion(ir, 0.01));
     }
