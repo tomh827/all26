@@ -22,6 +22,7 @@ import org.team100.lib.subsystems.swerve.commands.manual.DriveFieldRelative;
 import org.team100.lib.subsystems.swerve.commands.manual.DriveMovingTargetLock;
 import org.team100.lib.subsystems.swerve.commands.manual.DriveTargetLockDirect;
 import org.team100.lib.targeting.CachedSolution;
+import org.team100.lib.targeting.InverseRange;
 import org.team100.lib.targeting.ProxySolver;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -104,7 +105,6 @@ public class Binder {
         /// CLIMBER
         ///
 
-
         // whileTrue(driver::x,
         // m_machinery.m_ClimberExtension.setPosition()
         // .andThen(m_machinery.m_Climber.setClimb1()));
@@ -116,7 +116,6 @@ public class Binder {
         // whileTrue(driver::y,
         // m_machinery.m_Climber.setClimb0()
         // .andThen(m_machinery.m_ClimberExtension.setHomePosition()));
-
 
         // These are from ClimberExtendTEST
         // whileTrue(driver::x, m_machinery.m_ClimberExtension.setPosition());
@@ -170,12 +169,21 @@ public class Binder {
                         m_machinery.m_limiter)
                         .withName("Direct target lock"));
 
-        solver = new ProxySolver();
+        InverseRange ir = new InverseRange(
+                FieldConstants2026.FUEL_DRAG,
+                0.75,
+                2.5,
+                FieldConstants2026.HUB.getZ(),
+                FieldConstants2026.HUB_ELEVATION,
+                7,
+                1);
+        solver = new ProxySolver(ir);
         CachedSolution tofSolution = new CachedSolution(
                 fieldLogger, m_machinery.m_drive::getState, target, solver);
         // here we rely only on PID so make it stronger
         FeedbackR1 aggressiveFeedback = new FullStateFeedback(
                 m_log, 3, 0.1, true, 0.025, 0.25);
+                
         // button 5
         whileTrue(() -> driver.leftBumper(),
                 new DriveMovingTargetLock(
