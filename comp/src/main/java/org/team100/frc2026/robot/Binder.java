@@ -104,6 +104,7 @@ public class Binder {
         /// CLIMBER
         ///
 
+
         // whileTrue(driver::x,
         // m_machinery.m_ClimberExtension.setPosition()
         // .andThen(m_machinery.m_Climber.setClimb1()));
@@ -115,6 +116,7 @@ public class Binder {
         // whileTrue(driver::y,
         // m_machinery.m_Climber.setClimb0()
         // .andThen(m_machinery.m_ClimberExtension.setHomePosition()));
+
 
         // These are from ClimberExtendTEST
         // whileTrue(driver::x, m_machinery.m_ClimberExtension.setPosition());
@@ -197,6 +199,7 @@ public class Binder {
         Command runSerial = m_machinery.m_serializer.testSerialize();
         Command runSerialBack = m_machinery.m_serializer.testSerializeBack();
         Command runSerialUpper = m_machinery.m_serializerUpper.testSerializerUpper();
+        Command runShooter3 = m_machinery.m_shooter.testMotor3Command();
         Command runSerialUpperBack = m_machinery.m_serializerUpper.testSerializerUpperBack();
         // whileTrue(driver::rightTrigger,
         // parallel(
