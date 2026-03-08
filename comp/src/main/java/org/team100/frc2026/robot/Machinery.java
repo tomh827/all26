@@ -11,7 +11,7 @@ import org.team100.frc2026.Intake;
 import org.team100.frc2026.IntakeExtend;
 import org.team100.frc2026.Shooter;
 import org.team100.frc2026.ShooterHood;
-import org.team100.frc2026.Targeter;
+import org.team100.frc2026.targeting.Targeter;
 import org.team100.lib.coherence.Takt;
 import org.team100.lib.controller.se2.ControllerFactorySE2;
 import org.team100.lib.controller.se2.ControllerSE2;

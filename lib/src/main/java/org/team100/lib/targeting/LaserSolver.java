@@ -14,13 +14,13 @@ import edu.wpi.first.math.geometry.Translation2d;
  * 
  * Azimuth is always the bearing.
  * Azimuth velocity is the apparent target motion.
- * Elevation is always zero.
+ * Elevation is specified by the parameters.
  */
 public class LaserSolver implements Solver {
 
-    private final DoubleFunction<FiringParameters> m_rangeToParams;
+    private final DoubleFunction<Optional<FiringParameters>> m_rangeToParams;
 
-    public LaserSolver(DoubleFunction<FiringParameters> rangeToParams) {
+    public LaserSolver(DoubleFunction<Optional<FiringParameters>> rangeToParams) {
         m_rangeToParams = rangeToParams;
     }
 
@@ -35,7 +35,10 @@ public class LaserSolver implements Solver {
         final Translation2d T0 = targetPosition.minus(robotPosition);
         double rangeM = T0.getNorm();
 
-        FiringParameters params = m_rangeToParams.apply(rangeM);
+        Optional<FiringParameters> oParams = m_rangeToParams.apply(rangeM);
+        if (oParams.isEmpty())
+            return Optional.empty();
+        FiringParameters params = oParams.get();
 
         // Does not include target velocity in solution velocity.
         Rotation2d absoluteBearing = TargetUtil.absoluteBearing(
@@ -45,6 +48,7 @@ public class LaserSolver implements Solver {
         return Optional.of(new Solution(
                 absoluteBearing,
                 azimuthVelocity,
+                params.speed(),
                 new Rotation2d(params.elevation())));
     }
 

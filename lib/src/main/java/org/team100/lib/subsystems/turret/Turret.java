@@ -73,7 +73,7 @@ public class Turret extends SubsystemBase {
     public Turret(
             LoggerFactory parent,
             LoggerFactory field,
-            DoubleFunction<FiringParameters> rangeToParams,
+            DoubleFunction<Optional<FiringParameters>> rangeToParams,
             Supplier<ModelSE2> state,
             Supplier<Translation2d> target,
             double speed) {
@@ -206,11 +206,12 @@ public class Turret extends SubsystemBase {
                 m_speed);
         if (azimuth.isEmpty())
             return Optional.empty();
-        // use zero azimuth velocity for now.
-        // TODO: solve for that
+        // TODO: add azimuth velocity
+        // TODO: add drum velocity
         return Optional.of(
                 new Solution(
                         azimuth.get(),
+                        0,
                         0,
                         Rotation2d.kZero));
     }

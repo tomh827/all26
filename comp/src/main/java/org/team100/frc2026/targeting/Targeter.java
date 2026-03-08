@@ -1,4 +1,4 @@
-package org.team100.frc2026;
+package org.team100.frc2026.targeting;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +43,11 @@ public class Targeter {
                         new FiringParameters(16, 12, 0.5, 2)));
     }
 
+    /**
+     * Hood angle for the specified range.
+     * Empty if there is no valid solution for that range (e.g. it's too far or too
+     * close)
+     */
     public OptionalDouble angle() {
         Translation2d p = m_position.get();
         if (FieldConstants2026.isInAllianceZone(p)) {
@@ -53,6 +58,12 @@ public class Targeter {
         }
         return OptionalDouble.empty();
     }
+
+    /**
+     * Drum speed for the specified range.
+     * Empty if there is no valid solution for that range (e.g. it's too far or too
+     * close)
+     */
 
     public OptionalDouble speed() {
         Translation2d p = m_position.get();
@@ -65,6 +76,11 @@ public class Targeter {
         return OptionalDouble.empty();
     }
 
+    /**
+     * Firing parameters for the specified range.
+     * Empty if there is no valid solution for that range (e.g. it's too far or too
+     * close)
+     */
     public Optional<FiringParameters> forRange(double rangeM) {
         Translation2d p = m_position.get();
         if (FieldConstants2026.isInAllianceZone(p)) {
