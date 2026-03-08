@@ -87,13 +87,13 @@ public class IntakeExtend extends SubsystemBase {
                 .withName("Intake Extend GoToWobbleRetractedPosition");
     }
     public Command goToWobbleOutExtendedPosition() {
-        return startRun(this::reset, () -> actuateWithProfile(3))
+        return startRun(this::reset, () -> actuateWithProfile(2.5))
                 .until(m_servo::atGoal)
                 .withName("Intake Extend GoToWobbleExtendedPosition");
     }
 
     public Command goToWobbleInRetractedPosition() {
-        return startRun(this::reset, () -> actuateWithProfile(2))
+        return startRun(this::reset, () -> actuateWithProfile(1.5))
                 .until(m_servo::atGoal)
                 .withName("Intake Extend GoToWobbleRetractedPosition");
     }
