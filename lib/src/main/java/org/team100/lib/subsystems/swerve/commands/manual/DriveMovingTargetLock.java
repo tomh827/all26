@@ -14,6 +14,7 @@ import org.team100.lib.hid.Velocity;
 import org.team100.lib.logging.Level;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.LoggerFactory.BooleanLogger;
+import org.team100.lib.state.ModelR1;
 import org.team100.lib.subsystems.swerve.SwerveDriveSubsystem;
 import org.team100.lib.subsystems.swerve.kinodynamics.SwerveKinodynamics;
 import org.team100.lib.subsystems.swerve.kinodynamics.limiter.SwerveLimiter;
@@ -88,7 +89,9 @@ public class DriveMovingTargetLock extends Command {
             // No target, so use the driver input.
             return null;
         }
-        return m_aim.getOmega(m_drive.getState(), oSolution.get());
+        Solution solution = oSolution.get();
+        ModelR1 target = new ModelR1(solution.azimuth().getRadians(), solution.azimuthVelocity());
+        return m_aim.getOmega(m_drive.getState(), target);
     }
 
     /** Null to skip override */

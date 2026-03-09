@@ -80,7 +80,8 @@ public class ShootingMethod implements Solver {
     void dump() {
         for (double elevation = m_xMin.get(1); elevation <= m_xMax.get(1); elevation += 0.05) {
             Interception e = m_range.get(elevation);
-            System.out.printf("gun elevation %6.3f %s\n", elevation, e);
+            if (DEBUG)
+                System.out.printf("gun elevation %6.3f %s\n", elevation, e);
         }
     }
 

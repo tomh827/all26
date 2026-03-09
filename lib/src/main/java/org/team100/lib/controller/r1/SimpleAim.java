@@ -62,8 +62,8 @@ public class SimpleAim {
                 0 });
 
         // Goal omega should match the target's apparent motion.
-        double targetMotion = TargetUtil.targetMotion(state, target);
-        m_log_apparent_motion.log(() -> targetMotion);
+        double azimuthVelocity = TargetUtil.targetMotion(state, target);
+        m_log_apparent_motion.log(() -> azimuthVelocity);
 
         double unwrappedBearing = TargetUtil.unwrappedAbsoluteBearing(state.pose(), target);
         if (DEBUG)
@@ -71,7 +71,7 @@ public class SimpleAim {
         // eliminate target motion to reduce noise
         // TODO: put back target motion
         // ModelR1 goal = new ModelR1(unwrappedBearing, 0);
-        final ModelR1 goal = new ModelR1(unwrappedBearing, targetMotion);
+        final ModelR1 goal = new ModelR1(unwrappedBearing, azimuthVelocity);
         m_log_goal.log(() -> goal);
         if (DEBUG)
             System.out.printf("goal %s\n", goal);

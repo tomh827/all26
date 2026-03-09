@@ -8,7 +8,6 @@ import org.team100.lib.logging.LoggerFactory.DoubleLogger;
 import org.team100.lib.logging.LoggerFactory.ModelR1Logger;
 import org.team100.lib.state.ModelR1;
 import org.team100.lib.state.ModelSE2;
-import org.team100.lib.targeting.Solution;
 import org.team100.lib.util.Math100;
 
 import edu.wpi.first.math.MathUtil;
@@ -54,10 +53,10 @@ public class LeadingAim {
         m_thetaController.reset();
     }
 
-    public Double getOmega(ModelSE2 state, Solution solution) {
+    public Double getOmega(ModelSE2 state, ModelR1 target) {
 
         double thetaFB = getThetaFB(state);
-        double thetaFF = getThetaFF(solution, state);
+        double thetaFF = getThetaFF(state, target);
 
         double omega = MathUtil.clamp(
                 thetaFF + thetaFB,
@@ -76,16 +75,16 @@ public class LeadingAim {
         return thetaFB;
     }
 
-    private double getThetaFF(Solution solution, ModelSE2 state) {
+    private double getThetaFF(ModelSE2 state, ModelR1 target) {
 
         double robotYaw = state.pose().getRotation().getRadians();
-        double goalYaw = Math100.getMinDistance(robotYaw, solution.azimuth().getRadians());
+        double goalYaw = Math100.getMinDistance(robotYaw, target.x());
         // m_goal = new ModelR1(goalYaw, 0);
-        double targetMotion = solution.azimuthVelocity();
-        m_log_apparent_motion.log(() -> targetMotion);
+        double azimuthVelocity = target.v();
+        m_log_apparent_motion.log(() -> azimuthVelocity);
 
         // Assign the new goal
-        m_goal = new ModelR1(goalYaw, targetMotion);
+        m_goal = new ModelR1(goalYaw, azimuthVelocity);
         m_log_goal.log(() -> m_goal);
 
         double thetaFF = m_goal.v();
