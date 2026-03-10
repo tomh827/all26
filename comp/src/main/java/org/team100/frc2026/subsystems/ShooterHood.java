@@ -74,11 +74,15 @@ public class ShooterHood extends SubsystemBase {
         m_servo.periodic();
     }
 
-    /** Uses a profile. Maybe don't use a profile? */
-    public Command position() {
-        return startRun(this::reset, this::autoWork);
+    /** Use a profile to set the position according to the angle supplier. */
+    public Command autoPosition() {
+        return startRun(
+                this::reset,
+                this::autoPositionWork)
+                .withName("Hood Auto Position");
     }
 
+    /** Set the position to the tuning value in glass */
     public Command tune() {
         return startRun(
                 this::reset,
@@ -125,7 +129,7 @@ public class ShooterHood extends SubsystemBase {
         m_servo.actuateDirect(value, 0);
     }
 
-    private void autoWork() {
+    private void autoPositionWork() {
         m_angle.get().ifPresentOrElse(
                 this::actuateWithProfile, this::stopServo);
     }
