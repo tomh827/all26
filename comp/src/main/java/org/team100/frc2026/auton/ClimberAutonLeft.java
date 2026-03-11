@@ -1,7 +1,6 @@
 package org.team100.frc2026.auton;
 
 import static edu.wpi.first.wpilibj2.command.Commands.sequence;
-import static edu.wpi.first.wpilibj2.command.Commands.waitSeconds;
 
 import java.util.List;
 
@@ -67,9 +66,9 @@ public class ClimberAutonLeft implements AnnotatedCommand {
                 machinery.m_trajectoryViz, this::t1);
         return sequence(
                 n1.until(n1::isDone).withTimeout(1)
-                //machinery.m_ClimberExtension.setPosition(),
-                //waitSeconds(1).andThen(machinery.m_Climber.setClimb1())
-                );
+        // machinery.m_ClimberExtension.setPosition(),
+        // waitSeconds(1).andThen(machinery.m_Climber.setClimb1())
+        );
     }
 
     @Override

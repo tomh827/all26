@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj.RobotState;
  */
 public class Binder {
     private static final LoggerFactory rootLogger = Logging.instance().rootLogger;
+    @SuppressWarnings("unused")
     private static final LoggerFactory fieldLogger = Logging.instance().fieldLogger;
 
     private final Machinery m_machinery;
