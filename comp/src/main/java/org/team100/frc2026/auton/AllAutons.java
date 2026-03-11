@@ -36,18 +36,6 @@ public class AllAutons {
                 machinery.m_swerveKinodynamics,
                 controller,
                 machinery));
-        m_autonChooser.add(new ClimberAutonLeft(
-                // m_autonChooser.add(new AutonTest(
-                log,
-                machinery.m_swerveKinodynamics,
-                controller,
-                machinery));
-        m_autonChooser.add(new ClimberAutonRight(
-                // m_autonChooser.add(new Auton1(
-                log,
-                machinery.m_swerveKinodynamics,
-                controller,
-                machinery));
         m_autonChooser.add(new AutonTest(
                 log,
                 machinery.m_swerveKinodynamics,

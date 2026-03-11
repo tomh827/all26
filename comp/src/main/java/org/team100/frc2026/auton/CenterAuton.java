@@ -82,7 +82,7 @@ public class CenterAuton implements AnnotatedCommand {
                         new DirectionSE2(1, 1, 0), 1));
         return planner.restToRest(waypoints);
     }
-
+    
     TrajectorySE2 t2(Pose2d startingPose) {
         List<WaypointSE2> waypoints = List.of(
                 new WaypointSE2(startingPose,
