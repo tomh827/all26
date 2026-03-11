@@ -2,7 +2,6 @@ package org.team100.frc2026.targeting;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.function.Supplier;
 
 import org.team100.frc2026.field.FieldConstants2026;

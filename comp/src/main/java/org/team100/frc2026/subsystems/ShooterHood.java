@@ -26,12 +26,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ShooterHood extends SubsystemBase {
-    // TODO GET THIS CAN ID
     private static final CanId CAN_ID = new CanId(13);
     private static final double GEAR_RATIO = 10;
 
     // MECHANISM POSITIONS
-
     private static final double INITIAL_POSITION_RAD = 0;
     private static final double MIN_POSITION_RAD = 0;
     // TODO: this is definitely wrong
