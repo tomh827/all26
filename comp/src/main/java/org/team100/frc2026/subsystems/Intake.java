@@ -37,10 +37,7 @@ public class Intake extends SubsystemBase {
         LoggerFactory log = parent.type(this);
         LoggerFactory log1 = log.name("motor1");
         LoggerFactory log2 = log.name("motor2");
-        // TODO: TUNE
-        // this was "7" but was really "8.5"???
         NORMAL_SPEED = new Mutable(log, "Intake Speed", 7);
-        // TODO: TUNE
         VelocityProfileR1 profile = new CurrentLimitedExponentialVelocityProfileR1(
                 10, 10, 20, 30);
         VelocityReferenceR1 ref = new VelocityProfileReferenceR1(
@@ -50,7 +47,7 @@ public class Intake extends SubsystemBase {
         switch (Identity.instance) {
             case TEST_BOARD_B0, COMP_BOT -> {
                 double supplyLimit = 50;
-                double statorLimit = 50;
+                double statorLimit = 80;
                 SimpleDynamics ff = new SimpleDynamics(log, 0.0, 0.0);
                 // friction test 3/12/26
                 Friction friction = new Friction(log, 0.5, 0.5, 0.0, 0.5);

@@ -177,8 +177,8 @@ public class Binder {
         whileTrue(driver::leftTrigger,
                 parallel(
                         m_machinery.m_shooterHood.autoPosition(),
-                        m_machinery.m_shooter.testShooterFullspeed(),
-                        m_machinery.m_conveyor.testConveyor(),
+                        m_machinery.m_shooter.auto(),
+                        m_machinery.m_conveyor.convey(),
                         repeatingSequence(
                                 waitUntil(
                                         m_machinery.m_shooter::atSpeed),
