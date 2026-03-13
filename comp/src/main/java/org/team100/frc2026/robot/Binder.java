@@ -217,10 +217,10 @@ public class Binder {
         // whileTrue(driver::b,
         // m_machinery.m_shooterHood.setPosition(0));
 
-        // whileTrue(driver::a,
-        // parallel(
-        // m_machinery.m_conveyor.testConveyor(),
-        // m_machinery.m_feeder.testFeed()));
+        whileTrue(driver::a,
+                parallel(
+                        m_machinery.m_conveyor.setVelocity(2),
+                        m_machinery.m_feeder.setVelocity(2)));
         // whileTrue(driver::b,
         // parallel(
         // m_machinery.m_conveyor.testConveyorBack(),
