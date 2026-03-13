@@ -30,11 +30,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
  */
 public class ShooterHood extends SubsystemBase {
     private static final CanId CAN_ID = new CanId(13);
-    // TODO: TUNE
-    private static final double GEAR_RATIO = 10;
+    // from Yotaro 3/12/26
+    private static final double GEAR_RATIO = 270;
     private static final double MIN_POSITION_RAD = 0;
-    // TODO: TUNE
-    private static final double MAX_POSITION_RAD = 1;
+    // max extension is 0.5 3/12/26
+    private static final double MAX_POSITION_RAD = 0.45;
 
     private final Supplier<OptionalDouble> m_angle;
     private final AngularPositionServo m_servo;

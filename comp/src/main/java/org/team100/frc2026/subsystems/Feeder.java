@@ -24,7 +24,7 @@ public class Feeder extends SubsystemBase {
     public static final CanId canID1 = new CanId(8);
     public static final CanId canID2 = new CanId(9);
     private static final double TOLERANCE_M_S = 1.0;
-    private static final double GEAR_RATIO = 1.0;
+    private static final double GEAR_RATIO = 3.0;
     private static final double WHEEL_DIAMETER_M = 0.05;
     // TODO: TUNE
     private static final double NORMAL_SPEED = 5.0;

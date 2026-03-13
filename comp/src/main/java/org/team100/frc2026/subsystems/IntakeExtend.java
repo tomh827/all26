@@ -134,10 +134,10 @@ public class IntakeExtend extends SubsystemBase {
     }
 
     /** For testing friction only */
-    public Command setVelocity(double x) {
+    public Command setVelocity(double rad_S) {
         return startRun(
                 this::reset,
-                () -> m_servo.setVelocity(x))
+                () -> m_servo.setVelocity(rad_S))
                 .withName("set velocity");
     }
 

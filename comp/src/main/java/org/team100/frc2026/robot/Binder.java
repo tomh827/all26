@@ -196,20 +196,20 @@ public class Binder {
         // whileTrue(driver::a, m_machinery.m_shooter.testMotor3Command());
         // whileTrue(driver::b, parallel(runShooter, runSerial, runSerialUpper));
 
-        // for friction testing
+        // for friction and feedforward testing
 
         // whileTrue(driver::a,
-        // m_machinery.m_intakeExtend.setVelocity(10));
+        // m_machinery.m_intakeExtend.setVelocity(1));
         // whileTrue(driver::a,
-        // m_machinery.m_intake.setVelocity(10));
+        // m_machinery.m_intake.setVelocity(1));
         // whileTrue(driver::a,
-        // m_machinery.m_conveyor.setVelocity(10));
+        // m_machinery.m_conveyor.setVelocity(1));
         // whileTrue(driver::a,
-        // m_machinery.m_feeder.setVelocity(10));
+        // m_machinery.m_feeder.setVelocity(1));
         // whileTrue(driver::a,
-        // m_machinery.m_shooter.setVelocity(10));
+        // m_machinery.m_shooter.setVelocity(1));
         // whileTrue(driver::a,
-        // m_machinery.m_shooterHood.setVelocity(10));
+        // m_machinery.m_shooterHood.setVelocity(1));
 
         // whileTrue(driver::a,
         // parallel(

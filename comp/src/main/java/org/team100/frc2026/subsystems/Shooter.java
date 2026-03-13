@@ -29,9 +29,10 @@ public class Shooter extends SubsystemBase {
     private static final CanId CAN_ID_2 = new CanId(5);
     private static final CanId CAN_ID_3 = new CanId(14);
     private static final double TOLERANCE_M_S = 1;
-    // TODO: TUNE
-    // gear ratios are not all the same
+
     private static final double GEAR_RATIO = 1;
+    // barrel 1 has a different gear ratio
+    private static final double GEAR_RATIO_1 = 32.0/34.0;
     private static final double WHEEL_DIAMETER_M = 0.075;
 
     /** Speed used in selftest. */
@@ -94,8 +95,9 @@ public class Shooter extends SubsystemBase {
                 m3 = new SimulatedBareMotor(log3, 600);
             }
         }
+        // note different gear ratio
         m_servo1 = OutboardLinearVelocityServo.make(
-                log1, m1, ref, GEAR_RATIO, WHEEL_DIAMETER_M, TOLERANCE_M_S);
+                log1, m1, ref, GEAR_RATIO_1, WHEEL_DIAMETER_M, TOLERANCE_M_S);
         m_servo2 = OutboardLinearVelocityServo.make(
                 log2, m2, ref, GEAR_RATIO, WHEEL_DIAMETER_M, TOLERANCE_M_S);
         m_servo3 = OutboardLinearVelocityServo.make(

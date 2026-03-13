@@ -113,5 +113,5 @@ public interface AngularPositionServo extends Player {
     void periodic();
 
     /** For setting friction only */
-    void setVelocity(double v);
+    void setVelocity(double rad_S);
 }
