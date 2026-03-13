@@ -95,7 +95,7 @@ public enum Camera {
             new Transform3d()),
             
     /**
-     * ALPHA Climber Camera Left
+     * ALPHA Climber Camera Right
      */
     CLIMB_RIGHT("364f07fb090a3bf7",
             new Transform3d()),
