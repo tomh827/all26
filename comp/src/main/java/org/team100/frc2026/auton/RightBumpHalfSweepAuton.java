@@ -126,7 +126,7 @@ public class RightBumpHalfSweepAuton implements AnnotatedCommand {
         // Intake, score, climb.         
         return sequence(
                 parallel(
-                IntakeSetUp.until(IntakeSetUp::isDone),
+                IntakeSetUp.until(IntakeSetUp::isDone).withTimeout(4),
                 // Assumed that the intake shouldn't deploy over the bump
                 waitSeconds(1).andThen(machinery.m_intakeExtend.goToExtendedPosition())), 
                 waitSeconds(1),
