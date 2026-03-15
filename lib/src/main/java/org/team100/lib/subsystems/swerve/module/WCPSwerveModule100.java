@@ -149,7 +149,8 @@ public class WCPSwerveModule100 extends SwerveModule100 {
         SimpleDynamics ff = new SimpleDynamics(parent, 0.004, 0.002);
         // note (10/2/24) 0.4 produces oscillation, on carpet.
         Friction friction = new Friction(parent, 0.26, 0.26, 0.006, 0.5);
-        PIDConstants pid = PIDConstants.makeVelocityPID(parent, 0.05);
+        // 3/14/26 lowered P from 0.05 to 0.03 to investigate oscillation
+        PIDConstants pid = PIDConstants.makeVelocityPID(parent, 0.03);
         KrakenX60Motor driveMotor = new KrakenX60Motor(
                 parent,
                 driveMotorCanId,
