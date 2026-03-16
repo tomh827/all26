@@ -3,6 +3,7 @@ package org.team100.frc2026.subsystems;
 import java.util.OptionalDouble;
 import java.util.function.Supplier;
 
+import org.team100.frc2026.robot.CurrentLimits;
 import org.team100.lib.config.Friction;
 import org.team100.lib.config.Identity;
 import org.team100.lib.config.PIDConstants;
@@ -70,8 +71,7 @@ public class Shooter extends SubsystemBase {
         final BareMotor m3;
         switch (Identity.instance) {
             case TEST_BOARD_B0, COMP_BOT -> {
-                double supplyLimit = 40;
-                double statorLimit = 60;
+  
                 SimpleDynamics ff = new SimpleDynamics(log, 0.000, 0.000);
                 // friction test 3/12/262
                 Friction friction = new Friction(log, 0.3, 0.25, 0.0, 0.5);
@@ -80,13 +80,13 @@ public class Shooter extends SubsystemBase {
 
                 m1 = new KrakenX60Motor(
                         log1, CAN_ID_1, NeutralMode100.COAST, MotorPhase.FORWARD,
-                        supplyLimit, statorLimit, ff, friction, pid);
+                        CurrentLimits.shooterSupplyCurrentLimit, CurrentLimits.shooterStatorCurrentLimit, ff, friction, pid);
                 m2 = new KrakenX60Motor(
                         log2, CAN_ID_2, NeutralMode100.COAST, MotorPhase.REVERSE,
-                        supplyLimit, statorLimit, ff, friction, pid);
+                        CurrentLimits.shooterSupplyCurrentLimit, CurrentLimits.shooterStatorCurrentLimit, ff, friction, pid);
                 m3 = new KrakenX60Motor(
                         log3, CAN_ID_3, NeutralMode100.COAST, MotorPhase.FORWARD,
-                        supplyLimit, statorLimit, ff, friction, pid);
+                        CurrentLimits.shooterSupplyCurrentLimit, CurrentLimits.shooterStatorCurrentLimit, ff, friction, pid);
             }
             default -> {
                 m1 = new SimulatedBareMotor(log1, 600);
