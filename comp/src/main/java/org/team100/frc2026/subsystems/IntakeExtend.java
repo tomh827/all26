@@ -48,7 +48,7 @@ public class IntakeExtend extends SubsystemBase {
                 motor = new KrakenX44Motor(
                         log, CAN_ID,
                         NeutralMode100.COAST, MotorPhase.REVERSE,
-                        CurrentLimits.intakeExtendSupplyCurrentLimit, CurrentLimits.intakeExtendStatorCurrentLimit,
+                        CurrentLimits.INTAKE_EXTEND_SUPPLY, CurrentLimits.INTAKE_EXTEND_STATOR,
                         ff, friction, pid);
             }
             default -> {

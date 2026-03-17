@@ -64,7 +64,7 @@ public class ShooterHood extends SubsystemBase {
 
                 motor = new KrakenX44Motor(
                         log, CAN_ID, NeutralMode100.COAST, MotorPhase.REVERSE,
-                        CurrentLimits.shooterHoodSupplyCurrentLimit, CurrentLimits.shooterHoodStatorCurrentLimit, ff, friction, pid);
+                        CurrentLimits.SHOOTER_HOOD_SUPPLY, CurrentLimits.SHOOTER_HOOD_STATOR, ff, friction, pid);
 
             }
             default -> {

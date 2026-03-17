@@ -80,13 +80,13 @@ public class Shooter extends SubsystemBase {
 
                 m1 = new KrakenX60Motor(
                         log1, CAN_ID_1, NeutralMode100.COAST, MotorPhase.FORWARD,
-                        CurrentLimits.shooterSupplyCurrentLimit, CurrentLimits.shooterStatorCurrentLimit, ff, friction, pid);
+                        CurrentLimits.SHOOTER_SUPPLY, CurrentLimits.SHOOTER_STATOR, ff, friction, pid);
                 m2 = new KrakenX60Motor(
                         log2, CAN_ID_2, NeutralMode100.COAST, MotorPhase.REVERSE,
-                        CurrentLimits.shooterSupplyCurrentLimit, CurrentLimits.shooterStatorCurrentLimit, ff, friction, pid);
+                        CurrentLimits.SHOOTER_SUPPLY, CurrentLimits.SHOOTER_STATOR, ff, friction, pid);
                 m3 = new KrakenX60Motor(
                         log3, CAN_ID_3, NeutralMode100.COAST, MotorPhase.FORWARD,
-                        CurrentLimits.shooterSupplyCurrentLimit, CurrentLimits.shooterStatorCurrentLimit, ff, friction, pid);
+                        CurrentLimits.SHOOTER_SUPPLY, CurrentLimits.SHOOTER_STATOR, ff, friction, pid);
             }
             default -> {
                 m1 = new SimulatedBareMotor(log1, 600);

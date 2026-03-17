@@ -56,10 +56,10 @@ public class Conveyor extends SubsystemBase {
 
                 m1 = new KrakenX44Motor(
                         log1, canID1, NeutralMode100.COAST, MotorPhase.REVERSE,
-                        CurrentLimits.conveyorSupplyCurrentLimit, CurrentLimits.conveyorStatorCurrentLimit, dynamics, friction, pid);
+                        CurrentLimits.CONVEYOR_SUPPLY, CurrentLimits.CONVEYOR_STATOR, dynamics, friction, pid);
                 m2 = new KrakenX44Motor(
                         log2, canID2, NeutralMode100.COAST, MotorPhase.REVERSE,
-                        CurrentLimits.conveyorSupplyCurrentLimit, CurrentLimits.conveyorStatorCurrentLimit, dynamics, friction, pid);
+                        CurrentLimits.CONVEYOR_SUPPLY, CurrentLimits.CONVEYOR_STATOR, dynamics, friction, pid);
             }
             default -> {
                 m1 = new SimulatedBareMotor(log1, 600);
