@@ -35,10 +35,16 @@ public class AutonVisualization {
     public void show(AnnotatedCommand cmd) {
         List<Pose2d> ps = new ArrayList<>();
         Pose2d p = cmd.start();
-        if (p == null)
+        if (p == null) {
+            clear();
             return;
+        }
         ps.add(p);
         List<Function<Pose2d, TrajectorySE2>> tfns = cmd.trajectoryFns();
+        if (tfns.isEmpty()) {
+            clear();
+            return;
+        }
         List<TrajectorySE2> ts = new ArrayList<>();
         for (Function<Pose2d, TrajectorySE2> tfn : tfns) {
             TrajectorySE2 t = tfn.apply(p);
