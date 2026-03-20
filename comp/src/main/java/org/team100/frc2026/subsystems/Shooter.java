@@ -205,7 +205,7 @@ public class Shooter extends SubsystemBase {
      * Note this is quite noisy.
      */
     public double meanError() {
-        return (m_servo1.error() + m_servo2.error() + m_servo3.error() + m_servo4.error()) / 3;
+        return (m_servo1.error() + m_servo2.error() + m_servo3.error() + m_servo4.error()) / 4;
     }
 
     public Boolean atSpeed() {
