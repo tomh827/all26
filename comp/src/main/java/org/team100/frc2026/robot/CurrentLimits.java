@@ -1,7 +1,7 @@
 package org.team100.frc2026.robot;
 
 public class CurrentLimits {
-    public static final double INTAKE_STATOR = 20;
+    public static final double INTAKE_STATOR = 40;
     public static final double INTAKE_SUPPLY = 30;
 
     public static final double INTAKE_EXTEND_STATOR = 50;
