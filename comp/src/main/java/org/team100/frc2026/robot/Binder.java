@@ -86,23 +86,23 @@ public class Binder {
         /// "X": roll backwards to clear jams (only when out)
         /// "Y": wobble intake to help clear jams
 
-        whileTrue(driver::rightBumper,
-                m_machinery.m_intakeExtend.goToRetractedPosition());
+     //   whileTrue(driver::rightBumper,
+     //           m_machinery.m_intakeExtend.goToRetractedPosition());
 
-        whileTrue(driver::rightTrigger,
-                parallel(
-                        m_machinery.m_intakeExtend.goToExtendedPositionEndlessly(),
-                        sequence(
-                                waitUntil(m_machinery.m_intakeExtend::atGoal),
-                                m_machinery.m_intake.intake())));
+       // whileTrue(driver::rightTrigger,
+       //         parallel(
+       //                 m_machinery.m_intakeExtend.goToExtendedPositionEndlessly(),
+       //                 sequence(
+       //                         waitUntil(m_machinery.m_intakeExtend::atGoal),
+       //                         m_machinery.m_intake.intake())));
 
         whileTrue(driver::x,
-                m_machinery.m_intake.back());
+                m_machinery.m_intake.intake());
 
-        whileTrue(driver::y,
-                repeatingSequence(
-                        m_machinery.m_intakeExtend.goToWobbleSlightlyInExtendedPosition().withTimeout(0.5),
-                        m_machinery.m_intakeExtend.goToWobbleSlightlyOutRetractedPosition().withTimeout(0.5)));
+        //whileTrue(driver::y,
+        //        repeatingSequence(
+        //                m_machinery.m_intakeExtend.goToWobbleSlightlyInExtendedPosition().withTimeout(0.5),
+        //                m_machinery.m_intakeExtend.goToWobbleSlightlyOutRetractedPosition().withTimeout(0.5)));
 
         ////////////////////////////////////////////////////
         ///

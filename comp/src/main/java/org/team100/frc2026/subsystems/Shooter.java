@@ -78,7 +78,7 @@ public class Shooter extends SubsystemBase {
         final BareMotor m3;
         final BareMotor m4;
         switch (Identity.instance) {
-            case TEST_BOARD_B0, COMP_BOT -> {
+            case TEST_BOARD_B0 -> {
   
                 SimpleDynamics ff = new SimpleDynamics(log, 0.000, 0.000);
                 // friction test 3/12/262
