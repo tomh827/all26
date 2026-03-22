@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import org.team100.frc2026.field.FieldConstants2026;
 import org.team100.frc2026.robot.Machinery;
 import org.team100.lib.config.AnnotatedCommand;
 import org.team100.lib.controller.se2.ControllerSE2;
@@ -26,12 +25,10 @@ import org.team100.lib.trajectory.constraint.VelocityLimitRegionConstraint;
 import org.team100.lib.trajectory.path.PathSE2Factory;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 
 /** An example of a simple sequence */
-public class CenterHalfSweepAuton implements AnnotatedCommand {
+public class RightBumpPreloadedAuton implements AnnotatedCommand {
     private final LoggerFactory log;
     private final ControllerSE2 controller;
     private final Machinery machinery;
@@ -40,7 +37,7 @@ public class CenterHalfSweepAuton implements AnnotatedCommand {
     private final PathSE2Factory pathFactory;
     private final TrajectorySE2Planner planner;
 
-    public CenterHalfSweepAuton(
+    public RightBumpPreloadedAuton(
             LoggerFactory parent,
             SwerveKinodynamics kinodynamics,
             ControllerSE2 controller,
@@ -75,63 +72,40 @@ public class CenterHalfSweepAuton implements AnnotatedCommand {
 
     @Override
     public String name() {
-        return "Half Sweep from Center";
+        return "Shoot from Right Bump";
     }
 
- 
     TrajectorySE2 t1(Pose2d startingPose) {
         List<WaypointSE2> waypoints = List.of(
                 new WaypointSE2(startingPose,
-                        new DirectionSE2(0, 1, 0), 1),
-                new WaypointSE2(StartingPositions.LEFT_BUMP,
-                        new DirectionSE2(1, 0, 0), 1),
-                new WaypointSE2(AutonPositions.ABOVE_BALL_FIELD,
-                        new DirectionSE2(1, 1, 0), 1),
-                new WaypointSE2(AutonPositions.MIDDLE_BALL_FIELD,
-                        new DirectionSE2(0, -1, 0), 1),
-                new WaypointSE2(new Pose2d(6.5, 5.5, new Rotation2d(0 * (Math.PI / 180))),
                         new DirectionSE2(-1, 0, 0), 1),
-                new WaypointSE2(StartingPositions.LEFT_BUMP,
-                        new DirectionSE2(-1, 0, 0), 1),
-                new WaypointSE2(AutonPositions.SHOOT_LEFT,
-                        new DirectionSE2(-1, -1, 0), 1));
+                new WaypointSE2(AutonPositions.SHOOT_RIGHT,
+                        new DirectionSE2(-1, 0, 0), 1));
         return planner.restToRest(waypoints);
     }
 
     @Override
     public Command command() {
-        DriveWithTrajectoryFunction IntakeSetUp = new DriveWithTrajectoryFunction(
-                log.name("IntakeSetUp"), machinery.m_drive, controller,
+        DriveWithTrajectoryFunction ScoreSetUp = new DriveWithTrajectoryFunction(
+                log, machinery.m_drive, controller,
                 machinery.m_trajectoryViz, this::t1);
 
-        // Intake, score
+        // Shoot preloaded balls
         return sequence(
                 parallel(
-                        IntakeSetUp.until(IntakeSetUp::isDone).withTimeout(8),
-                        // Assumed that the intake shouldn't deploy over the bump
-                        sequence(
-                        Commands.waitUntil(() -> FieldConstants2026
-                                        .isInNeutralZone(machinery.m_drive.getState().translation())),
-                            (machinery.m_intakeExtend.goToExtendedPosition()
-                            .andThen(machinery.m_intake.intake())).withTimeout(3),
-        
-                        Commands.waitUntil(() -> FieldConstants2026
-                                        .isInAllianceZone(machinery.m_drive.getState().translation())),
-                            parallel(
-                                machinery.m_intake.stop(),
-                                machinery.m_intakeExtend.goToRetractedPosition(),
+                        ScoreSetUp.until(ScoreSetUp::isDone).withTimeout(3.5),
+                        machinery.m_conveyor.convey(),
+                        machinery.m_feeder.proportional(),
+                        machinery.m_shooterHood.autoPosition(),
+                        machinery.m_shooter.auto()),
 
-                                machinery.m_conveyor.convey(),
-                                machinery.m_feeder.proportional(),
-                                machinery.m_shooterHood.autoPosition(),
-                                machinery.m_shooter.auto())
-                                ))
-        );
+                waitSeconds(5),
+                machinery.m_shooter.stop().withTimeout(1));
     }
 
     @Override
     public Pose2d start() {
-        return AutonPositions.CENTER;
+        return StartingPositions.RIGHT_BUMP;
     }
 
     @Override

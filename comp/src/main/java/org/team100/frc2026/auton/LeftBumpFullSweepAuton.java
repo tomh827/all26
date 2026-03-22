@@ -14,6 +14,7 @@ import org.team100.lib.controller.se2.ControllerSE2;
 import org.team100.lib.geometry.DirectionSE2;
 import org.team100.lib.geometry.WaypointSE2;
 import org.team100.lib.logging.LoggerFactory;
+import org.team100.lib.logging.LoggerFactory.Pose2dLogger;
 import org.team100.lib.subsystems.se2.commands.DriveWithTrajectoryFunction;
 import org.team100.lib.subsystems.swerve.kinodynamics.SwerveKinodynamics;
 import org.team100.lib.trajectory.TrajectorySE2;
@@ -93,17 +94,31 @@ public class LeftBumpFullSweepAuton implements AnnotatedCommand {
         return planner.restToRest(waypoints);
     }
 
+    TrajectorySE2 t2(Pose2d startingPose) {
+        List<WaypointSE2> waypoints = List.of(
+            new WaypointSE2(startingPose,
+                new DirectionSE2(1, -0.2, 0), 1),
+            new WaypointSE2(AutonPositions.LEFT_BUMP_180DEG,
+                new DirectionSE2(1, 0, 0), 1),
+            new WaypointSE2(new Pose2d(7.5, 4, new Rotation2d(90 * (Math.PI / 180))),
+                new DirectionSE2(0, -1, 0), 1)
+            );
+        return planner.restToRest(waypoints);
+    }
+
     @Override
     public Command command() {
-        DriveWithTrajectoryFunction IntakeSetUp = new DriveWithTrajectoryFunction(
-                log.name("IntakeSetUp"), machinery.m_drive, controller,
+        DriveWithTrajectoryFunction Cycle1 = new DriveWithTrajectoryFunction(
+                log.name("Cycle1"), machinery.m_drive, controller,
                 machinery.m_trajectoryViz, this::t1);
+        DriveWithTrajectoryFunction Cycle2 = new DriveWithTrajectoryFunction(
+                log.name("Cycle1"), machinery.m_drive, controller,
+                machinery.m_trajectoryViz, this::t2);
 
         // Intake, score
         return sequence(
                 parallel(
-                        IntakeSetUp.until(IntakeSetUp::isDone).withTimeout(8),
-                        // Assumed that the intake shouldn't deploy over the bump
+                        Cycle1.until(Cycle1::isDone).withTimeout(8),
                         sequence(
                         Commands.waitUntil(() -> FieldConstants2026
                                         .isInNeutralZone(machinery.m_drive.getState().translation())),
@@ -114,13 +129,22 @@ public class LeftBumpFullSweepAuton implements AnnotatedCommand {
                                         .isInAllianceZone(machinery.m_drive.getState().translation())),
                             parallel(
                                 machinery.m_intake.stop(),
-                                machinery.m_intakeExtend.goToRetractedPosition(),
+                          //      machinery.m_intakeExtend.goToRetractedPosition(),
 
                                 machinery.m_conveyor.convey(),
                                 machinery.m_feeder.proportional(),
                                 machinery.m_shooterHood.autoPosition(),
                                 machinery.m_shooter.auto())
-                                ))
+                                .withTimeout(4)
+                                )),
+                parallel(
+                    Cycle2.until(Cycle2::isDone),
+                    Commands.waitUntil(() -> FieldConstants2026
+                                        .isInNeutralZone(machinery.m_drive.getState().translation()))
+                    .andThen(
+                    machinery.m_intake.intake()
+                    )
+                )
         );
     }
 
@@ -131,7 +155,7 @@ public class LeftBumpFullSweepAuton implements AnnotatedCommand {
 
     @Override
     public List<Function<Pose2d, TrajectorySE2>> trajectoryFns() {
-        return List.of(this::t1);
+        return List.of(this::t1, this::t2);
     }
 
 }

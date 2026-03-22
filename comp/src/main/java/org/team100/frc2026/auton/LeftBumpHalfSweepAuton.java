@@ -26,6 +26,7 @@ import org.team100.lib.trajectory.constraint.VelocityLimitRegionConstraint;
 import org.team100.lib.trajectory.path.PathSE2Factory;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
@@ -84,6 +85,8 @@ public class LeftBumpHalfSweepAuton implements AnnotatedCommand {
                         new DirectionSE2(1, 1, 0), 1),
                 new WaypointSE2(AutonPositions.MIDDLE_BALL_FIELD,
                         new DirectionSE2(0, -1, 0), 1),
+                new WaypointSE2(new Pose2d(6.5, 5.5, new Rotation2d(0 * (Math.PI / 180))),
+                        new DirectionSE2(-1, 0, 0), 1),
                 new WaypointSE2(StartingPositions.LEFT_BUMP,
                         new DirectionSE2(-1, 0, 0), 1),
                 new WaypointSE2(AutonPositions.SHOOT_LEFT,
