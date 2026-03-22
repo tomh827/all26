@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import org.team100.frc2026.field.FieldConstants2026;
 import org.team100.frc2026.robot.Machinery;
 import org.team100.lib.config.AnnotatedCommand;
 import org.team100.lib.controller.se2.ControllerSE2;
@@ -25,7 +26,9 @@ import org.team100.lib.trajectory.constraint.VelocityLimitRegionConstraint;
 import org.team100.lib.trajectory.path.PathSE2Factory;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 
 /** An example of a simple sequence */
 public class CenterFullSweepAuton implements AnnotatedCommand {
@@ -75,30 +78,18 @@ public class CenterFullSweepAuton implements AnnotatedCommand {
         return "Full Sweep from Center";
     }
 
-    TrajectorySE2 t1(Pose2d startingPose) {
+      TrajectorySE2 t1(Pose2d startingPose) {
         List<WaypointSE2> waypoints = List.of(
                 new WaypointSE2(startingPose,
                         new DirectionSE2(0, 1, 0), 1),
-                new WaypointSE2(AutonPositions.ABOVE_BALL_FIELD,
-                        new DirectionSE2(1, 1, 0), 1));
-        return planner.restToRest(waypoints);
-    }
-
-    TrajectorySE2 t2(Pose2d startingPose) {
-        List<WaypointSE2> waypoints = List.of(
-                new WaypointSE2(startingPose,
+                new WaypointSE2(new Pose2d(4, 5.5, new Rotation2d(90 * (Math.PI / 180))),
+                        new DirectionSE2(1, -0.2, 0), 1),
+                new WaypointSE2(new Pose2d(7.75, 7, new Rotation2d(90 * (Math.PI / 180))),
+                        new DirectionSE2(0.1, -1, 0), 1),
+                new WaypointSE2(new Pose2d(7.75, 1, new Rotation2d(90 * (Math.PI / 180))),
                         new DirectionSE2(0, -1, 0), 1),
-                new WaypointSE2(AutonPositions.BELOW_BALL_FIELD,
-                        new DirectionSE2(0, -1, 0), 1));
-        return planner.restToRest(waypoints);
-    }
-
-    TrajectorySE2 t3(Pose2d startingPose) {
-        List<WaypointSE2> waypoints = List.of(
-                new WaypointSE2(startingPose,
-                        new DirectionSE2(-1, 1, 0), 1),
-                new WaypointSE2(AutonPositions.LEFT_BUMP_MID,
-                        new DirectionSE2(-1, 0, 0), 1),
+                new WaypointSE2(new Pose2d(7, 4, new Rotation2d(270 * (Math.PI / 180))),
+                        new DirectionSE2(0, 1, 0), 1),
                 new WaypointSE2(StartingPositions.LEFT_BUMP,
                         new DirectionSE2(-1, 0, 0), 1),
                 new WaypointSE2(AutonPositions.SHOOT_LEFT,
@@ -109,38 +100,31 @@ public class CenterFullSweepAuton implements AnnotatedCommand {
     @Override
     public Command command() {
         DriveWithTrajectoryFunction IntakeSetUp = new DriveWithTrajectoryFunction(
-                log, machinery.m_drive, controller,
+                log.name("IntakeSetUp"), machinery.m_drive, controller,
                 machinery.m_trajectoryViz, this::t1);
-        DriveWithTrajectoryFunction IntakeBalls = new DriveWithTrajectoryFunction(
-                log, machinery.m_drive, controller,
-                machinery.m_trajectoryViz, this::t2);
-        DriveWithTrajectoryFunction ScoreSetUp = new DriveWithTrajectoryFunction(
-                log, machinery.m_drive, controller,
-                machinery.m_trajectoryViz, this::t3);
 
-        // Intake, score, climb.
+        // Intake, score
         return sequence(
                 parallel(
-                        IntakeSetUp.until(IntakeSetUp::isDone), // .withTimeout(3.5),
-                        // Assumed that the intake shouldn't deploy while going over the bump
-                        waitSeconds(1).andThen(machinery.m_intakeExtend.goToExtendedPosition())),
+                        IntakeSetUp.until(IntakeSetUp::isDone).withTimeout(8),
+                        // Assumed that the intake shouldn't deploy over the bump
+                        sequence(
+                        Commands.waitUntil(() -> FieldConstants2026
+                                        .isInNeutralZone(machinery.m_drive.getState().translation())),
+                            (machinery.m_intakeExtend.goToExtendedPosition()
+                            .andThen(machinery.m_intake.intake())).withTimeout(4),
+        
+                        Commands.waitUntil(() -> FieldConstants2026
+                                        .isInAllianceZone(machinery.m_drive.getState().translation())),
+                            parallel(
+                                machinery.m_intake.stop(),
+                                machinery.m_intakeExtend.goToRetractedPosition(),
 
-                parallel(
-                        IntakeBalls,
-                        machinery.m_intake.intake()).until(IntakeBalls::isDone),
-                machinery.m_intake.stopOnce(),
-
-                ScoreSetUp.until(ScoreSetUp::isDone),
-                parallel(
-                        machinery.m_conveyor.convey(),
-                        machinery.m_feeder.proportional(),
-                        machinery.m_shooterHood.autoPosition(),
-                        machinery.m_shooter.auto())// ,
-        // .withTimeout(1),
-        // machinery.m_shooterHood.autoPosition().withTimeout(0.5),
-        // machinery.m_shooter.auto().withTimeout(1),
-        // waitSeconds(5),
-        // machinery.m_shooter.stop().withTimeout(1)
+                                machinery.m_conveyor.convey(),
+                                machinery.m_feeder.proportional(),
+                                machinery.m_shooterHood.autoPosition(),
+                                machinery.m_shooter.auto())
+                                ))
         );
     }
 
@@ -151,7 +135,7 @@ public class CenterFullSweepAuton implements AnnotatedCommand {
 
     @Override
     public List<Function<Pose2d, TrajectorySE2>> trajectoryFns() {
-        return List.of(this::t1, this::t2, this::t3);
+        return List.of(this::t1);
     }
 
 }
