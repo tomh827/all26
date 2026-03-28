@@ -110,9 +110,6 @@ public class RightLobAuton implements AnnotatedCommand {
                         Commands.waitUntil(() -> FieldConstants2026
                                         .isInNeutralZone(machinery.m_drive.getState().translation()))
                         .andThen(parallel(
-                        machinery.m_conveyor.convey(),
-                        machinery.m_feeder.proportional(),
-                        machinery.m_shooterHood.autoPosition(),
                         machinery.m_shooter.auto()))));
     }
 
