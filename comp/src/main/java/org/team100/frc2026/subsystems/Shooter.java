@@ -83,10 +83,10 @@ public class Shooter extends SubsystemBase {
                 PIDConstants pid = PIDConstants.makeVelocityPID(log, 0.075);
 
                 m1 = new NeoVortexCANSparkMotor(
-                        log1, currentLog, CAN_ID_1, NeutralMode100.COAST, MotorPhase.REVERSE,
+                        log1, currentLog, CAN_ID_1, NeutralMode100.COAST, MotorPhase.FORWARD,
                         CurrentLimits.SHOOTER, ff, friction, pid);
                 m2 = new NeoVortexCANSparkMotor(
-                        log2, currentLog, CAN_ID_2, NeutralMode100.COAST, MotorPhase.FORWARD,
+                        log2, currentLog, CAN_ID_2, NeutralMode100.COAST, MotorPhase.REVERSE,
                         CurrentLimits.SHOOTER, ff, friction, pid);
                 m3 = new NeoVortexCANSparkMotor(
                         log3, currentLog, CAN_ID_3, NeutralMode100.COAST, MotorPhase.FORWARD,
