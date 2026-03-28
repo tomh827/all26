@@ -50,14 +50,14 @@ public class TrenchScallopLobAutonRightFull implements AnnotatedCommand {
         double bumpV = 2; // cartesian velocity over the bump
         List<TimingConstraint> new_constraints = new ArrayList<>(List.of(
                 // high velocity, moderate accel
-                new ConstantConstraint(log, 10, 20),
+                new ConstantConstraint(log, 15, 10),
                 // absolute maxima
-                new SwerveDriveDynamicsConstraint(log, kinodynamics, 1, 1),
+                // new SwerveDriveDynamicsConstraint(log, kinodynamics, 1, 1),
                 // high yaw limits
-                new YawRateConstraint(log, 15, 20),
+                // new YawRateConstraint(log, 15, 20),
                 // moderate capsize limits. Note we're not actually concerned about capsize
                 // here, we just want to limit tire tread shear
-                new CapsizeAccelerationConstraint(log, 5, 20),
+                new CapsizeAccelerationConstraint(log, 15, 10),
                 new VelocityLimitRegionConstraint(log, BumpZones.BLUE_BUMP_LEFT, bumpV),
                 new VelocityLimitRegionConstraint(log, BumpZones.BLUE_BUMP_RIGHT, bumpV),
                 new VelocityLimitRegionConstraint(log, BumpZones.RED_BUMP_LEFT, bumpV),
@@ -117,10 +117,10 @@ public class TrenchScallopLobAutonRightFull implements AnnotatedCommand {
                 // new WaypointSE2(new Pose2d(8.3, 5, new Rotation2d(180 * (Math.PI / 180))), new DirectionSE2(1, 0, 0), 1),
 
                 // new WaypointSE2(new Pose2d(7, 5.5, new Rotation2d(180 * (Math.PI / 180))), new DirectionSE2(-1, 0, 0), 1), 
-                new WaypointSE2(startingPose, new DirectionSE2(1, -0.75, 0), 1),
+                new WaypointSE2(startingPose, new DirectionSE2(1, -0.3, 0), 1),
 
-                new WaypointSE2(new Pose2d(9, 2, new Rotation2d(195 * (Math.PI / 180))), new DirectionSE2(1, 0.5, 0), 1),
-                
+                new WaypointSE2(new Pose2d(7, 1.5, new Rotation2d(195 * (Math.PI / 180))), new DirectionSE2(1, 0.5, 0), 1),
+
                 new WaypointSE2(new Pose2d(9, 2, new Rotation2d(195 * (Math.PI / 180))), new DirectionSE2(1, 0.5, 0), 1),
                 new WaypointSE2(new Pose2d(7, 2.1, new Rotation2d(195 * (Math.PI / 180))), new DirectionSE2(1, 0, 0), 1),
                 
@@ -131,12 +131,12 @@ public class TrenchScallopLobAutonRightFull implements AnnotatedCommand {
             
                 new WaypointSE2(new Pose2d(7, 4, new Rotation2d(210 * (Math.PI / 180))), new DirectionSE2(1, 0.5, 0), 1),
 
-                new WaypointSE2(new Pose2d(9, 5.2, new Rotation2d(150 * (Math.PI / 180))), new DirectionSE2(1, 0, 0), 1),
-                new WaypointSE2(new Pose2d(7, 5.3, new Rotation2d(150 * (Math.PI / 180))), new DirectionSE2(1, 0.5, 0), 1),
+                new WaypointSE2(new Pose2d(9, 5.2, new Rotation2d(170 * (Math.PI / 180))), new DirectionSE2(1, 0, 0), 1),
+                new WaypointSE2(new Pose2d(7, 6, new Rotation2d(170 * (Math.PI / 180))), new DirectionSE2(1, 0.5, 0), 1),
 
-                new WaypointSE2(new Pose2d(9, 4.9, new Rotation2d(150 * (Math.PI / 180))), new DirectionSE2(1, 0, 0), 1),
-                new WaypointSE2(new Pose2d(7, 7.5, new Rotation2d(150 * (Math.PI / 180))), new DirectionSE2(1, 0, 0), 1),
-                new WaypointSE2(new Pose2d(9, 7.3, new Rotation2d(150 * (Math.PI / 180))), new DirectionSE2(1, 0, 0), 1)
+                new WaypointSE2(new Pose2d(9, 5.8, new Rotation2d(170 * (Math.PI / 180))), new DirectionSE2(1, 0, 0), 1),
+                new WaypointSE2(new Pose2d(7, 6.6, new Rotation2d(170 * (Math.PI / 180))), new DirectionSE2(1, 0, 0), 1),
+                new WaypointSE2(new Pose2d(9, 6, new Rotation2d(170 * (Math.PI / 180))), new DirectionSE2(1, 0, 0), 1)
 
 
 
