@@ -155,6 +155,21 @@ public class AllAutons {
                 machinery.m_swerveKinodynamics,
                 controller,
                 machinery));
+        m_autonChooser.add(new MajorDisruptLBump(
+                log,
+                machinery.m_swerveKinodynamics,
+                controller,
+                machinery));
+         m_autonChooser.add(new MajorDisruptRBump(
+                log,
+                machinery.m_swerveKinodynamics,
+                controller,
+                machinery));
+         m_autonChooser.add(new MajorDisruptRTrench(
+                log,
+                machinery.m_swerveKinodynamics,
+                controller,
+                machinery));
         //  m_autonChooser.add(new MajorDisruptLeftBAuton(
         //         log,
         //         machinery.m_swerveKinodynamics,
