@@ -43,8 +43,8 @@ public class AutonAlerts {
     }
 
     public void run() {
-        checkStart();
-        checkAlliance();
+        // checkStart();
+        // checkAlliance();
         viz();
     }
 
