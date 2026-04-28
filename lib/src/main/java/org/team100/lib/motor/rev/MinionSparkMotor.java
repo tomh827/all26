@@ -19,6 +19,9 @@ import com.revrobotics.spark.SparkMax;
  * @see https://store.ctr-electronics.com/products/minion-brushless-motor
  */
 public class MinionSparkMotor extends CANSparkMotor {
+    /** See SparkMaxConfig.Presets.CTRE_Minion */
+    private static final double COMMUTATION_DEGREES = 120;
+
     public MinionSparkMotor(
             LoggerFactory parent,
             TotalCurrentLog currentLog,
@@ -28,10 +31,13 @@ public class MinionSparkMotor extends CANSparkMotor {
             CurrentLimit limit,
             SimpleDynamics ff,
             Friction friction,
-            PIDConstants pid) {
+            PIDConstants pid,
+            int averageDepth,
+            int measurementPeriod) {
         super(parent, currentLog,
                 new SparkMax(canId.id, MotorType.kBrushless),
-                neutral, motorPhase, limit, ff, friction, pid);
+                neutral, motorPhase, limit, ff, friction, pid,
+                COMMUTATION_DEGREES, averageDepth, measurementPeriod);
     }
 
     @Override

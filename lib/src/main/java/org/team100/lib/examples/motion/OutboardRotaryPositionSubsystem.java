@@ -76,12 +76,13 @@ public class OutboardRotaryPositionSubsystem extends SubsystemBase {
                         new CurrentLimit(10, 10), // Stator current limit, amps
                         new SimpleDynamics(log, 0.01, 0.01),
                         new Friction(log, 0.5, 0.5, 0.0, 0.5),
-                        PIDConstants.makePositionPID(log, 0.2));
+                        PIDConstants.makePositionPID(log, 0.2),
+                        0,
+                        0);
                 IncrementalBareEncoder encoder = motor.encoder();
                 return getMech(log, motor, encoder);
             }
         }
-
     }
 
     private RotaryMechanism getMech(LoggerFactory log, BareMotor motor, IncrementalBareEncoder encoder) {

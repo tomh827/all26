@@ -39,10 +39,12 @@ import com.revrobotics.spark.SparkLimitSwitch;
  * to be useful; turning the filters all the way down may help a tiny bit.
  * 
  * https://www.chiefdelphi.com/t/psa-default-neo-sparkmax-velocity-readings-are-still-bad-for-flywheels/454453
+ * https://www.chiefdelphi.com/t/psa-rev-spark-default-velocity-filtering-is-still-really-bad-for-flywheels/514567
  * https://www.chiefdelphi.com/t/shooter-encoder/400211/10
- * 
+ * https://www.chiefdelphi.com/t/frc-4481-team-rembrandts-2026-build-thread-open-alliance/507296/475
  * https://docs.revrobotics.com/brushless/spark-max/gs/make-it-spin#limiting-current
  * https://www.chiefdelphi.com/t/rev-robotics-2024-2025/471083/26
+ * https://www.reca.lc/flywheel
  */
 public abstract class CANSparkMotor implements BareMotor {
     private final LoggerFactory m_log;
@@ -97,7 +99,10 @@ public abstract class CANSparkMotor implements BareMotor {
             CurrentLimit limit,
             SimpleDynamics ff,
             Friction friction,
-            PIDConstants pid) {
+            PIDConstants pid,
+            double commutationDegrees,
+            int averageDepth,
+            int measurementPeriod) {
         currentLog.register(this);
         m_motor = motor;
         m_log = parent.type(this);
@@ -110,7 +115,10 @@ public abstract class CANSparkMotor implements BareMotor {
                 neutral,
                 motorPhase,
                 limit,
-                pid);
+                pid,
+                commutationDegrees,
+                averageDepth,
+                measurementPeriod);
         m_configurator.longCANTimeout();
         m_configurator.baseConfig();
         m_configurator.motorConfig();
