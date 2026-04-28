@@ -31,11 +31,13 @@ public class MinionSparkMotor extends CANSparkMotor {
             CurrentLimit limit,
             SimpleDynamics ff,
             Friction friction,
-            PIDConstants pid) {
+            PIDConstants pid,
+            int averageDepth,
+            int measurementPeriod) {
         super(parent, currentLog,
                 new SparkMax(canId.id, MotorType.kBrushless),
                 neutral, motorPhase, limit, ff, friction, pid,
-                COMMUTATION_DEGREES);
+                COMMUTATION_DEGREES, averageDepth, measurementPeriod);
     }
 
     @Override

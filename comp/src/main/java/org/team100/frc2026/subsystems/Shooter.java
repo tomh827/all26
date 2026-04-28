@@ -81,18 +81,20 @@ public class Shooter extends SubsystemBase {
                 // tuned 3/12/26
                 PIDConstants pid = PIDConstants.makeVelocityPID(log, 0.075);
 
+                int averageDepth = 2;
+                int measurementPeriod = 4;
                 m1 = new NeoVortexCANSparkMotor(
                         log1, currentLog, CAN_ID_1, NeutralMode100.COAST, MotorPhase.FORWARD,
-                        CurrentLimits.SHOOTER, ff, friction, pid);
+                        CurrentLimits.SHOOTER, ff, friction, pid, averageDepth, measurementPeriod);
                 m2 = new NeoVortexCANSparkMotor(
                         log2, currentLog, CAN_ID_2, NeutralMode100.COAST, MotorPhase.REVERSE,
-                        CurrentLimits.SHOOTER, ff, friction, pid);
+                        CurrentLimits.SHOOTER, ff, friction, pid, averageDepth, measurementPeriod);
                 m3 = new NeoVortexCANSparkMotor(
                         log3, currentLog, CAN_ID_3, NeutralMode100.COAST, MotorPhase.FORWARD,
-                        CurrentLimits.SHOOTER, ff, friction, pid);
+                        CurrentLimits.SHOOTER, ff, friction, pid, averageDepth, measurementPeriod);
                 m4 = new NeoVortexCANSparkMotor(
                         log4, currentLog, CAN_ID_4, NeutralMode100.COAST, MotorPhase.REVERSE,
-                        CurrentLimits.SHOOTER, ff, friction, pid);
+                        CurrentLimits.SHOOTER, ff, friction, pid, averageDepth, measurementPeriod);
 
             }
             default -> {

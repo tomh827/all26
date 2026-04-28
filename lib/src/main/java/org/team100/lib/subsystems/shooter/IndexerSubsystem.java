@@ -18,8 +18,11 @@ public class IndexerSubsystem extends SubsystemBase {
     private final LinearMechanism m_linearMechanism;
 
     public IndexerSubsystem(
-            LoggerFactory parent, LinearMechanism linearMechanism, double maxAccel,
-            double objectLengthM, double indexVelocityM_S) {
+            LoggerFactory parent,
+            LinearMechanism linearMechanism,
+            double maxAccel,
+            double objectLengthM,
+            double indexVelocityM_S) {
         m_logger = parent.type(this);
         m_objectLength = objectLengthM;
         m_IndexerVelocityM_S = indexVelocityM_S;

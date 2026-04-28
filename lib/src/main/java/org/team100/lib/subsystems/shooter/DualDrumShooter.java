@@ -9,17 +9,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /**
- * Direct-drive shooter with left and right drums.
- * 
- * Typical free speed of 6k rpm => 100 turn/sec
- * diameter of 0.1m => 0.314 m/turn
- * therefore top speed is around 30 m/s.
- * 
- * Empirically it seems to take a second or so to spin
- * up, so set the acceleration a bit higher than that to start.
+ * Shooter with left and right drums.
  */
 public class DualDrumShooter extends SubsystemBase {
-
     private final LinearVelocityServo m_left;
     private final LinearVelocityServo m_right;
     private final BooleanLogger m_log_atGoal;
@@ -38,21 +30,19 @@ public class DualDrumShooter extends SubsystemBase {
      * 
      * Will not work in Command.initialize().
      */
-    public void set(double velocityM_S) {
+    public void setVelocityProfiled(double velocityM_S) {
+        m_left.setVelocityProfiled(velocityM_S);
+        m_right.setVelocityProfiled(velocityM_S);
+    }
 
-        //
-        //
-        // TODO: figure out why velocity control isn't working
-        //
-        //
-        m_left.setDutyCycle(0.1);
-        m_right.setDutyCycle(0.1);
+    public void setVelocityDirect(double velocityM_S) {
+        m_left.setVelocityDirect(velocityM_S);
+        m_right.setVelocityDirect(velocityM_S);
+    }
 
-        // m_left.setVelocityDirect(velocityM_S);
-        // m_right.setVelocityDirect(velocityM_S);
-
-        // m_left.setVelocityProfiled(velocityM_S);
-        // m_right.setVelocityProfiled(velocityM_S);
+    public void setDutyCycle(double dutyCycle) {
+        m_left.setDutyCycle(dutyCycle);
+        m_right.setDutyCycle(dutyCycle);
     }
 
     public double get() {
@@ -68,9 +58,21 @@ public class DualDrumShooter extends SubsystemBase {
         return m_right.atGoal() && m_left.atGoal();
     }
 
-    public Command spin(double velocityM_S) {
+    public Command spinProfiled(double velocityM_S) {
         return run(() -> {
-            set(velocityM_S);
+            setVelocityProfiled(velocityM_S);
+        });
+    }
+
+    public Command spinDirect(double velocityM_S) {
+        return run(() -> {
+            setVelocityDirect(velocityM_S);
+        });
+    }
+
+    public Command spinDutyCycle(double dutyCycle) {
+        return run(() -> {
+            setDutyCycle(dutyCycle);
         });
     }
 

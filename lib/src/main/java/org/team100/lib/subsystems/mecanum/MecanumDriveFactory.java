@@ -87,7 +87,11 @@ public class MecanumDriveFactory {
                 new OutboardLinearVelocityServo(logRR, mechRR, ref, 1));
     }
 
-    /** Real or simulated depending on identity */
+    /**
+     * Real or simulated depending on identity.
+     * 
+     * TODO: verify the velocity averaging parameters
+     */
     public static BareMotor getMotor(
             LoggerFactory log, TotalCurrentLog currentLog, CanId can, MotorPhase phase,
             CurrentLimit limit, SimpleDynamics ff, Friction friction, PIDConstants pid) {
@@ -95,7 +99,7 @@ public class MecanumDriveFactory {
             case BLANK -> new SimulatedBareMotor(log, 600);
             default -> new NeoCANSparkMotor(
                     log, currentLog, can, NeutralMode100.BRAKE, phase,
-                    limit, ff, friction, pid);
+                    limit, ff, friction, pid, 2, 4);
         };
     }
 

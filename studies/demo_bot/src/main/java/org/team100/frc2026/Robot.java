@@ -1,9 +1,5 @@
 package org.team100.frc2026;
 
-import static edu.wpi.first.wpilibj2.command.Commands.parallel;
-import static edu.wpi.first.wpilibj2.command.Commands.repeatingSequence;
-import static edu.wpi.first.wpilibj2.command.Commands.waitUntil;
-
 import org.team100.lib.coherence.Cache;
 import org.team100.lib.coherence.Takt;
 import org.team100.lib.config.CurrentLimit;
@@ -17,10 +13,10 @@ import org.team100.lib.logging.RobotLog;
 import org.team100.lib.logging.TotalCurrentLog;
 import org.team100.lib.subsystems.shooter.DrumShooterFactory;
 import org.team100.lib.subsystems.shooter.DualDrumShooter;
-import org.team100.lib.subsystems.shooter.IndexerServo;
 import org.team100.lib.subsystems.shooter.PivotDefault;
 import org.team100.lib.subsystems.shooter.PivotSubsystem;
-import org.team100.lib.subsystems.shooter.Shoot;
+import org.team100.lib.subsystems.shooter.SimpleIndexerFactory;
+import org.team100.lib.subsystems.shooter.SimpleIndexerSubsystem;
 import org.team100.lib.subsystems.tank.TankDrive;
 import org.team100.lib.subsystems.tank.TankDriveFactory;
 import org.team100.lib.subsystems.tank.commands.TankManual;
@@ -48,7 +44,8 @@ public class Robot extends TimedRobot100 {
     private final TankDrive m_drive;
     private final Command m_auton;
     private final DualDrumShooter m_shooter;
-    private final IndexerServo m_indexer;
+    // private final PWMIndexerServo m_indexer;
+    private final SimpleIndexerSubsystem m_indexer;
     private final PivotSubsystem m_pivot;
 
     public Robot() {
@@ -91,7 +88,15 @@ public class Robot extends TimedRobot100 {
                 SHOOTER_WHEEL_DIA_M);
         m_shooter.setDefaultCommand(m_shooter.run(m_shooter::stop));
 
-        m_indexer = new IndexerServo(logger, 0);
+        // m_indexer = new PWMIndexerServo(logger, 0);
+        m_indexer = SimpleIndexerFactory.make(
+                logger,
+                m_currentLog,
+                new CurrentLimit(20, 20),
+                new CanId(100), // TODO: CANID
+                1.0,
+                0.1);
+
         m_indexer.setDefaultCommand(m_indexer.run(m_indexer::stop));
 
         m_pivot = new PivotSubsystem(
@@ -102,11 +107,28 @@ public class Robot extends TimedRobot100 {
         m_pivot.setDefaultCommand(
                 new PivotDefault(driverControl::leftY, m_pivot));
 
-        // this shows two ways to do the "shoot when spinning fast enough" thing.
+        /////////////////////////////////////////////////////////////////////////////////////
+        ///
+        /// SHOOTER CONTROL
+        ///
+        /// Simpler shooter controls, all left hand.
+        ///
+        new Trigger(driverControl::leftTrigger)
+                .whileTrue(m_shooter.spinDirect(10)
+                        .withName("Shooter spin"));
+        new Trigger(driverControl::leftBumper)
+                .whileTrue(m_indexer.spinDirect(1.0)
+                        .withName("Indexer feed"));
 
+        m_auton = null;
+
+        /////////////////////////////////////////////////////////////////////////////////////
+        ///
+        /// parking lot
+        ///
+        // this shows two ways to do the "shoot when spinning fast enough" thing.
         // a command class that contains the condition
         // new Trigger(driverControl::a).whileTrue(new Shoot(m_shooter, m_indexer));
-
         // "fluent" command assembly.
         // new Trigger(driverControl::y).whileTrue(
         // parallel(
@@ -114,15 +136,6 @@ public class Robot extends TimedRobot100 {
         // repeatingSequence(
         // waitUntil(m_shooter::atGoal),
         // m_indexer.feed().withTimeout(0.5))));
-
-        new Trigger(driverControl::x).whileTrue(
-                m_shooter.spin(10)
-                        .withName("Shooter Spin"));
-
-        new Trigger(driverControl::y).whileTrue(
-                m_indexer.feed()
-                        .withName("Indexer feed"));
-        m_auton = null;
     }
 
     /**

@@ -66,7 +66,7 @@ public class ShooterHood extends SubsystemBase {
 
                 motor = new NeoVortexCANSparkMotor(
                         log, currentLog, CAN_ID, NeutralMode100.COAST, MotorPhase.REVERSE,
-                        CurrentLimits.SHOOTER_HOOD, ff, friction, pid);
+                        CurrentLimits.SHOOTER_HOOD, ff, friction, pid, 0, 0);
 
             }
             default -> {

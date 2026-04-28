@@ -20,20 +20,15 @@ import org.team100.lib.reference.r1.VelocityReferenceR1;
 import org.team100.lib.servo.OutboardLinearVelocityServo;
 import org.team100.lib.util.CanId;
 
-/** Configuration of motors on the demobot shooter. */
-public class DrumShooterFactory {
-
-    public static DualDrumShooter make(
+public class SimpleIndexerFactory {
+    public static SimpleIndexerSubsystem make(
             LoggerFactory parent,
             TotalCurrentLog currentLog,
             CurrentLimit limit,
-            CanId canL,
-            CanId canR,
+            CanId canId,
             double gearRatio,
             double wheelDiaM) {
-        LoggerFactory log = parent.name("shooter");
-        LoggerFactory logL = log.name("left");
-        LoggerFactory logR = log.name("right");
+        LoggerFactory log = parent.name("indexer");
 
         SimpleDynamics ff = new SimpleDynamics(log, 0, 0);
         Friction friction = new Friction(log, 0.07, 0.07, 0.01, 0.5);
@@ -43,27 +38,21 @@ public class DrumShooterFactory {
         double maxSpeedM_S = 10;
         double freeSpeedRad_S = maxSpeedM_S * gearRatio / (0.5 * wheelDiaM);
 
-        BareMotor motorL = getMotor(
-                limit, logL, currentLog, freeSpeedRad_S, canL,
-                MotorPhase.FORWARD, ff, friction, pid);
-        BareMotor motorR = getMotor(
-                limit, logR, currentLog, freeSpeedRad_S, canR,
+        BareMotor motor = getMotor(
+                limit, log, currentLog, freeSpeedRad_S, canId,
                 MotorPhase.REVERSE, ff, friction, pid);
 
-        LinearMechanism mechL = new LinearMechanism(
-                logL, motorL, motorL.encoder(), gearRatio, wheelDiaM,
-                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-        LinearMechanism mechR = new LinearMechanism(
-                logR, motorR, motorR.encoder(), gearRatio, wheelDiaM,
+        LinearMechanism mech = new LinearMechanism(
+                log, motor, motor.encoder(), gearRatio, wheelDiaM,
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
         VelocityProfileR1 profile = new AccelLimitedVelocityProfileR1(10);
         VelocityReferenceR1 ref = new VelocityProfileReferenceR1(
                 log, () -> profile, 1);
 
-        return new DualDrumShooter(parent,
-                new OutboardLinearVelocityServo(logL, mechL, ref, 1),
-                new OutboardLinearVelocityServo(logR, mechR, ref, 1));
+        return new SimpleIndexerSubsystem(
+                parent,
+                new OutboardLinearVelocityServo(log, mech, ref, 1));
     }
 
     /**

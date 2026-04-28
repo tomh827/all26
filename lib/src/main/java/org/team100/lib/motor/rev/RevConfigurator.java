@@ -41,6 +41,32 @@ public class RevConfigurator {
      * to ignore this parameter.
      */
     private final double m_commutationDegrees;
+    /**
+     * Number of samples to average for velocity measurement. Default is 64.
+     * 
+     * Position control should use more averaging, velocity control should use less.
+     * 
+     * The default is probably good for slow positional control.
+     * 
+     * For fast velocity control, try 2.
+     * 
+     * Pass zero to get the default.
+     */
+    private final int m_averageDepth;
+    /**
+     * Velocity is computed as the difference in position across this interval, in
+     * milliseconds. Default is 100.
+     * 
+     * Position control should use a longer period, velocity control should use
+     * less.
+     * 
+     * The default is probably good for slow positional control.
+     * 
+     * For fast velocity control, try 4.
+     *
+     * Pass zero to get the default.
+     */
+    private final int m_measurementPeriod;
 
     /**
      * Stator current limit is mutable.
@@ -54,7 +80,9 @@ public class RevConfigurator {
             MotorPhase phase,
             CurrentLimit limit,
             PIDConstants pid,
-            double commutationDegrees) {
+            double commutationDegrees,
+            int averageDepth,
+            int measurementPeriod) {
         m_motor = motor;
         m_neutral = neutral;
         m_phase = phase;
@@ -63,6 +91,8 @@ public class RevConfigurator {
         // reapply the pid parameters if any change.
         m_pid.register(this::pidConfig);
         m_commutationDegrees = commutationDegrees;
+        m_averageDepth = averageDepth;
+        m_measurementPeriod = measurementPeriod;
     }
 
     /**
@@ -99,8 +129,23 @@ public class RevConfigurator {
             case FORWARD -> false;
             case REVERSE -> true;
         });
-        if (m_commutationDegrees != 0)
+
+        // Minion motor uses different commutation angle.
+        if (m_commutationDegrees != 0) {
             conf.advanceCommutation(m_commutationDegrees);
+        }
+
+        // Velocity control wants less filtering.
+        // Max uses "uvw" and Flex uses "quadrature"
+        if (m_averageDepth != 0) {
+            conf.encoder.quadratureAverageDepth(m_averageDepth);
+            conf.encoder.uvwAverageDepth(m_averageDepth);
+        }
+        if (m_measurementPeriod != 0) {
+            conf.encoder.quadratureMeasurementPeriod(m_measurementPeriod);
+            conf.encoder.uvwMeasurementPeriod(m_measurementPeriod);
+        }
+
         conf.signals.primaryEncoderVelocityPeriodMs(ENCODER_REPORT_PERIOD_MS);
         conf.signals.primaryEncoderVelocityAlwaysOn(true);
         conf.signals.primaryEncoderPositionPeriodMs(ENCODER_REPORT_PERIOD_MS);

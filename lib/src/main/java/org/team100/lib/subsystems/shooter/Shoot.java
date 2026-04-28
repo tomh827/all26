@@ -8,9 +8,9 @@ import edu.wpi.first.wpilibj2.command.Command;
  */
 public class Shoot extends Command {
     private final DualDrumShooter m_shooter;
-    private final IndexerServo m_indexer;
+    private final PWMIndexerServo m_indexer;
 
-    public Shoot(DualDrumShooter shooter, IndexerServo indexer) {
+    public Shoot(DualDrumShooter shooter, PWMIndexerServo indexer) {
         m_shooter = shooter;
         m_indexer = indexer;
         addRequirements(m_shooter, m_indexer);
@@ -18,7 +18,7 @@ public class Shoot extends Command {
 
     @Override
     public void execute() {
-        m_shooter.set(10);
+        m_shooter.spinDirect(10);
         if (m_shooter.atGoal()) {
             m_indexer.set(1);
         }

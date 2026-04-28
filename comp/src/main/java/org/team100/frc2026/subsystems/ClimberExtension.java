@@ -45,7 +45,7 @@ public class ClimberExtension extends SubsystemBase {
                 motor = new NeoVortexCANSparkMotor(
                         log, currentLog, new CanId(2),
                         NeutralMode100.BRAKE, MotorPhase.FORWARD,
-                        limit, ff, friction, pid);
+                        limit, ff, friction, pid, 0, 0);
             }
             default -> {
                 motor = new SimulatedBareMotor(log, 600);
