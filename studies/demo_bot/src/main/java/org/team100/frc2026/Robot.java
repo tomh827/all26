@@ -86,7 +86,7 @@ public class Robot extends TimedRobot100 {
                 m_currentLog,
                 new CurrentLimit(20, 20),
                 new CanId(39),
-                new CanId(19),
+                new CanId(8),
                 SHOOTER_GEAR_RATIO,
                 SHOOTER_WHEEL_DIA_M);
         m_shooter.setDefaultCommand(m_shooter.run(m_shooter::stop));
@@ -115,7 +115,7 @@ public class Robot extends TimedRobot100 {
                                 waitUntil(m_shooter::atGoal),
                                 m_indexer.feed().withTimeout(0.5))));
 
-        // whileTrue(driverControl::fullCycle, new ShootOne(m_shooter, m_indexer));
+
         new Trigger(driverControl::x).whileTrue(m_shooter.spin(10));
         m_auton = null;
     }
