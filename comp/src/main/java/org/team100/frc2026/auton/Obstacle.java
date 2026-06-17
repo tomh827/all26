@@ -10,7 +10,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 
 
     public class Obstacle {
-       private final Rectangle2d rectangle;
+       public final Rectangle2d rectangle;
        private final double clearance;
 
        public Obstacle(
