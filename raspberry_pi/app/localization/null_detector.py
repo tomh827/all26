@@ -26,6 +26,24 @@ class NullDetector(Interpreter):
 
     @override
     def analyze(self, req: Request) -> None:
+        # self.analyzeRGB(req)
+        self.analyzeYUV(req)
+
+    def analyzeRGB(self, req: Request) -> None:
+        buffer: Buffer
+        with req.rgb() as buffer:
+            img: NDArray[np.uint8] = np.frombuffer(buffer, dtype=np.uint8)
+
+            img_bgr: NDArray[np.uint8] = img.reshape((self.height, self.width, 3))
+
+            fps = req.fps()
+            delay_us = req.delay_us()
+            self._display.text(img_bgr, f"FPS {fps:2.0f}", (5, 65))
+            self._display.text(img_bgr, f"delay (ms) {delay_us/1000:2.0f}", (5, 105))
+            self._display.put(img_bgr)
+
+
+    def analyzeYUV(self, req: Request) -> None:
         with req.yuv() as buffer:
             img: NDArray[np.uint8] = np.frombuffer(
                 buffer, dtype=np.uint8, count=self.y_len

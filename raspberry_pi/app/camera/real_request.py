@@ -1,5 +1,7 @@
 # pylint: disable=E0401
 
+from pprint import pprint
+
 from contextlib import AbstractContextManager
 from typing import cast
 from typing_extensions import Buffer, override
@@ -23,6 +25,14 @@ class RealRequest(Request):
         self._req: CompletedRequest = req
         self._fps = fps
         self._rolling = rolling
+        # print("#### REAL REQUEST ####")
+        # print(req)
+        # print("config")
+        # print(req.config)
+        # print(req.config.keys())
+        # foo = req.make_image("main")
+        # print("#### FOO ####")
+        # print(foo)
 
     @override
     def fps(self) -> float:
@@ -32,12 +42,17 @@ class RealRequest(Request):
     @override
     def delay_us(self) -> int:
         metadata = self._req.get_metadata()  # type: ignore
+        # print("\n*** METADATA")
+        # pprint(metadata)
         # Time of first row received, this is roughly the "readout timestamp"
         sensor_timestamp_ns = cast(int, metadata["SensorTimestamp"])
 
         # Half the exposure time.
-        exposure_term_us = cast(int, metadata["ExposureTime"] * 0.5)
-        exposure_term_ns = exposure_term_us * 1000
+        # Note UVC camera does not have this field
+        # exposure_term_us = cast(int, metadata["ExposureTime"] * 0.5)
+        # exposure_term_ns = exposure_term_us * 1000
+        # TODO: fake a real exposure time
+        exposure_term_ns = 0
 
         frame_term_ns = cast(int, EXTRA_DELAY_MS * 1000000)
 
@@ -68,7 +83,8 @@ class RealRequest(Request):
 
     @override
     def yuv(self) -> AbstractContextManager[Buffer]:
-        return self._buffer("lores")
+        # return self._buffer("lores")
+        return self._buffer("main")
 
     def _buffer(self, stream: str) -> AbstractContextManager[Buffer]:
         # Returns AbstractContextManager[Buffer] because the flow is:
@@ -101,6 +117,11 @@ class RealRequest(Request):
         # the easiest way to get at the mmap buffer.
         #
         # To use the buffer, you can pass it to np.frombuffer().
+        # print("**** REQ BUFFERS ****")
+        # print(self._req.request.buffers.keys())
+        # print("**** STREAM ****")
+        # print(stream)
+        # print("***** WOO *****")
         return _MappedBuffer(self._req, stream)  # type: ignore
 
     @override

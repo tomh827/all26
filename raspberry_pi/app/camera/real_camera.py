@@ -31,9 +31,14 @@ from app.camera.size import Size
 from app.config.identity import Identity
 from app.util.timer import Timer
 
-
 class RealCamera(Camera):
     def __init__(self, identity: Identity) -> None:
+        Picamera2.set_logging(Picamera2.INFO)
+        # debug logs with every frame (!)
+        # Picamera2.set_logging(Picamera2.DEBUG)
+        print("GLOBAL CAMERA INFO")
+        pprint(Picamera2.global_camera_info())
+        print("+==================")
         self._cam: Picamera2 = Picamera2()  # type: ignore
 
         print("\n*** SENSOR MODES AVAILABLE")
@@ -42,6 +47,9 @@ class RealCamera(Camera):
         print("\n*** CAMERA CONTROLS")
         pprint(self._cam.camera_controls)  # type:ignore
 
+        print("\n*** RAW MODES")
+        pprint(self._cam._raw_modes)
+
         self._mtx: Intrinsic = Intrinsic(identity)
         self._dist: Distortion = Distortion(identity)
 
@@ -49,6 +57,7 @@ class RealCamera(Camera):
         self._rolling = Shutter(model).rolling()
         self._size: Size = Size.from_model(model)
 
+        print("\n\n*** CONFIG! ***\n\n")
         self._camera_config: dict[str, Any] = RealCamera.__get_config(  # type: ignore
             identity, self._cam, self._size  # type: ignore
         )
@@ -63,7 +72,13 @@ class RealCamera(Camera):
 
         self._cam.configure(self._camera_config)  # type:ignore
 
-        self._fail_mismatched_size()
+        # the "sensor" is not filled in for USB cameras.
+        if identity in (
+            Identity.FLIPPED,
+            # Identity.FUNNEL,
+            Identity.CLIMB_RIGHT,
+        ):
+            self._fail_mismatched_size()
 
         self._cam.start()  # type:ignore
         self._frame_time = Timer.time_ns()
@@ -98,7 +113,8 @@ class RealCamera(Camera):
     def __get_config(
         identity: Identity, cam: Picamera2, size: Size  # type: ignore
     ) -> dict[str, Any]:
-        return cam.create_still_configuration() # type:ignore
+        print("creating config")
+        # return cam.create_still_configuration() # type:ignore
     
         """Consult https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf"""
         camera_config: dict[str, Any] = cam.create_still_configuration(  # type:ignore
@@ -109,27 +125,31 @@ class RealCamera(Camera):
                 "output_size": (size.sensor_width, size.sensor_height),
                 "bit_depth": 10,
             },
-            main={"format": "RGB888", "size": (size.width, size.height)},
-            lores={"format": "YUV420", "size": (size.width, size.height)},
+            # YUYV is YUV422 so the luma is the same
+            main={"format": "YUYV", "size": (size.width, size.height)},
+            # it's a mono camera so what does it do for MJPEG?
+            # main={"format": "MJPEG", "size": (size.width, size.height)},
+            # main={"format": "RGB888", "size": (size.width, size.height)},
+            # lores={"format": "YUV420", "size": (size.width, size.height)},
             raw=None,
             controls={
                 # ANALOGUE GAIN
                 # To minimize blur, set this as high as possible.
                 # TODO: try much larger values, up to 250.
-                "AnalogueGain": 8,
+                # "AnalogueGain": 8,
                 #
                 # AUTO EXPOSURE
                 # Must be true for outside or in bright sun.
                 # "AeEnable": True,
-                "AeEnable": False,
+                # "AeEnable": False,
                 #
                 # AUTO WHITE BALANCE
                 # Screws up color sensing.
-                "AwbEnable": False,
+                # "AwbEnable": False,
                 #
                 # EXPOSURE TIME (microseconds)
                 # Minimizes blur.  Requires pretty good light.
-                "ExposureTime": 500,
+                # "ExposureTime": 500,
                 # Works in less light, slightly more blur.
                 # "ExposureTime": 2000,
                 #
@@ -146,7 +166,7 @@ class RealCamera(Camera):
                 # NOISE REDUCTION MODE
                 # noise reduction takes A LOT of time (100 ms per frame!), don't need it.
                 # See libcamera.controls.draft.NoiseReductionModeEnum.Off,
-                "NoiseReductionMode": 0,
+                # "NoiseReductionMode": 0,
             },
         )
 

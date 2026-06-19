@@ -9,6 +9,7 @@ from app.dashboard.display import Display
 from app.localization.combined_detector import CombinedDetector
 from app.localization.target_detector import TargetDetector
 from app.localization.tag_detector import TagDetector
+from app.localization.null_detector import NullDetector
 from app.network.network_protocol import Network
 
 
@@ -28,7 +29,9 @@ class InterpreterFactory:
 
         match identity:
             case Identity.FUNNEL:
-                return TagDetector(identity, cam, display, network)
+                # return TagDetector(identity, cam, display, network)
+                print("USING NULL DETECTOR")
+                return NullDetector(cam, display)
             case Identity.GAME_PIECE:
                 return TargetDetector(
                     cam,
