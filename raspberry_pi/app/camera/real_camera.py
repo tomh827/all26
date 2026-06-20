@@ -34,12 +34,12 @@ from app.util.timer import Timer
 
 class RealCamera(Camera):
     def __init__(self, identity: Identity) -> None:
-        print("\n*** Camera: RealCamera")
-        Picamera2.set_logging(Picamera2.INFO)
+
+        Picamera2.set_logging(Picamera2.INFO)  # type: ignore
         # debug logs with every frame (!)
         # Picamera2.set_logging(Picamera2.DEBUG)
         print("GLOBAL CAMERA INFO")
-        pprint(Picamera2.global_camera_info())
+        pprint(Picamera2.global_camera_info())  # type: ignore
         print("+==================")
         self._cam: Picamera2 = Picamera2()  # type: ignore
 
@@ -50,7 +50,7 @@ class RealCamera(Camera):
         pprint(self._cam.camera_controls)  # type:ignore
 
         print("\n*** RAW MODES")
-        pprint(self._cam._raw_modes)
+        pprint(self._cam._raw_modes)  # type:ignore
 
         self._mtx: Intrinsic = Intrinsic(identity)
         self._dist: Distortion = Distortion(identity)
@@ -60,8 +60,8 @@ class RealCamera(Camera):
         self._size: Size = Size.from_model(model)
 
         print("\n\n*** CONFIG! ***\n\n")
-        self._camera_config: dict[str, Any] = RealCamera.__get_config(  # type: ignore
-            identity, self._cam, self._size  # type: ignore
+        self._camera_config: dict[str, Any] = self._get_config(  # type: ignore
+            identity, self._cam  # type: ignore
         )
 
         print("\n*** REQUESTED CONFIG")
@@ -73,14 +73,6 @@ class RealCamera(Camera):
         print(self._camera_config)
 
         self._cam.configure(self._camera_config)  # type:ignore
-
-        # the "sensor" is not filled in for USB cameras.
-        if identity in (
-            Identity.FLIPPED,
-            # Identity.FUNNEL,
-            Identity.CLIMB_RIGHT,
-        ):
-            self._fail_mismatched_size()
 
         self._cam.start()  # type:ignore
         self._frame_time = Timer.time_ns()
@@ -111,80 +103,52 @@ class RealCamera(Camera):
     def get_dist(self) -> NDArray[np.float32]:
         return self._dist.get()
 
-    @staticmethod
-    def __get_config(
-        identity: Identity, cam: Picamera2, size: Size  # type: ignore
-    ) -> dict[str, Any]:
-        print("creating config")
+    def _buffer_count(self) -> int:
+        # more buffers seem to make the pipeline a little smoother
+        return 5
 
-        camera_config: dict[str, Any] = cam.create_still_configuration(  # type:ignore
-            # more buffers seem to make the pipeline a little smoother
-            buffer_count=5,
-            queue=True,
-            sensor={
-                "output_size": (size.sensor_width, size.sensor_height),
-                "bit_depth": 10,
-            },
-            # YUYV is YUV422 so the luma is the same
-            main={"format": "YUYV", "size": (size.width, size.height)},
-            # it's a mono camera so what does it do for MJPEG?
-            # main={"format": "MJPEG", "size": (size.width, size.height)},
-            # main={"format": "RGB888", "size": (size.width, size.height)},
-            # lores={"format": "YUV420", "size": (size.width, size.height)},
-            raw=None,
-            transform=RealCamera._transform(identity),  # type:ignore
-            controls={
-                # ANALOGUE GAIN
-                # To minimize blur, set this as high as possible.
-                # TODO: try much larger values, up to 250.
-                # "AnalogueGain": 8,
-                #
-                # AUTO EXPOSURE
-                # Must be true for outside or in bright sun.
-                # "AeEnable": True,
-                # "AeEnable": False,
-                #
-                # AUTO WHITE BALANCE
-                # Screws up color sensing.
-                # "AwbEnable": False,
-                #
-                # EXPOSURE TIME (microseconds)
-                # Minimizes blur.  Requires pretty good light.
-                # "ExposureTime": 500,
-                # Works in less light, slightly more blur.
-                # "ExposureTime": 2000,
-                #
-                # COLOUR GAINS
-                # The first argument is the red gain, second is blue gain.
-                # values are from testing in the new gym lighting(1.2,2.2)
-                # "ColourGains": (1.2,2.0),
-                #
-                # FRAME DURATION LIMITS
-                # limit auto exposure: go as fast as possible but no slower than 30fps
-                # without a duration limit, we slow down in the dark, which is fine
-                # "FrameDurationLimits": (500, 33333),  # 41 fps
-                #
-                # NOISE REDUCTION MODE
-                # noise reduction takes A LOT of time (100 ms per frame!), don't need it.
-                # See libcamera.controls.draft.NoiseReductionModeEnum.Off,
-                # "NoiseReductionMode": 0,
-            },
-        )
-        return camera_config  # type: ignore
+    def _queue(self) -> bool:
+        # Without queueing, every capture waits for the current
+        # frame, which means less FPS and more latency.
+        return True
 
-    @staticmethod
-    def _transform(identity: Identity) -> libcamera.Transform:  # type: ignore
+    def _sensor(self) -> dict[str, Any]:
+        # not all cameras use the "sensor" field
+        return {}
+
+    def _main(self) -> dict[str, Any]:
+        # override this
+        return {}
+
+    def _transform(self, identity: Identity) -> libcamera.Transform:  # type: ignore
         # Flip for upside-down cameras.
         # see libcamera/src/libcamera/transform.cpp
-        if identity in (
-            Identity.FLIPPED,
-            # Identity.FUNNEL,
-            Identity.CLIMB_RIGHT,
-        ):
-            return libcamera.Transform(  # type: ignore
-                rotation=0, hflip=True, vflip=True, transpose=False
-            )
-        return libcamera.Transform()  # type: ignore
+        match identity:
+            case Identity.FLIPPED | Identity.CLIMB_RIGHT:
+                return libcamera.Transform(  # type: ignore
+                    rotation=0, hflip=True, vflip=True, transpose=False
+                )
+            case _:
+                return libcamera.Transform()  # type: ignore
+
+    def _controls(self) -> dict[str, Any]:
+        # override this
+        return {}
+
+    def _get_config(
+        self,
+        identity: Identity,
+        cam: Picamera2,  # type: ignore
+    ) -> dict[str, Any]:
+        return cam.create_still_configuration(  # type:ignore
+            buffer_count=self._buffer_count(),
+            queue=self._queue(),
+            sensor=self._sensor(),
+            main=self._main(),
+            raw=None,
+            transform=self._transform(identity),  # type:ignore
+            controls=self._controls(),
+        )
 
     def _fail_mismatched_size(self):
         """Configured size and actual size must match."""
