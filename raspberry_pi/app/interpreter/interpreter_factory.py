@@ -3,13 +3,13 @@ import numpy as np
 from numpy.typing import NDArray
 
 from app.camera.camera_protocol import Camera
-from app.camera.interpreter_protocol import Interpreter
+from app.interpreter.interpreter_protocol import Interpreter
 from app.config.identity import Identity
 from app.dashboard.display import Display
 from app.localization.combined_detector import CombinedDetector
 from app.localization.target_detector import TargetDetector
 from app.localization.tag_detector import TagDetector
-from app.localization.null_detector import NullDetector
+from app.interpreter.viewfinder import Viewfinder
 from app.network.network_protocol import Network
 
 USE_NULL: bool = False
@@ -22,7 +22,7 @@ class InterpreterFactory:
     ) -> Interpreter:
         if USE_NULL:
             # For testing.
-            return NullDetector(cam, display, network)
+            return Viewfinder(display, network)
 
         # GREEN TARGET VALUES
         # object_lower = np.array((40, 50, 100))

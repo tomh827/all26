@@ -3,18 +3,19 @@
 import os
 from typing import cast  # pyright: ignore[reportUnusedImport]
 import cv2
+from cv2.typing import MatLike
 import ntcore
 import numpy as np
 from numpy.typing import NDArray
 from robotpy_apriltag import AprilTagDetection, AprilTagDetector, AprilTagPoseEstimator
-from typing_extensions import override
+from typing_extensions import override, Buffer
 from app.camera.camera_protocol import Camera, Request, Size
-from app.camera.interpreter_protocol import Interpreter
+from app.interpreter.interpreter_protocol import Interpreter
 from app.config.identity import Identity
 from app.dashboard.display import Display
 from app.network.network_protocol import Network
 from app.network.structs import Blip
-
+from app.decoder.decoder_protocol import Decoder
 
 class TagDetector(Interpreter):
     """A wrapper for the AprilTag detector."""
@@ -22,7 +23,11 @@ class TagDetector(Interpreter):
     IMAGE_DIR = "images"
 
     def __init__(
-        self, identity: Identity, cam: Camera, display: Display, network: Network
+        self,
+        identity: Identity,
+        cam: Camera,
+        display: Display,
+        network: Network,
     ) -> None:
         """Debug is very slow.  It writes apriltag detector debug images
         into the same filenames over and over, and also writes
@@ -118,35 +123,13 @@ class TagDetector(Interpreter):
 
     @override
     def analyze(self, req: Request) -> None:
-        # TODO: allow both yuv420 and yuyv and mjpeg etc.
-        # FOR MJPEG
-        # with req.rgb() as buffer:
-        # buffer here is jpeg encoded.
-        # jpg: NDArray[np.uint8] = np.frombuffer(buffer, dtype=np.uint8)
-        # img = cv2.imdecode(jpg, 0) # grayscale
-        # if img is None:
-        #     return
-
-        # FOR YUYV
+        buffer: Buffer
         with req.buffer() as buffer:
-            img: NDArray[np.uint8] = np.frombuffer(buffer, dtype=np.uint8)
-            img = img.reshape((self._height, self._width * 2))  # type:ignore
-            img = img[:, ::2]
-            # # the stride above is just a noncontiguous view, so:
-            img = np.ascontiguousarray(img)
-
-            # TODO: make some utility methods for this.
-            #
-            # FOR YUV420
-            #            # truncate, ignore chrominance. this makes a view, very fast (300 ns)
-            #            img: NDArray[np.uint8] = cast(
-            #                NDArray[np.uint8],
-            #                np.frombuffer(buffer, dtype=np.uint8, count=self._y_len),  # type:ignore
-            #            )
-            #
-            #            # this  makes a view, very fast (150 ns)
-            #            img = img.reshape((self._height, self._width))  # type:ignore
-
+            decoder: Decoder = req.decoder()
+            img: MatLike | None = decoder.mono(buffer)
+            if img is None:
+                return
+          
             if self._network.calibrate():
                 self.write_calibration_image(img)
 

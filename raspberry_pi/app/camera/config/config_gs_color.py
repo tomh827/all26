@@ -3,8 +3,9 @@
 from typing import Any
 from typing_extensions import override
 
-from app.camera.config_protocol import Config
+from app.camera.config.config_protocol import Config
 from app.camera.size import Size
+from app.decoder.rgb888_decoder import Rgb888Decoder
 
 
 class ConfigGsColor(Config):
@@ -12,35 +13,41 @@ class ConfigGsColor(Config):
     It uses the 24-bit RGB encoding option from the camera.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, size: Size) -> None:
         print("\n*** Config: ConfigGsColor")
+        self._size = size
 
     @override
-    def sensor(self, size: Size) -> dict[str, Any]:
+    def decoder(self) -> Rgb888Decoder:
+        return Rgb888Decoder(self._size)
+
+    @override
+    def sensor(self) -> dict[str, Any]:
         # for rpi camera
         return {
-            "output_size": (size.sensor_width, size.sensor_height),
+            "output_size": (self._size.sensor_width, self._size.sensor_height),
             "bit_depth": 10,
         }
 
     @override
-    def main(self, size: Size) -> dict[str, Any]:
+    def main(self) -> dict[str, Any]:
         """RGB encoding.
         Remember that when OpenCV says "RGB" it really means "BGR"
         github.com/raspberrypi/picamera2/issues/848"""
-        return {"format": "RGB888", "size": (size.width, size.height)}
+        return {"format": "RGB888", "size": (self._size.width, self._size.height)}
 
+    @override
     def controls(self) -> dict[str, Any]:
         return {
             # ANALOGUE GAIN
             # To minimize blur, set this as high as possible.
             # TODO: try much larger values, up to 250.
-            # "AnalogueGain": 8,
+            "AnalogueGain": 8,
             #
             # AUTO EXPOSURE
             # Must be true for outside or in bright sun.
             # "AeEnable": True,
-            # "AeEnable": False,
+            "AeEnable": False,
             #
             # AUTO WHITE BALANCE
             # Screws up color sensing.
@@ -50,7 +57,7 @@ class ConfigGsColor(Config):
             # Minimizes blur.  Requires pretty good light.
             # "ExposureTime": 500,
             # Works in less light, slightly more blur.
-            # "ExposureTime": 2000,
+            "ExposureTime": 2000,
             #
             # COLOUR GAINS
             # The first argument is the red gain, second is blue gain.

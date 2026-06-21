@@ -19,7 +19,6 @@ class FakeCamera(Camera):
     def __init__(
         self,
         filename: str,
-        yuv: bool,
         size: Optional[tuple[int, int]] = None,
         k1: float = 0.0,
         inv_k1: float = 0.0,
@@ -32,12 +31,13 @@ class FakeCamera(Camera):
         inv_k1: inverse distortion, used to distort the image
         note: if k1 magnitude is more than about 7, undistort barfs.
         """
-        p = Path(__file__).with_name(filename)
+        p = Path(__file__).parent / filename
         pathstr: str = str(p)
-        file = cv2.imread(pathstr)
+        # force the file to be read as three-channel BGR
+        file = cv2.imread(pathstr, cv2.IMREAD_COLOR)
         if file is None:
-            raise ValueError("no file")
-        self._yuv = yuv
+            raise ValueError("no file: " + pathstr)
+        # img is 3 channel BGR
         self.img: MatLike = file
         if size is not None:
             self.img = cv2.resize(self.img, size)
@@ -61,7 +61,7 @@ class FakeCamera(Camera):
         total_time_ms = (capture_start - self.frame_time) / 1000000
         self.frame_time = capture_start
         fps = 1000 / total_time_ms
-        return FakeRequest(self.img, fps, self._yuv)
+        return FakeRequest(self.img, fps)
 
     @override
     def stop(self) -> None:

@@ -12,9 +12,10 @@ from typing_extensions import override
 from wpimath.geometry import Rotation3d
 from cv2.typing import MatLike, Moments
 from app.camera.camera_protocol import Camera, Request, Size
-from app.camera.interpreter_protocol import Interpreter
+from app.interpreter.interpreter_protocol import Interpreter
 from app.config.identity import Identity
 from app.dashboard.display import Display
+from app.decoder.decoder_protocol import Decoder
 from app.network.structs import Blip, Target
 from app.network.network_protocol import Network
 
@@ -206,11 +207,12 @@ class CombinedDetector(Interpreter):
     @override
     def analyze(self, req: Request) -> None:
         """Process both tags and objects from the BGR image."""
-        with req.buffer() as buffer_rgb:
-            # Get BGR image for both detectors
-            img_bgr: NDArray[np.uint8] = np.frombuffer(buffer_rgb, dtype=np.uint8)
+        with req.buffer() as buffer:
+            decoder: Decoder = req.decoder()
+            img_bgr: MatLike | None = decoder.color(buffer)
+            if img_bgr is None:
+                return
 
-            img_bgr = img_bgr.reshape((self._height, self._width, 3))
             img_display = img_bgr.copy()
 
             # microsecond age of frame

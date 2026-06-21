@@ -1,10 +1,8 @@
 # pylint: disable=E1101
 
-from typing import override
 from numpy.typing import NDArray
 from cv2.typing import MatLike
-
-from typing_extensions import Buffer
+from typing_extensions import override, Buffer
 import cv2
 import numpy as np
 from app.camera.size import Size
@@ -20,7 +18,7 @@ class YuyvDecoder(Decoder):
     @override
     def mono(self, buffer: Buffer) -> MatLike | None:
         img: NDArray[np.uint8] = np.frombuffer(buffer, dtype=np.uint8)
-        img = img.reshape((self._size.height, self._.size.width * 2))  # type:ignore
+        img = img.reshape((self._size.height, self._size.width * 2))  # type:ignore
         img = img[:, ::2]
         # the stride above is just a noncontiguous view, so:
         return np.ascontiguousarray(img)

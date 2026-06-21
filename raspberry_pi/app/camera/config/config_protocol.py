@@ -4,13 +4,18 @@ from typing import Any
 from typing import Protocol
 from picamera2 import libcamera  # type: ignore
 
-from app.camera.size import Size
 from app.config.identity import Identity
+from app.decoder.decoder_protocol import Decoder
 
 
 class Config(Protocol):
     """Interface for camera config, with some defaults.
-    Corresponds to the arguments for Picamera2.create_still_configuration()."""
+    Mostly corresponds to the arguments for
+    Picamera2.create_still_configuration()."""
+
+    def decoder(self) -> Decoder:
+        """Decoder for the format of this config."""
+        ...
 
     def buffer_count(self) -> int:
         """Even though we always take the most-recent buffer,
@@ -22,7 +27,7 @@ class Config(Protocol):
         frame, which means less FPS and more latency."""
         return True
 
-    def sensor(self, size: Size) -> dict[str, Any]:
+    def sensor(self) -> dict[str, Any]:
         """RPI cameras only, size and bit depth."""
         return {}
 
@@ -31,7 +36,7 @@ class Config(Protocol):
         We never use these."""
         return None
 
-    def main(self, size: Size) -> dict[str, Any]:
+    def main(self) -> dict[str, Any]:
         """Encoding format and size."""
         ...
 

@@ -3,9 +3,14 @@
 from typing import Protocol
 from contextlib import AbstractContextManager
 from typing_extensions import Buffer
+from app.decoder.decoder_protocol import Decoder
 
 
 class Request(Protocol):
+    def decoder(self) -> Decoder:
+        """Decoder for the format of this request."""
+        ...
+
     def fps(self) -> float:
         """FPS calculated from the previous capture."""
         ...
@@ -21,6 +26,6 @@ class Request(Protocol):
         of the camera."""
         ...
 
-    def release(self) -> None: 
+    def release(self) -> None:
         """Release the buffer back to the pool."""
         ...

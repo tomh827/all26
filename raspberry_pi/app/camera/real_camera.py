@@ -5,12 +5,13 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
+from app.decoder.decoder_protocol import Decoder
 from picamera2 import CompletedRequest, Picamera2  # type: ignore
 from typing_extensions import override
 
 from app.camera.camera_protocol import Camera, Request
-from app.camera.config_factory import ConfigFactory
-from app.camera.config_protocol import Config
+from app.camera.config.config_factory import ConfigFactory
+from app.camera.config.config_protocol import Config
 from app.camera.distortion import Distortion
 from app.camera.intrinsic import Intrinsic
 from app.camera.model import Model
@@ -35,9 +36,9 @@ class RealCamera(Camera):
     """
 
     def __init__(self, identity: Identity) -> None:
-        Picamera2.set_logging(Picamera2.INFO)  # type: ignore
+        # Picamera2.set_logging(Picamera2.INFO)  # type: ignore
         # debug logs with every frame (!)
-        # Picamera2.set_logging(Picamera2.DEBUG)
+        Picamera2.set_logging(Picamera2.DEBUG)  # type: ignore
         print("GLOBAL CAMERA INFO")
         pprint(Picamera2.global_camera_info())  # type: ignore
         print("+==================")
@@ -59,10 +60,11 @@ class RealCamera(Camera):
         self._size: Size = Size.from_model(model)
 
         print("\n\n*** CONFIG! ***\n\n")
-        config: Config = ConfigFactory.get(identity)
+        config: Config = ConfigFactory.get(identity, self._size)
         self._camera_config: dict[str, Any] = self._get_config(  # type: ignore
-            config, self._size, identity, self._cam  # type: ignore
+            config, identity, self._cam  # type: ignore
         )
+        self._decoder: Decoder = config.decoder()
         print("\n*** REQUESTED CONFIG")
         print(self._camera_config)
         # optimal alignment makes the ISP a little faster
@@ -83,7 +85,7 @@ class RealCamera(Camera):
         total_time_ms = (capture_start - self._frame_time) / 1000000
         self._frame_time = capture_start
         fps = 1000 / total_time_ms
-        return RealRequest(req, fps)  # type: ignore
+        return RealRequest(req, fps, self._decoder)  # type: ignore
 
     @override
     def stop(self) -> None:
@@ -105,7 +107,6 @@ class RealCamera(Camera):
     def _get_config(
         self,
         conf: Config,
-        size: Size,
         identity: Identity,
         cam: Picamera2,  # type: ignore
     ) -> dict[str, Any]:
@@ -116,14 +117,17 @@ class RealCamera(Camera):
         never really needed that, and it's not supported for
         UVC cameras, so it's gone.  There's just one "main"
         stream."""
+        controls = conf.controls()
+        print("\nREQUESTED CONTROLS:")
+        pprint(controls)
         return cam.create_still_configuration(  # type:ignore
             buffer_count=conf.buffer_count(),
             queue=conf.queue(),
-            sensor=conf.sensor(size),
-            main=conf.main(size),
+            sensor=conf.sensor(),
+            main=conf.main(),
             raw=conf.raw(),
             transform=conf.transform(identity),  # type:ignore
-            controls=conf.controls(),
+            controls=controls,
         )
 
     def _check_config(self, config: Config):

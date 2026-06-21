@@ -19,7 +19,7 @@ class CameraFactory:
             from app.camera.fake_camera import FakeCamera
 
             # 1/4 scale
-            # return FakeCamera("tag_and_board.jpg", (1100, 620), -5)
+            # return FakeCamera("images/tag_and_board.jpg", (1100, 620), -5)
             # full-size (huge)
-            return FakeCamera("tag_and_board.jpg", False, (5504, 3096), -0.1, 0.1)
-            # return FakeCamera("blob.jpg")
+            return FakeCamera("images/tag_and_board.jpg", (5504, 3096), -0.1, 0.1)
+            # return FakeCamera("images/blob.jpg")

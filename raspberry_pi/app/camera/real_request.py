@@ -1,29 +1,34 @@
 # pylint: disable=E0401
-
-
+from pprint import pprint
 from contextlib import AbstractContextManager
 from typing import cast
 from typing_extensions import Buffer, override
-
 from picamera2 import CompletedRequest  # type: ignore
 from picamera2.request import _MappedBuffer  # type: ignore
-
 from app.camera.request_protocol import Request
 from app.util.timer import Timer
+from app.decoder.decoder_protocol import Decoder
 
 # Extra constant delay.
 EXTRA_DELAY_MS: float = 2.5
 
 
 class RealRequest(Request):
-    def __init__(self, req: CompletedRequest, fps: float):  # type: ignore
+    def __init__(self, req: CompletedRequest, fps: float, decoder: Decoder):  # type: ignore
         # Before we get a CompletedRequest, its constructor has used the
         # camera allocator sync property to:
         # * instantiate a DMA allocator sync for each buffer
         # * tell the camera allocator to mark the buffers as 'in use'
         # * __enter__() each buffer's DmaSync, which calls ioctl DMA_BUF_SYNC_START
         self._req: CompletedRequest = req
+        print("METADATA")
+        pprint(req.get_metadata())  # type: ignore
         self._fps = fps
+        self._decoder = decoder
+
+    @override
+    def decoder(self) -> Decoder:
+        return self._decoder
 
     @override
     def fps(self) -> float:
