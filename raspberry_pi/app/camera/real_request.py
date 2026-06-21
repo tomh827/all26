@@ -21,8 +21,8 @@ class RealRequest(Request):
         # * tell the camera allocator to mark the buffers as 'in use'
         # * __enter__() each buffer's DmaSync, which calls ioctl DMA_BUF_SYNC_START
         self._req: CompletedRequest = req
-        print("METADATA")
-        pprint(req.get_metadata())  # type: ignore
+        # print("METADATA")
+        # pprint(req.get_metadata())  # type: ignore
         self._fps = fps
         self._decoder = decoder
 

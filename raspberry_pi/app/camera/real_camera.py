@@ -1,6 +1,7 @@
 # pylint: disable=E0401
 
 from pprint import pprint
+import time
 from typing import Any
 
 import numpy as np
@@ -36,9 +37,9 @@ class RealCamera(Camera):
     """
 
     def __init__(self, identity: Identity) -> None:
-        # Picamera2.set_logging(Picamera2.INFO)  # type: ignore
+        Picamera2.set_logging(Picamera2.INFO)  # type: ignore
         # debug logs with every frame (!)
-        Picamera2.set_logging(Picamera2.DEBUG)  # type: ignore
+        # Picamera2.set_logging(Picamera2.DEBUG)  # type: ignore
         print("GLOBAL CAMERA INFO")
         pprint(Picamera2.global_camera_info())  # type: ignore
         print("+==================")
@@ -76,6 +77,9 @@ class RealCamera(Camera):
         self._check_config(config)
 
         self._cam.start()  # type:ignore
+        # Controls need to be set *after* the camera starts,
+        # or AeEnable doesn't do anything!
+        self._cam.set_controls(config.controls()) # type:ignore
         self._frame_time = Timer.time_ns()
 
     @override
