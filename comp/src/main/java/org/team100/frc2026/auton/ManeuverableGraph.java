@@ -31,7 +31,7 @@ public class ManeuverableGraph {
     return graph;
      }
 
-    private static boolean intersectsObstacle(
+    public static boolean intersectsObstacle(
             Translation2d a,
             Translation2d b,
             List<Obstacle> obstacles) {

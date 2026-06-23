@@ -14,8 +14,7 @@ import org.team100.frc2026.auton.ManeuverableGraph;
 
 
 public class GraphAvoid {
-
-        private final Translation2d point;
+    private final Translation2d point;
 
         public GraphAvoid(Translation2d point) {
             this.point = point;
@@ -24,6 +23,7 @@ public class GraphAvoid {
         public Translation2d getPoint () {
             return point;
 
+    
         }
     }
 
