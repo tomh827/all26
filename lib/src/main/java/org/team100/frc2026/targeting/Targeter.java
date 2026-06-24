@@ -59,6 +59,8 @@ public class Targeter {
      * Firing parameters for the specified range.
      * Empty if there is no valid solution for that range (e.g. it's too far or too
      * close)
+     * 
+     * TODO: extract target selection and shot type
      */
     public Optional<FiringParameters> forRange(double rangeM) {
         Translation2d p = m_position.get();

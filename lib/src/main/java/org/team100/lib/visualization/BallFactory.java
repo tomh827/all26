@@ -1,5 +1,6 @@
 package org.team100.lib.visualization;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import org.team100.lib.logging.LoggerFactory;
@@ -14,7 +15,7 @@ public class BallFactory {
             LoggerFactory field,
             Supplier<ModelSE2> robot,
             Supplier<Rotation2d> azimuth,
-            double speed) {
+            DoubleSupplier speed) {
         return new BallR2(field, robot, azimuth, speed);
 
     }
@@ -24,7 +25,7 @@ public class BallFactory {
             Supplier<ModelSE2> robot,
             Supplier<Rotation2d> azimuth,
             Supplier<Rotation2d> elevation,
-            double speed,
+            DoubleSupplier speed,
             double omega) {
         Drag d = new Drag(0.5, 0.025, 0.1, 0.1, 0.1);
         return new BallR3(field, d, robot, azimuth, elevation, speed, omega);

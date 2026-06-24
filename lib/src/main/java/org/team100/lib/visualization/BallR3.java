@@ -1,5 +1,6 @@
 package org.team100.lib.visualization;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import org.team100.lib.framework.TimedRobot100;
@@ -28,7 +29,7 @@ public class BallR3 implements Ball {
     private final Supplier<ModelSE2> m_robot;
     private final Supplier<Rotation2d> m_azimuth;
     private final Supplier<Rotation2d> m_elevation;
-    private final double m_speed;
+    private final DoubleSupplier m_speed;
     private final double m_omega;
 
     // null when contained in robot.
@@ -54,7 +55,7 @@ public class BallR3 implements Ball {
             Supplier<ModelSE2> robot,
             Supplier<Rotation2d> azimuth,
             Supplier<Rotation2d> elevation,
-            double speed,
+            DoubleSupplier speed,
             double omega) {
         m_log_field_ball = field.doubleArrayLogger(Level.COMP, "ball");
         m_drag = drag;
@@ -69,7 +70,7 @@ public class BallR3 implements Ball {
     public void launch() {
         // Velocity due only to the gun
         GlobalVelocityR3 v = GlobalVelocityR3.fromPolar(
-                m_azimuth.get(), m_elevation.get(), m_speed);
+                m_azimuth.get(), m_elevation.get(), m_speed.getAsDouble());
         // velocity due to robot translation
         GlobalVelocityR3 mv = GlobalVelocityR3.fromSe2(m_robot.get().velocity());
         // Initial position is on the floor.
