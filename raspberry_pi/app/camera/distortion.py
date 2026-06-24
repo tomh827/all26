@@ -11,6 +11,11 @@ class Distortion:
 
     We've had good results using the four-parameter model: [k1, k2, p1, p2].
 
+case Identity.FUNNEL:
+                self._dist = np.array(
+                    [0.01912500689, -0.009503859475, 0.002487117763, -0.0008741780275]
+                )       
+
     Using the 3.2mm lens and GS camera:
     * k1 is quadratic radial, should be around -0.3
     * k2 is quartic radial, should be around 0.1
