@@ -1,4 +1,8 @@
 import unittest
+import numpy as np
+from robotpy_apriltag import AprilTagDetection
+from wpimath.geometry import Transform3d, Translation3d, Rotation3d
+
 from app.camera.fake_camera import FakeCamera
 from app.config.identity import Identity
 from app.dashboard.fake_display import FakeDisplay
@@ -197,6 +201,16 @@ class TagDetectorTest(unittest.TestCase):
         self.assertEqual(2, len(display.locs))
         self.assertEqual(1, display.frame_count)
 
+    def verify_pose(self, pose: Transform3d) -> None:
+        t: Translation3d = pose.translation()
+        self.assertAlmostEqual(-0.186, t.x, 3)
+        self.assertAlmostEqual(0.027, t.y, 3)
+        self.assertAlmostEqual(0.642, t.z, 3)
+        r: Rotation3d = pose.rotation()
+        self.assertAlmostEqual(0.786, r.x, 3)
+        self.assertAlmostEqual(-0.607, r.y, 3)
+        self.assertAlmostEqual(-0.492, r.z, 3)
+
     def test_distortion(self) -> None:
         """How much distortion can there be in the image?"""
         identity = Identity.UNKNOWN
@@ -209,6 +223,7 @@ class TagDetectorTest(unittest.TestCase):
             camera.capture_request()
         )
         self.assertEqual(1, len(display.tags))
+        self.verify_pose(display.poses[0])
 
         # this is about the most possible
         camera = FakeCamera("images/tag_and_board.jpg", (1100, 620), -5, 5)
@@ -217,6 +232,8 @@ class TagDetectorTest(unittest.TestCase):
             camera.capture_request()
         )
         self.assertEqual(1, len(display.tags))
+        # TODO: fix this
+        # self.verify_pose(display.poses[0])
 
         # This is too much distortion, so detection fails.
         # Note, this is a truly enormous amount of distortion.

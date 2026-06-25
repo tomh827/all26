@@ -51,7 +51,9 @@ class FakeCamera(Camera):
 
         dist = np.array([inv_k1, 0, 0, 0])
 
-        self.img = cv2.undistort(self.img, mtx, dist)
+        self.img: MatLike = cv2.undistort(self.img, mtx, dist)
+        print("\n*** img shape:", self.img.shape)
+
         # uncomment to see the distorted thing
         # cv2.imwrite("blarg.jpg", self.img)
 

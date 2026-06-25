@@ -1,6 +1,8 @@
 package org.team100;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 
@@ -10,13 +12,111 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.MatOfPoint3f;
+import org.opencv.core.Point;
+import org.opencv.core.Size;
 import org.opencv.core.TermCriteria;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
+import edu.wpi.first.apriltag.AprilTagDetection;
+import edu.wpi.first.apriltag.AprilTagDetector;
 import edu.wpi.first.apriltag.AprilTagPoseEstimator;
 import edu.wpi.first.cscore.OpenCvLoader;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 
 public class CornerTest {
+
+    double[] RAW_CORNERS = new double[] { //
+            955, 2477, //
+            1934, 1929, //
+            1847, 1042, //
+            649, 1465 };
+    double[] RAW_HOMOGRAPHY = new double[] { //
+            684, 202, 1413, //
+            -60, 612, 1741, //
+            0, 0, 0 };
+
+    /**
+     * Find files in the classpath.
+     * 
+     * Test resources should go in src/test/resources,
+     * and they appear in build/resources/test.
+     */
+    private String res(String filename) {
+        return getClass().getResource("/" + filename).getPath();
+    }
+
+    @Test
+    void testDetection() throws IOException {
+        OpenCvLoader.forceLoad();
+        try (AprilTagDetector detector = new AprilTagDetector()) {
+            detector.addFamily("tag36h11");
+            Mat img = Imgcodecs.imread(res("tag_and_board.jpg"));
+            assertNotNull(img);
+            // the equivalent tag_detector_test.py resizes, so we do too.
+            Imgproc.resize(img, img, new Size(1100, 620));
+            Size size = img.size();
+            assertEquals(1100, size.width);
+            assertEquals(620, size.height);
+            Imgproc.cvtColor(img, img, Imgproc.COLOR_BGR2GRAY);
+            AprilTagDetection[] detections = detector.detect(img);
+            // we find the big one
+            assertEquals(1, detections.length);
+            AprilTagDetection detection = detections[0];
+            assertEquals(1, detection.getId());
+
+            // Verify the corner locations.
+            double[] corners = new double[] { //
+                    191, 496, //
+                    387, 386, //
+                    369, 209, //
+                    130, 293 };
+            assertArrayEquals(corners, detection.getCorners(), 1.0);
+
+            // Verify the computed homography for those corners.
+            double[] homography = new double[] { //
+                    137, 40, 282, //
+                    -12, 122, 349, //
+                    0, 0, 0 };
+            assertArrayEquals(homography, detection.getHomography(), 1.0);
+
+            // Compute the homography again with OpenCV: it's the same.
+            MatOfPoint2f srcPoints = new MatOfPoint2f(
+                    new Point(-1, 1),
+                    new Point(1, 1),
+                    new Point(1, -1),
+                    new Point(-1, -1));
+            MatOfPoint2f dstPoints = new MatOfPoint2f(
+                    new Point(corners[0], corners[1]),
+                    new Point(corners[2], corners[3]),
+                    new Point(corners[4], corners[5]),
+                    new Point(corners[6], corners[7]));
+            Mat h2 = Calib3d.findHomography(srcPoints, dstPoints);
+            double[] d2 = new double[9];
+            h2.get(0, 0, d2);
+            assertArrayEquals(homography, d2, 1.0);
+
+            // tag size is the real tag size
+            // camera intrinsic matches GS camera and python test
+            AprilTagPoseEstimator.Config conf = new AprilTagPoseEstimator.Config(
+                    0.1651, 935, 935, 550, 310);
+            AprilTagPoseEstimator estimator = new AprilTagPoseEstimator(conf);
+            Transform3d pose = estimator.estimate(homography, corners);
+            Translation3d t = pose.getTranslation();
+            Rotation3d r = pose.getRotation();
+            // these are all inverted compared to the python code.
+            assertEquals(0.186, t.getX(), 0.001);
+            assertEquals(-0.027, t.getY(), 0.001);
+            assertEquals(-0.642, t.getZ(), 0.001);
+            assertEquals(-0.786, r.getX(), 0.001);
+            assertEquals(0.600, r.getY(), 0.001); // different in last digit
+            assertEquals(Math.PI - 0.492, r.getZ(), 0.003); // different in last digit
+
+        }
+    }
+
     /**
      * One option is to ship *raw* camera corners, and for the camera to be unaware
      * of its own parameters.
@@ -24,7 +124,7 @@ public class CornerTest {
      * @throws Throwable
      */
     @Test
-    void testUndistortInJava() throws Throwable {
+    void testUndistortInJava() throws IOException {
         OpenCvLoader.forceLoad();
         // from the camera
         Mat src = new Mat();

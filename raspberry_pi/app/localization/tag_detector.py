@@ -43,6 +43,8 @@ class TagDetector(Interpreter):
 
         self._mtx: NDArray[np.float32] = cam.get_intrinsic()
         self._dist: NDArray[np.float32] = cam.get_dist()
+        print("\n*** intrinsic:\n", self._mtx)
+        print("\n*** distortion:", self._dist)
 
         size: Size = cam.get_size()
         self._width: int = size.width
@@ -98,6 +100,9 @@ class TagDetector(Interpreter):
         else:
             # normal tag size is 6.5 inches
             tag_size = 0.1651
+
+        print("\n*** tag size:", tag_size)
+
         self._estimator = AprilTagPoseEstimator(
             AprilTagPoseEstimator.Config(
                 tag_size,
