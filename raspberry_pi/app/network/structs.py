@@ -21,6 +21,22 @@ class Blip:
 
 @wpistruct.make_wpistruct  # type:ignore
 @dataclasses.dataclass
+class BlipWithCorners:
+    """AprilTag pose with pixel corners"""
+
+    timestamp: wpistruct.int64
+    """server microseconds"""
+    id: wpistruct.int32
+    """tag id"""
+    corners: list[float]
+    """pixel corners"""
+    pose: Transform3d
+    """camera-relative"""
+
+
+
+@wpistruct.make_wpistruct  # type:ignore
+@dataclasses.dataclass
 class Target:
     """Game piece target"""
 
