@@ -246,7 +246,7 @@ public class AprilTagCornerRobotLocalizer extends CameraReader<BlipWithCorners> 
             BlipWithCorners blip = blips[i];
 
             // Camera-to-tag.
-            final Transform3d cameraToTag = tagInCamera(blip);
+            final Transform3d cameraToTag = tagInCamera(camera, blip);
 
             if (i == 0) {
                 // Only log the first tag seen; for calibration we really only see one.
@@ -403,13 +403,13 @@ public class AprilTagCornerRobotLocalizer extends CameraReader<BlipWithCorners> 
      * The raw pose in the blip is "z-forward" like the camera.
      * This returns "x-forward" like the robot.
      */
-    private Transform3d tagInCamera(BlipWithCorners blip) {
+    private Transform3d tagInCamera(Camera camera, BlipWithCorners blip) {
         float[] corners = blip.getCorners();
         double[] dCorners = new double[corners.length];
         for (int i = 0; i < corners.length; ++i) {
             dCorners[i] = corners[i];
         }
-        Transform3d zFwd = m_estimator.pose(dCorners);
+        Transform3d zFwd = m_estimator.pose(camera, dCorners);
         return GeometryUtil.zForwardToXForward(zFwd);
         // return blip.blipToTransform();
     }
