@@ -75,6 +75,22 @@ public class SwerveModuleState100 implements Comparable<SwerveModuleState100>, S
         return m_angle;
     }
 
+    public double vx() {
+         if (Math.abs(speedMetersPerSecond()) < 1e-6 || angle().isEmpty()) {
+            // wheel is stopped, or angle is invalid so pretend it's stopped.
+            return 0;
+        }
+        return speedMetersPerSecond() * angle().get().getCos();
+    }
+
+    public double vy() {
+        if (Math.abs(speedMetersPerSecond()) < 1e-6 || angle().isEmpty()) {
+            // wheel is stopped, or angle is invalid so pretend it's stopped.
+            return 0;
+        }
+        return speedMetersPerSecond() * angle().get().getSin();
+    }
+
     @Override
     public String toString() {
         return String.format(

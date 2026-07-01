@@ -131,7 +131,7 @@ public class SimulatedDrivingTest implements Timeless {
         if (DEBUG)
             System.out.printf("%s\n", modulePositionDelta);
 
-        Twist2d twist = swerveKinodynamics.getKinematics().toTwist2d(modulePositionDelta);
+        Twist2d twist = swerveKinodynamics.getKinematics().forward(modulePositionDelta);
 
         Pose2d deltaPose = GeometryUtil.sexp(twist);
         ChassisSpeeds continuousSpeeds = new ChassisSpeeds(

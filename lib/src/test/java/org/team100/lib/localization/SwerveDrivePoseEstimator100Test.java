@@ -934,7 +934,7 @@ class SwerveDrivePoseEstimator100Test implements Timeless {
                     groundTruthState.velocityMetersPerSecond * groundTruthState.curvatureRadPerMeter);
 
             SwerveModuleStates moduleStates = kinodynamics.getKinematics()
-                    .toSwerveModuleStates(SwerveKinodynamics.discretize(chassisSpeeds, DT));
+                    .inverse(SwerveKinodynamics.discretize(chassisSpeeds, DT));
             SwerveModuleState100[] moduleStatesAll = moduleStates.all();
             SwerveModulePosition100[] positionsAll = positions.all();
             SwerveModulePosition100[] newPositions = new SwerveModulePosition100[positionsAll.length];
