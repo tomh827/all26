@@ -32,7 +32,7 @@ public class Robot extends TimedRobot {
         motor1 = new KrakenX60Motor(
                 logger.name("one"),
                 currentLog,
-                new CanId(18),
+                new CanId(6),
                 NeutralMode100.COAST,
                 MotorPhase.FORWARD,
                 new CurrentLimit(STATOR_LIMIT, SUPPLY_LIMIT),
@@ -42,7 +42,7 @@ public class Robot extends TimedRobot {
         motor2 = new KrakenX60Motor(
                 logger.name("two"),
                 currentLog,
-                new CanId(19),
+                new CanId(7),
                 NeutralMode100.COAST,
                 MotorPhase.REVERSE,
                 new CurrentLimit(STATOR_LIMIT, SUPPLY_LIMIT),
@@ -63,8 +63,12 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopPeriodic() {
-        motor1.setDutyCycle(1.0);
-        motor2.setDutyCycle(1.0);
+        // motor1.setDutyCycle(0.5);
+        // motor2.setDutyCycle(0.5);
+
+        motor1.setVelocity(300, 0, 0);
+        motor2.setVelocity(300, 0, 0);
+
     }
 
     @Override
