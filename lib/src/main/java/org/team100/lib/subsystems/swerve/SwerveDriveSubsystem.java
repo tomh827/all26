@@ -16,10 +16,11 @@ import org.team100.lib.logging.LoggerFactory.DoubleArrayLogger;
 import org.team100.lib.logging.LoggerFactory.DoubleLogger;
 import org.team100.lib.logging.LoggerFactory.EnumLogger;
 import org.team100.lib.logging.LoggerFactory.ModelSE2Logger;
-import org.team100.lib.logging.LoggerFactory.VelocitySE2Logger;
+import org.team100.lib.logging.LoggerFactory.VelocityControlSE2Logger;
 import org.team100.lib.music.Music;
 import org.team100.lib.music.Player;
 import org.team100.lib.state.ModelSE2;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.se2.VelocitySubsystemSE2;
 import org.team100.lib.subsystems.swerve.kinodynamics.SwerveKinodynamics;
 import org.team100.lib.subsystems.swerve.module.state.SwerveModulePositions;
@@ -47,7 +48,7 @@ public class SwerveDriveSubsystem extends SubsystemBase implements VelocitySubsy
     private final ModelSE2Logger m_log_state;
     private final DoubleArrayLogger m_log_pose_array;
     private final EnumLogger m_log_skill;
-    private final VelocitySE2Logger m_log_input;
+    private final VelocityControlSE2Logger m_log_input;
     private final DoubleLogger m_log_rotation_evolution;
 
     private final List<Player> m_players;
@@ -65,7 +66,7 @@ public class SwerveDriveSubsystem extends SubsystemBase implements VelocitySubsy
         m_log_state = log.modelSE2Logger(Level.COMP, "state");
         m_log_pose_array = log.doubleArrayLogger(Level.COMP, "pose array");
         m_log_skill = log.enumLogger(Level.TRACE, "skill level");
-        m_log_input = log.VelocitySE2Logger(Level.TRACE, "drive input");
+        m_log_input = log.velocityControlSE2Logger(Level.TRACE, "drive input");
         m_log_rotation_evolution = log.doubleLogger(Level.TRACE, "rotation evolution");
         m_players = m_swerveLocal.players();
         stop();
@@ -82,7 +83,7 @@ public class SwerveDriveSubsystem extends SubsystemBase implements VelocitySubsy
      * @param nextV for the next timestep
      */
     @Override
-    public void setVelocity(VelocitySE2 nextV) {
+    public void set(VelocityControlSE2 nextV) {
         // Actuation is constant for the whole control period, which means
         // that to calculate robot-relative speed from field-relative speed,
         // we need to use the robot rotation *at the future time*.
@@ -94,7 +95,7 @@ public class SwerveDriveSubsystem extends SubsystemBase implements VelocitySubsy
         m_log_rotation_evolution.log(
                 () -> nextTheta.minus(currentState.rotation()).getRadians());
         ChassisSpeeds nextSpeed = SwerveKinodynamics.toInstantaneousChassisSpeeds(
-                nextV, nextTheta);
+                nextV.velocity(), nextTheta);
         m_swerveLocal.setChassisSpeeds(nextSpeed);
         m_log_input.log(() -> nextV);
     }

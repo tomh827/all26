@@ -3,10 +3,11 @@
 This is a study of second-order dynamics applied to three different
 mechanisms:
 
-* [Revolute (R)](README_R.md) -- a very simple single-jointed arm
-* [Prismatic-Revolute (PR)](README_PR.md) -- an elevator an simple arm
-* [Revolute-Revolute (RR)](README_RR.md) -- a two-jointed arm
-* [Prismatic-Revolute-Revolute (PRR)](README_PRR.md) -- what we actually have
+* [Revolute (R)](README_R.md) -- a very simple single-jointed arm.
+* [Prismatic-Revolute (PR)](README_PR.md) -- an elevator an simple arm.
+* [Revolute-Revolute (RR)](README_RR.md) -- a two-jointed arm.
+* [Prismatic-Revolute-Revolute (PRR)](README_PRR.md) -- 2025 Calgames mech.
+* [Planar rigid body (SE2)](README_SE2.md) -- using intrinsic coordinates: swerve.
 
 
 The reason to explore this topic is to improve the accuracy of the

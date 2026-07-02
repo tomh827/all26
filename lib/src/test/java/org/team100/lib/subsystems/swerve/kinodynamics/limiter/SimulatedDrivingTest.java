@@ -22,6 +22,7 @@ import org.team100.lib.logging.TestLoggerFactory;
 import org.team100.lib.logging.primitive.TestPrimitiveLogger;
 import org.team100.lib.sensor.gyro.Gyro;
 import org.team100.lib.sensor.gyro.SimulatedGyro;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.swerve.SwerveDriveSubsystem;
 import org.team100.lib.subsystems.swerve.SwerveLocal;
 import org.team100.lib.subsystems.swerve.kinodynamics.SwerveKinodynamics;
@@ -147,11 +148,11 @@ public class SimulatedDrivingTest implements Timeless {
     void testStraight() {
         // just +x
         collection.reset();
-        VelocitySE2 input = new VelocitySE2(2, 0, 0);
+        VelocityControlSE2 input = new VelocityControlSE2(2, 0, 0);
         double start = Takt.get();
         for (int i = 0; i < 100; ++i) {
             stepTime();
-            drive.setVelocity(input);
+            drive.set(input);
             if (DEBUG)
                 System.out.printf("%.2f %s\n", Takt.get() - start, drive.getPose());
         }
@@ -162,11 +163,11 @@ public class SimulatedDrivingTest implements Timeless {
         // just +x
         // this accelerates infinitely, immediately to the requested speed.
         collection.reset();
-        VelocitySE2 input = new VelocitySE2(2, 0, 0);
+        VelocityControlSE2 input = new VelocityControlSE2(2, 0, 0);
         double start = Takt.get();
         for (int i = 0; i < 100; ++i) {
             stepTime();
-            drive.setVelocity(input);
+            drive.set(input);
             if (DEBUG)
                 System.out.printf("%.2f %s\n", Takt.get() - start, drive.getPose());
         }
@@ -183,14 +184,14 @@ public class SimulatedDrivingTest implements Timeless {
         Experiments.instance.testOverride(Experiment.UseSwerveLimiter, true);
         collection.reset();
         // +x and spinning. course is always zero.
-        VelocitySE2 input = new VelocitySE2(2, 0, 3.5);
+        VelocityControlSE2 input = new VelocityControlSE2(2, 0, 3.5);
         for (int i = 0; i < 50; ++i) {
             if (DEBUG)
                 System.out.printf("\nstep time ...\n");
             stepTime();
             if (DEBUG)
                 System.out.printf("takt: %.2f state: %s\n", Takt.get(), drive.getState());
-            drive.setVelocity(input);
+            drive.set(input);
         }
     }
 
@@ -201,14 +202,14 @@ public class SimulatedDrivingTest implements Timeless {
     void testVeeringVerbatim() {
         collection.reset();
         // +x and spinning
-        VelocitySE2 input = new VelocitySE2(2, 0, 3.5);
+        VelocityControlSE2 input = new VelocityControlSE2(2, 0, 3.5);
         for (int i = 0; i < 100; ++i) {
             if (DEBUG)
                 System.out.printf("\nstep time ...\n");
             stepTime();
             if (DEBUG)
                 System.out.printf("takt: %.2f state: %s\n", Takt.get(), drive.getState());
-            drive.setVelocity(input);
+            drive.set(input);
         }
     }
 
@@ -216,13 +217,13 @@ public class SimulatedDrivingTest implements Timeless {
     @Test
     void testGyro() {
         // spin fast
-        VelocitySE2 input = new VelocitySE2(0, 0, 4);
+        VelocityControlSE2 input = new VelocityControlSE2(0, 0, 4);
         if (DEBUG)
             System.out.printf("pose %s, gyro %s, rate %f\n",
                     drive.getPose(),
                     gyro.getYawNWU(),
                     gyro.getYawRateNWU());
-        drive.setVelocity(input);
+        drive.set(input);
         if (DEBUG)
             System.out.printf("pose %s, gyro %s, rate %f\n",
                     drive.getPose(),
@@ -234,7 +235,7 @@ public class SimulatedDrivingTest implements Timeless {
                     drive.getPose(),
                     gyro.getYawNWU(),
                     gyro.getYawRateNWU());
-        drive.setVelocity(input);
+        drive.set(input);
         if (DEBUG)
             System.out.printf("pose %s, gyro %s, rate %f\n",
                     drive.getPose(),

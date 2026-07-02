@@ -4,10 +4,11 @@ import org.team100.lib.geometry.VelocitySE2;
 import org.team100.lib.logging.Level;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.LoggerFactory.DoubleArrayLogger;
-import org.team100.lib.logging.LoggerFactory.VelocitySE2Logger;
+import org.team100.lib.logging.LoggerFactory.VelocityControlSE2Logger;
 import org.team100.lib.sensor.gyro.Gyro;
 import org.team100.lib.servo.OutboardLinearVelocityServo;
 import org.team100.lib.state.ModelSE2;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.mecanum.kinematics.MecanumKinematics100;
 import org.team100.lib.subsystems.mecanum.kinematics.MecanumKinematics100.Slip;
 import org.team100.lib.subsystems.se2.VelocitySubsystemSE2;
@@ -27,7 +28,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class MecanumDrive100 extends SubsystemBase implements VelocitySubsystemSE2 {
 
     private final DoubleArrayLogger m_log_field_robot;
-    private final VelocitySE2Logger m_log_input;
+    private final VelocityControlSE2Logger m_log_input;
     /** May be null. */
     private final Gyro m_gyro;
     private final double m_trackWidthM;
@@ -60,7 +61,7 @@ public class MecanumDrive100 extends SubsystemBase implements VelocitySubsystemS
             OutboardLinearVelocityServo rearRight) {
         LoggerFactory log = parent.type(this);
         m_log_field_robot = fieldLogger.doubleArrayLogger(Level.COMP, "robot");
-        m_log_input = log.VelocitySE2Logger(Level.TRACE, "drive input");
+        m_log_input = log.velocityControlSE2Logger(Level.TRACE, "drive input");
         m_gyro = gyro;
         m_trackWidthM = trackWidthM;
         m_wheelbaseM = wheelbaseM;
@@ -92,7 +93,7 @@ public class MecanumDrive100 extends SubsystemBase implements VelocitySubsystemS
      * @param nextV for the next timestep
      */
     @Override
-    public void setVelocity(VelocitySE2 nextV) {
+    public void set(VelocityControlSE2 nextV) {
         Rotation2d yaw = getYaw();
         ChassisSpeeds speed = SwerveKinodynamics.toInstantaneousChassisSpeeds(
                 nextV, yaw);
@@ -119,7 +120,7 @@ public class MecanumDrive100 extends SubsystemBase implements VelocitySubsystemS
 
     /** Set the field-relative velocity. */
     public Command driveWithGlobalVelocity(VelocitySE2 v) {
-        return run(() -> setVelocity(v))
+        return run(() -> set(v))
                 .withName("drive with global velocity");
     }
 

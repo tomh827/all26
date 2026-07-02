@@ -7,6 +7,7 @@ import org.team100.lib.experiments.Experiments;
 import org.team100.lib.geometry.VelocitySE2;
 import org.team100.lib.hid.Velocity;
 import org.team100.lib.logging.LoggerFactory;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.mecanum.MecanumDrive100;
 import org.team100.lib.subsystems.swerve.kinodynamics.limiter.SwerveLimiter;
 import org.team100.lib.tuning.Mutable;
@@ -71,13 +72,13 @@ public class ManualMecanum extends Command {
             case CLIP -> input.diamond(1, y_x, poseRotation);
             case SQUASH -> input.squashedDiamond(1, y_x, poseRotation);
         };
-        VelocitySE2 scaled = VelocitySE2.scale(
+        VelocityControlSE2 scaled = VelocityControlSE2.scale(
                 clippedOrSquashed, m_maxVX.getAsDouble(), m_maxOmega.getAsDouble());
         // Apply field-relative limits.
         if (Experiments.instance.enabled(Experiment.UseSwerveLimiter)) {
             scaled = m_limiter.apply(scaled);
         }
-        m_drive.setVelocity(scaled);
+        m_drive.set(scaled);
     }
 
 }

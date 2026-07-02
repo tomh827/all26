@@ -24,6 +24,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
  * 
  * Note: the metric used here is not the SE(2) geodesic, it treats the XY plane
  * and rotation dimensions independently.
+ * 
+ * TODO: rename this to StateSE2
  */
 public class ModelSE2 {
     private final ModelR1 m_x;

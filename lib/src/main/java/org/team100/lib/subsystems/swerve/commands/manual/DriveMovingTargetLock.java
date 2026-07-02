@@ -9,12 +9,12 @@ import org.team100.lib.controller.r1.AzimuthController;
 import org.team100.lib.experiments.Experiment;
 import org.team100.lib.experiments.Experiments;
 import org.team100.lib.geometry.GeometryUtil;
-import org.team100.lib.geometry.VelocitySE2;
 import org.team100.lib.hid.Velocity;
 import org.team100.lib.logging.Level;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.LoggerFactory.BooleanLogger;
 import org.team100.lib.state.ModelR1;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.swerve.SwerveDriveSubsystem;
 import org.team100.lib.subsystems.swerve.kinodynamics.SwerveKinodynamics;
 import org.team100.lib.subsystems.swerve.kinodynamics.limiter.SwerveLimiter;
@@ -75,7 +75,7 @@ public class DriveMovingTargetLock extends Command {
     @Override
     public void initialize() {
         m_heedRadiusM.accept(HEED_RADIUS_M);
-        m_limiter.updateSetpoint(m_drive.getVelocity());
+        m_limiter.updateSetpoint(new VelocityControlSE2(m_drive.getVelocity()));
         m_aim.reset();
     }
 
@@ -101,27 +101,27 @@ public class DriveMovingTargetLock extends Command {
     /** Null to skip override */
     private void actuate(Double omega) {
         // Clip and scale user input.
-        VelocitySE2 v = VelocitySE2.scale(
+        VelocityControlSE2 nextV = VelocityControlSE2.scale(
                 m_twistSupplier.get().clip(1.0),
                 m_swerveKinodynamics.getMaxDriveVelocityM_S(),
                 m_swerveKinodynamics.getMaxAngleSpeedRad_S());
 
         // Scale for driver skill.
-        v = GeometryUtil.scale(v, DriverSkill.level().scale());
+        nextV = GeometryUtil.scale(nextV, DriverSkill.level().scale());
 
         // Apply field-relative limits.
         if (Experiments.instance.enabled(Experiment.UseSwerveLimiter)) {
-            v = m_limiter.apply(v);
+            nextV = m_limiter.apply(nextV);
         }
 
         // Override omega.
         m_log_aiming.log(() -> omega != null);
         if (omega != null) {
-            v = new VelocitySE2(v.x(), v.y(), omega);
+            nextV = new VelocityControlSE2(nextV.x().v(), nextV.y().v(), omega);
         }
 
         // Actuate the drivetrain.
-        m_drive.setVelocity(v);
+        m_drive.set(nextV);
     }
 
 }

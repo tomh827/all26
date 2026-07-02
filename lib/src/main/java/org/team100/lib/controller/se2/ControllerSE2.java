@@ -1,8 +1,8 @@
 package org.team100.lib.controller.se2;
 
-import org.team100.lib.geometry.VelocitySE2;
 import org.team100.lib.state.ControlSE2;
 import org.team100.lib.state.ModelSE2;
+import org.team100.lib.state.VelocityControlSE2;
 
 /**
  * Feedback and feedforward control.
@@ -27,7 +27,7 @@ public interface ControllerSE2 {
      *         Give this to SwerveDriveSubsystem.driveInFieldCoords() or something
      *         similar.
      */
-    VelocitySE2 calculate(
+    VelocityControlSE2 calculate(
             ModelSE2 measurement,
             ModelSE2 currentReference,
             ControlSE2 nextReference);

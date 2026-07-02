@@ -11,6 +11,7 @@ import org.team100.lib.logging.LoggerFactory.ModelSE2Logger;
 import org.team100.lib.reference.se2.ReferenceSE2;
 import org.team100.lib.state.ControlSE2;
 import org.team100.lib.state.ModelSE2;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.se2.SubsystemSE2;
 
 public abstract class ReferenceControllerSE2Base {
@@ -49,10 +50,13 @@ public abstract class ReferenceControllerSE2Base {
     /**
      * Actuate the subsystem here.
      * 
+     * TODO: this seems like a confusing mess; one implementation uses one argument,
+     * the other one uses the other argument.
+     * 
      * @param next The next control setpoint.
      * @param u    The controller output for the next dt
      */
-    abstract void execute100(ControlSE2 next, VelocitySE2 u);
+    abstract void execute100(ControlSE2 next, VelocityControlSE2 u);
 
     /**
      * This should be called in Command.execute().

@@ -40,6 +40,10 @@ public record ControlR1(double x, double v, double a) implements Interpolatable<
         return new ModelR1(x, v);
     }
 
+    public VelocityControlR1 velocityControl() {
+        return new VelocityControlR1(v, a);
+    }
+
     public ControlR1 minus(ControlR1 other) {
         return new ControlR1(x() - other.x(), v() - other.v(), a() - other.a());
     }

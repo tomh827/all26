@@ -2,6 +2,8 @@ package org.team100.lib.geometry;
 
 import java.util.Optional;
 
+import org.team100.lib.state.VelocityControlSE2;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -116,6 +118,13 @@ public class GeometryUtil {
 
     public static VelocitySE2 scale(VelocitySE2 v, double scale) {
         return new VelocitySE2(v.x() * scale, v.y() * scale, v.theta() * scale);
+    }
+
+    public static VelocityControlSE2 scale(VelocityControlSE2 v, double scale) {
+        return new VelocityControlSE2(
+                v.x().times(scale),
+                v.y().times(scale),
+                v.theta().times(scale));
     }
 
     public static Pose2d transformBy(Pose2d a, Pose2d b) {

@@ -12,6 +12,7 @@ import org.team100.lib.logging.LoggerFactory.ModelSE2Logger;
 import org.team100.lib.logging.LoggerFactory.VelocitySE2Logger;
 import org.team100.lib.state.ControlSE2;
 import org.team100.lib.state.ModelSE2;
+import org.team100.lib.state.VelocityControlSE2;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 
@@ -75,7 +76,7 @@ public abstract class ControllerSE2Base implements ControllerSE2 {
     }
 
     @Override
-    public VelocitySE2 calculate(
+    public VelocityControlSE2 calculate(
             ModelSE2 measurement,
             ModelSE2 currentReference,
             ControlSE2 nextReference) {
@@ -93,7 +94,7 @@ public abstract class ControllerSE2Base implements ControllerSE2 {
      * @param nextReference velocity for dt from now
      * @returns control output for the period during dt
      */
-    public abstract VelocitySE2 calculate100(
+    public abstract VelocityControlSE2 calculate100(
             DeltaSE2 positionError,
             VelocitySE2 velocityError,
             ControlSE2 nextReference);

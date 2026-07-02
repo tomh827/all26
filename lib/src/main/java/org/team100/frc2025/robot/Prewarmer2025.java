@@ -48,7 +48,7 @@ public class Prewarmer2025 {
         planner.restToRest(waypoints);
 
         // Exercise the drive motors.
-        machinery.m_drive.setVelocity(new VelocitySE2(0, 0, 0));
+        machinery.m_drive.set(new VelocitySE2(0, 0, 0));
 
         // Exercise some mechanism commands.
         Command c = machinery.m_mech.homeToL4();

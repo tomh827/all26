@@ -9,7 +9,7 @@ import org.team100.lib.state.ControlSE2;
 import org.team100.lib.subsystems.se2.PositionSubsystemSE2;
 
 /**
- * Actuates a positional subsystem based on a reference.
+ * Actuates a positional subsystem based on a positional reference.
  * 
  * Uses outboard positional control, so it just passes through the "next"
  * reference.

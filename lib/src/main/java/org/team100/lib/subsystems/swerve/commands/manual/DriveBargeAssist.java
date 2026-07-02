@@ -7,8 +7,8 @@ import org.team100.lib.config.DriverSkill;
 import org.team100.lib.experiments.Experiment;
 import org.team100.lib.experiments.Experiments;
 import org.team100.lib.geometry.GeometryUtil;
-import org.team100.lib.geometry.VelocitySE2;
 import org.team100.lib.hid.Velocity;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.swerve.SwerveDriveSubsystem;
 import org.team100.lib.subsystems.swerve.kinodynamics.SwerveKinodynamics;
 import org.team100.lib.subsystems.swerve.kinodynamics.limiter.SwerveLimiter;
@@ -68,7 +68,7 @@ public class DriveBargeAssist extends Command {
     public void initialize() {
         m_heedRadiusM.accept(HEED_RADIUS_M);
         // make sure the limiter knows what we're doing
-        m_limiter.updateSetpoint(m_drive.getVelocity());
+        m_limiter.updateSetpoint(new VelocityControlSE2(m_drive.getVelocity()));
 
     }
 
@@ -93,7 +93,7 @@ public class DriveBargeAssist extends Command {
 
         Velocity avoidBarge = avoidBarge(clipped);
 
-        VelocitySE2 v = VelocitySE2.scale(
+        VelocityControlSE2 v = VelocityControlSE2.scale(
                 avoidBarge,
                 m_swerveKinodynamics.getMaxDriveVelocityM_S(),
                 m_swerveKinodynamics.getMaxAngleSpeedRad_S());
@@ -105,7 +105,7 @@ public class DriveBargeAssist extends Command {
         if (Experiments.instance.enabled(Experiment.UseSwerveLimiter)) {
             v = m_limiter.apply(v);
         }
-        m_drive.setVelocity(v);
+        m_drive.set(v);
 
     }
 

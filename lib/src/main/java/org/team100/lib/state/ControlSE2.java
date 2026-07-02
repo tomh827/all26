@@ -103,6 +103,13 @@ public class ControlSE2 {
         return new VelocitySE2(m_x.v(), m_y.v(), m_theta.v());
     }
 
+    public VelocityControlSE2 velocityControl() {
+        return new VelocityControlSE2(
+                m_x.velocityControl(),
+                m_y.velocityControl(),
+                m_theta.velocityControl());
+    }
+
     /** Robot-relative speeds */
     public ChassisSpeeds chassisSpeeds() {
         return SwerveKinodynamics.toInstantaneousChassisSpeeds(velocity(), rotation());
