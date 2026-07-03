@@ -96,7 +96,7 @@ public class MecanumDrive100 extends SubsystemBase implements VelocitySubsystemS
     public void set(VelocityControlSE2 nextV) {
         Rotation2d yaw = getYaw();
         ChassisSpeeds speed = SwerveKinodynamics.toInstantaneousChassisSpeeds(
-                nextV, yaw);
+                nextV.velocity(), yaw);
         MecanumDriveWheelSpeeds mSpeed = m_kinematics.toWheelSpeeds(speed);
         m_frontLeft.setVelocityDirect(mSpeed.frontLeftMetersPerSecond);
         m_frontRight.setVelocityDirect(mSpeed.frontRightMetersPerSecond);
@@ -119,7 +119,7 @@ public class MecanumDrive100 extends SubsystemBase implements VelocitySubsystemS
     }
 
     /** Set the field-relative velocity. */
-    public Command driveWithGlobalVelocity(VelocitySE2 v) {
+    public Command driveWithGlobalVelocity(VelocityControlSE2 v) {
         return run(() -> set(v))
                 .withName("drive with global velocity");
     }

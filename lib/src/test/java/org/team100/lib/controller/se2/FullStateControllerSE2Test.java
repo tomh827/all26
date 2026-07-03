@@ -32,7 +32,7 @@ class FullStateControllerSE2Test implements Timeless {
     void testAtRest() {
         FullStateControllerSE2 c = ControllerFactorySE2.test2(logger);
         assertFalse(c.atReference());
-        VelocitySE2 t = c.calculate(
+        VelocityControlSE2 t = c.calculate(
                 new ModelSE2(
                         new ModelR1(0, 0),
                         new ModelR1(0, 0),
@@ -45,9 +45,9 @@ class FullStateControllerSE2Test implements Timeless {
                         new ControlR1(0, 0),
                         new ControlR1(0, 0),
                         new ControlR1(0, 0)));
-        assertEquals(0, t.x(), DELTA);
-        assertEquals(0, t.y(), DELTA);
-        assertEquals(0, t.theta(), DELTA);
+        assertEquals(0, t.x().v(), DELTA);
+        assertEquals(0, t.y().v(), DELTA);
+        assertEquals(0, t.theta().v(), DELTA);
         assertTrue(c.atReference());
     }
 

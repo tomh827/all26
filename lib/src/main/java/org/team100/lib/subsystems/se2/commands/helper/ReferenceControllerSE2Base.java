@@ -1,7 +1,6 @@
 package org.team100.lib.subsystems.se2.commands.helper;
 
 import org.team100.lib.controller.se2.ControllerSE2;
-import org.team100.lib.geometry.VelocitySE2;
 import org.team100.lib.logging.Level;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.LoggerFactory.BooleanLogger;
@@ -14,6 +13,9 @@ import org.team100.lib.state.ModelSE2;
 import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.se2.SubsystemSE2;
 
+/**
+ * TODO: make this a component of the subclasses, not a parent
+ */
 public abstract class ReferenceControllerSE2Base {
     private final BooleanLogger m_logDone;
     private final DoubleLogger m_logToGo;
@@ -69,7 +71,7 @@ public abstract class ReferenceControllerSE2Base {
             ModelSE2 error = current.minus(measurement);
             // u represents the time from now until now+dt, so it's also
             // what the mechanism should be doing at the next time step
-            VelocitySE2 u = m_controller.calculate(measurement, current, next);
+            VelocityControlSE2 u = m_controller.calculate(measurement, current, next);
             execute100(next, u);
             m_log_measurement.log(() -> measurement);
             m_log_current.log(() -> current);

@@ -4,7 +4,6 @@ import java.util.function.Supplier;
 
 import org.team100.lib.experiments.Experiment;
 import org.team100.lib.experiments.Experiments;
-import org.team100.lib.geometry.VelocitySE2;
 import org.team100.lib.hid.Velocity;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.state.VelocityControlSE2;
@@ -58,7 +57,8 @@ public class ManualMecanum extends Command {
 
     @Override
     public void initialize() {
-        m_limiter.updateSetpoint(m_drive.getState().velocity());
+        m_limiter.updateSetpoint(new VelocityControlSE2(
+                m_drive.getState().velocity()));
     }
 
     @Override
