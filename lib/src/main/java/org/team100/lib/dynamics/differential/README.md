@@ -135,3 +135,15 @@ Note that these expressions don't depend on
 configuration (i.e. value of $x$ or $\theta$, or
 velocity (i.e. value of $\dot{x}$ or $\dot{\theta}$), so
 there are no "Config" or "Velocity" records.
+
+## An alternative formulation
+
+Another way to express the same thing is to divide the
+problem into two pieces, relying on our simplification
+that the only mass is the rigid-body mass.
+
+* Determine the rigid body (SE2) forces (see ../se2).  This
+  involves $m$ and $I$, and yields components $F_x$ and $\tau$.
+* Project these components into the drive contacts, which have
+  fixed locations and directions.  Since there are two wheels,
+  assign half the force to each, and then sum the components.
