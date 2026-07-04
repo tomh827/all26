@@ -1,5 +1,7 @@
 package org.team100.lib.subsystems.tank;
 
+import org.team100.lib.dynamics.differential.DifferentialDriveDynamics;
+import org.team100.lib.dynamics.differential.DifferentialDriveTorque;
 import org.team100.lib.dynamics.p.PTorque;
 import org.team100.lib.dynamics.se2.SE2Dynamics;
 import org.team100.lib.dynamics.se2.SE2Torque;
@@ -31,7 +33,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
  */
 public class TankDrive extends SubsystemBase {
     private final DoubleArrayLogger m_log_field_robot;
-    private final SE2Dynamics m_dynamics;
+    private final DifferentialDriveDynamics m_dynamics;
     private final double m_trackWidthM;
     private final double m_maxSpeedM_S;
     private final LinearMechanism m_left;
@@ -49,7 +51,7 @@ public class TankDrive extends SubsystemBase {
     public TankDrive(
             LoggerFactory parent,
             LoggerFactory fieldLogger,
-            SE2Dynamics dynamics,
+            DifferentialDriveDynamics dynamics,
             double trackWidthM,
             double maxSpeedM_S,
             LinearMechanism left,
@@ -84,21 +86,22 @@ public class TankDrive extends SubsystemBase {
      */
     public void setVelocity(double translationM_S, double rotationRad_S) {
         ChassisSpeeds speed = new ChassisSpeeds(translationM_S, 0, rotationRad_S);
-        m_logChassisSpeeds.log(() -> speed);
         DifferentialDriveWheelSpeeds wheelSpeeds = m_kinematics.toWheelSpeeds(speed);
         wheelSpeeds.desaturate(m_maxSpeedM_S);
-
         ChassisSpeeds actual = m_kinematics.toChassisSpeeds(wheelSpeeds);
+      
         AccelerationSE2 accel = accel(actual);
-        SE2Torque t = m_dynamics.torque(accel);
-        Pair<PTorque, PTorque> wheelForces = wheelForces(t);
+        DifferentialDriveTorque t = m_dynamics.torque(accel);
 
         double left = wheelSpeeds.leftMetersPerSecond;
         double right = wheelSpeeds.rightMetersPerSecond;
+
+        m_left.setVelocity(left, t.F1());
+        m_right.setVelocity(right, t.F2());
+
+        m_logChassisSpeeds.log(() -> actual);
         m_logLeft.log(() -> left);
         m_logRight.log(() -> right);
-        m_left.setVelocity(left, wheelForces.getFirst().f());
-        m_right.setVelocity(right, wheelForces.getSecond().f());
     }
 
     public void stop() {
@@ -160,23 +163,4 @@ public class TankDrive extends SubsystemBase {
         return new AccelerationSE2(
                 a.vxMetersPerSecond, a.vyMetersPerSecond, a.omegaRadiansPerSecond);
     }
-
-    /**
-     * Produce wheel forces equivalent to the SE2 forces.
-     * Note in reality the dynamic weight distribution and tire grip
-     * plays a role here, which we will ignore.
-     */
-    private Pair<PTorque, PTorque> wheelForces(SE2Torque t) {
-        // each side contributes the same to linear force in x
-        double halfX = t.fx() / 2;
-        double radius = m_trackWidthM / 2;
-        // t = F * r
-        double tangentialForce = t.t() / radius;
-        // each side contributes the same to torque
-        double halfTangential = tangentialForce / 2;
-        PTorque left = new PTorque(halfX - halfTangential);
-        PTorque right = new PTorque(halfX + halfTangential);
-        return new Pair<>(left, right);
-    }
-
 }

@@ -4,7 +4,7 @@ import org.team100.lib.config.CurrentLimit;
 import org.team100.lib.config.Friction;
 import org.team100.lib.config.Identity;
 import org.team100.lib.config.PIDConstants;
-import org.team100.lib.dynamics.se2.SE2Dynamics;
+import org.team100.lib.dynamics.differential.DifferentialDriveDynamics;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.TotalCurrentLog;
 import org.team100.lib.mechanism.LinearMechanism;
@@ -31,7 +31,7 @@ public class TankDriveFactory {
             double maxSpeedM_S,
             double gearRatio,
             double wheelDiaM,
-            SE2Dynamics dynamics) {
+            DifferentialDriveDynamics dynamics) {
         LoggerFactory log = parent.name("Tank Drive");
         LoggerFactory logL = log.name("left");
         LoggerFactory logR = log.name("right");
