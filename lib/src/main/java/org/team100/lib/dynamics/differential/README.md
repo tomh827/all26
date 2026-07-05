@@ -12,9 +12,9 @@ Divide the problem into two pieces.
 
 See [WRENCH.md](../WRENCH.md) for background.
 
-## Constrained Actuation
+## Contact Points
 
-The contacts and normals from the diagram are:
+The contacts from the diagram are:
 
 ```math
 \mathbf{r_1}
@@ -35,6 +35,10 @@ The contacts and normals from the diagram are:
 \end{bmatrix}
 \tag{2}
 ```
+
+## Constrained Actuation
+
+The normals from the diagram are:
 
 ```math
 \mathbf{n_1}
@@ -59,9 +63,9 @@ f_y \\
 \end{bmatrix}
 =
 \begin{bmatrix}
-1 && 1  \\
-0 && 0  \\
--1 && 1 
+1 & 1  \\
+0 & 0  \\
+-1 & 1 
 \end{bmatrix}
 \begin{bmatrix}
 f_1 \\
@@ -81,8 +85,8 @@ f_2 \\
 \end{bmatrix}
 =
 \begin{bmatrix}
-0.5 && 0 && -0.5  \\
-0.5 && 0 && 0.5  
+0.5 & 0 & -0.5  \\
+0.5 & 0 & 0.5  
 \end{bmatrix}
 \begin{bmatrix}
 f_x \\
@@ -109,9 +113,9 @@ F_y \\
 \end{bmatrix}
 =
 \begin{bmatrix}
-1 && 0 \\
-0 && 1 \\
-- r_{y} && r_{x} 
+1 & 0 \\
+0 & 1 \\
+- r_{y} & r_{x} 
 \end{bmatrix}
 \begin{bmatrix}
 f_{x} \\
@@ -133,9 +137,9 @@ F_y \\
 \end{bmatrix}
 =
 \begin{bmatrix}
-1 && 0 && 1 && 0 \\
-0 && 1 && 0 && 1 \\
--r_{1y} && r_{1x} && -r_{2y} && r_{2x}
+1 & 0 & 1 & 0 \\
+0 & 1 & 0 & 1 \\
+-r_{1y} & r_{1x} & -r_{2y} & r_{2x}
 \end{bmatrix}
 \begin{bmatrix}
 f_{1x} \\
@@ -159,9 +163,9 @@ F_y \\
 \end{bmatrix}
 =
 \begin{bmatrix}
-1 && 0 && 1 && 0 \\
-0 && 1 && 0 && 1 \\
--1 && 0 && 1 && 0
+1 & 0 & 1 & 0 \\
+0 & 1 & 0 & 1 \\
+-1 & 0 & 1 & 0
 \end{bmatrix}
 \begin{bmatrix}
 f_{1x} \\
@@ -183,10 +187,10 @@ f_{2y}
 \end{bmatrix}
 =
 \begin{bmatrix}
-0.5 && 0 && -0.5  \\
-0  && 0.5 && 0 \\
-0.5 && 0 && 0.5 \\
-0 && 0.5 && 0
+0.5 & 0 & -0.5  \\
+0  & 0.5 & 0 \\
+0.5 & 0 & 0.5 \\
+0 & 0.5 & 0
 \end{bmatrix}
 \begin{bmatrix}
 f_x \\

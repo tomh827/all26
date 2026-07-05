@@ -84,9 +84,9 @@ Combining translation and rotation:
 \end{bmatrix}
 =
 \begin{bmatrix}
-\frac{1}{m} && \frac{1}{m} \\
+\frac{1}{m} & \frac{1}{m} \\
 \\
-\frac{-W}{I} && \frac{W}{I}
+\frac{-W}{I} & \frac{W}{I}
 \end{bmatrix}
 \begin{bmatrix}
 F_1 \\
@@ -104,9 +104,9 @@ F_2
 =
 \frac{mI}{2W}
 \begin{bmatrix}
-\frac{W}{I} && \frac{-1}{m} \\
+\frac{W}{I} & \frac{-1}{m} \\
 \\
-\frac{W}{I} && \frac{1}{m}
+\frac{W}{I} & \frac{1}{m}
 \end{bmatrix}
 \begin{bmatrix}
 \ddot{x} \\
@@ -122,9 +122,9 @@ F_2
 =
 \frac{1}{2}
 \begin{bmatrix}
-m && \frac{-I}{W} \\
+m & \frac{-I}{W} \\
 \\
-m && \frac{I}{W}
+m & \frac{I}{W}
 \end{bmatrix}
 \begin{bmatrix}
 \ddot{x} \\

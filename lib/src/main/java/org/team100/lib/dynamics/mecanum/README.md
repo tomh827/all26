@@ -15,7 +15,7 @@ See [WRENCH.md](../WRENCH.md) for background.
 
 See [SE2](../se2/README.md) regarding the rigid-body effort.
 
-## Grasp Forces
+## Contact Points
 
 In the Mecanum drive, the contact points are fixed.  For example:
 
@@ -26,6 +26,7 @@ In the Mecanum drive, the contact points are fixed.  For example:
 1 \\
 1
 \end{bmatrix}
+\tag{1}
 ```
 
 ```math
@@ -35,6 +36,7 @@ In the Mecanum drive, the contact points are fixed.  For example:
 1 \\
 -1
 \end{bmatrix}
+\tag{2}
 ```
 
 ```math
@@ -44,6 +46,7 @@ In the Mecanum drive, the contact points are fixed.  For example:
 -1 \\
 1
 \end{bmatrix}
+\tag{3}
 ```
 
 ```math
@@ -53,10 +56,13 @@ In the Mecanum drive, the contact points are fixed.  For example:
 -1 \\
 -1
 \end{bmatrix}
+\tag{4}
 ```
 
-The contact directions are also fixed -- parallel to the axis of each
-contacting roller, at 45 degrees.
+## Constrained Actuation
+
+The contact directions are also fixed -- parallel to
+the axis of each contacting roller, at 45 degrees.
 
 ```math
 \mathbf{n_1}
@@ -67,6 +73,7 @@ contacting roller, at 45 degrees.
 0.71 \\
 -0.71
 \end{bmatrix}
+\tag{5}
 ```
 
 ```math
@@ -78,6 +85,7 @@ contacting roller, at 45 degrees.
 0.71 \\
 0.71
 \end{bmatrix}
+\tag{6}
 ```
 
 So the forward dynamics are:
@@ -90,9 +98,9 @@ f_y \\
 \end{bmatrix}
 =
 \begin{bmatrix}
-0.71 && 0.71 && 0.71 && 0.71 \\
--0.71 && 0.71 && 0.71 && -0.71 \\
--1.41 && 1.41 && -1.41 && 1.41
+0.71 & 0.71 & 0.71 & 0.71 \\
+-0.71 & 0.71 & 0.71 & -0.71 \\
+-1.41 & 1.41 & -1.41 & 1.41
 \end{bmatrix}
 \begin{bmatrix}
 f_1 \\
@@ -100,6 +108,7 @@ f_2 \\
 f_3 \\
 f_4
 \end{bmatrix}
+\tag{7}
 ```
 
 Using the
@@ -115,17 +124,31 @@ f_4
 \end{bmatrix}
 =
 \begin{bmatrix}
-0.35 && -0.35 && -0.18  \\
-0.35 && 0.35 && 0.18 \\
-0.35 && 0.35 && -0.18 \\
-0.35 && -0.35 && 0.18
+0.35 & -0.35 & -0.18  \\
+0.35 & 0.35 & 0.18 \\
+0.35 & 0.35 & -0.18 \\
+0.35 & -0.35 & 0.18
 \end{bmatrix}
 \begin{bmatrix}
 f_x \\
 f_y \\
 \tau
 \end{bmatrix}
+\tag{8}
 ```
+
+## Free Actuation
+
+As discussed in WRENCH.md, some wheels have the
+ability to produce force both perpendicular to the
+axle (driven by the motor) and parallel to the
+axle (resisting side force).  Mecanum drives,
+however, have free-spinning rollers, so the
+rollers can't resist side forces.
+
+So the only kind of actuation for a Mecanum drive
+is the "Constrained" actuation.
+
 ## Wheel forces
 
 From these point forces, we need to determine the wheel forces,
@@ -145,14 +168,16 @@ f_4
 \end{bmatrix}
 =
 \begin{bmatrix}
-0.5 && -0.5 && -0.25  \\
-0.5 && 0.5 && 0.25 \\
-0.5 && 0.5 && -0.25 \\
-0.5 && -0.5 && 0.25
+0.5 & -0.5 & -0.25  \\
+0.5 & 0.5 & 0.25 \\
+0.5 & 0.5 & -0.25 \\
+0.5 & -0.5 & 0.25
 \end{bmatrix}
 \begin{bmatrix}
 f_x \\
 f_y \\
 \tau
 \end{bmatrix}
+\tag{9}
 ```
+

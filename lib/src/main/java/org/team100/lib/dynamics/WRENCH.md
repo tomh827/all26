@@ -90,8 +90,8 @@ f_y \\
 \end{bmatrix}
 =
 \begin{bmatrix}
-\mathbf{n_1} && \mathbf{n_2} && \dots && \mathbf{n_k} \\
-\mathbf{r_1} \times \mathbf{n_1} && \mathbf{r_2} \times \mathbf{n_2} &&\dots && \mathbf{r_k} \times \mathbf{n_k}
+\mathbf{n_1} & \mathbf{n_2} & \dots & \mathbf{n_k} \\
+\mathbf{r_1} \times \mathbf{n_1} & \mathbf{r_2} \times \mathbf{n_2} & \dots & \mathbf{r_k} \times \mathbf{n_k}
 \end{bmatrix}
 \begin{bmatrix}
 f_1 \\
@@ -120,9 +120,9 @@ f_y \\
 \end{bmatrix}
 =
 \begin{bmatrix}
-n_{1x} && n_{2x}  \\
-n_{y1} && n_{2y}  \\
-r_{1x}n_{1y} - r_{1y}n_{1x} && r_{2x}n_{2y} - r_{2y}n_{2x} 
+n_{1x} & n_{2x}  \\
+n_{y1} & n_{2y}  \\
+r_{1x}n_{1y} - r_{1y}n_{1x} & r_{2x}n_{2y} - r_{2y}n_{2x} 
 \end{bmatrix}
 \begin{bmatrix}
 f_1 \\
@@ -172,9 +172,9 @@ F_y \\
 \end{bmatrix}
 =
 \begin{bmatrix}
-1 && 0 \\
-0 && 1 \\
-- r_{y} && r_{x} 
+1 & 0 \\
+0 & 1 \\
+- r_{y} & r_{x} 
 \end{bmatrix}
 \begin{bmatrix}
 f_{x} \\
