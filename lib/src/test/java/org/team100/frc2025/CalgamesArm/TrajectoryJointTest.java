@@ -71,7 +71,7 @@ public class TrajectoryJointTest {
         for (double tt = 0; tt < t.duration(); tt += 0.02) {
             TrajectorySE2Entry sample = t.sample(tt);
             TrajectorySE2Point point = sample.point();
-            ControlSE2 m = ControlSE2.fromMovingPathSE2Point(point);
+            ControlSE2 m = point.control();
             Pose2d p = m.pose();
             VelocitySE2 v = m.velocity();
             AccelerationSE2 a = m.acceleration();

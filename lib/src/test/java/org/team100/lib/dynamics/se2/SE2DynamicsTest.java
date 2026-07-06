@@ -3,7 +3,6 @@ package org.team100.lib.dynamics.se2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
-import org.team100.lib.dynamics.r.REffort;
 import org.team100.lib.geometry.AccelerationSE2;
 
 public class SE2DynamicsTest {

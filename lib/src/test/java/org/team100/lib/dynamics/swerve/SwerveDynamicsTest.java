@@ -3,6 +3,7 @@ package org.team100.lib.dynamics.swerve;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
+import org.team100.lib.dynamics.swerve.SwerveDynamics.Corners;
 import org.team100.lib.geometry.AccelerationSE2;
 
 import edu.wpi.first.math.MatBuilder;
@@ -35,7 +36,7 @@ public class SwerveDynamicsTest {
                 new Translation2d(-0.25, 0.25),
                 new Translation2d(-0.25, -0.25));
         AccelerationSE2 a = new AccelerationSE2(1, 0, 0);
-        SwerveEffort e = d.effort(a);
+        Corners e = d.corners(a);
         assertEquals(0.25, e.fl().x(), 0.001);
         assertEquals(0, e.fl().y(), 0.001);
 

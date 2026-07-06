@@ -13,7 +13,7 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
 
 /**
- * Implements the grasp matrix.  Note this is the inverse
+ * Implements the grasp matrix. Note this is the inverse
  * of the transpose of the kinematics matrix, so maybe
  * implement it that way?
  */
@@ -50,5 +50,39 @@ public class SwerveDynamics {
         // Find contact forces.
         Vector<N8> f = new Vector<>(m_inv.times(w));
         return SwerveEffort.fromVector(f);
+    }
+
+    /**
+     * Corner efforts for the given rigid body acceleration.
+     * 
+     * Acceleration here is extrinsic/inertial: no centrifugal force.
+     */
+    public Corners corners(AccelerationSE2 a) {
+        // Compute rigid body wrench.
+        SE2Effort se2Effort = m_dyn.effort(a);
+        Vector<N3> w = se2Effort.vector();
+        // Find contact forces.
+        Vector<N8> f = new Vector<>(m_inv.times(w));
+        return Corners.fromVector(f);
+    }
+
+    /**
+     * Planar (R2) force in Newtons.
+     */
+    static record Corner(double x, double y) {
+    }
+
+    static record Corners(Corner fl, Corner fr, Corner rl, Corner rr) {
+        /**
+         * The argument is (f1x, f1y, f2x, f2y ...)
+         * as specified in README.md.
+         */
+        public static Corners fromVector(Vector<N8> v) {
+            return new Corners(
+                    new Corner(v.get(0), v.get(1)),
+                    new Corner(v.get(2), v.get(3)),
+                    new Corner(v.get(4), v.get(5)),
+                    new Corner(v.get(6), v.get(7)));
+        }
     }
 }
