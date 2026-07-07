@@ -7,7 +7,6 @@ import org.team100.lib.config.CurrentLimit;
 import org.team100.lib.config.Friction;
 import org.team100.lib.config.Identity;
 import org.team100.lib.config.PIDConstants;
-import org.team100.lib.config.SimpleDynamics;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.TotalCurrentLog;
 import org.team100.lib.motor.BareMotor;
@@ -79,7 +78,6 @@ public class FiveBarBare extends SubsystemBase {
     /////////////////////
 
     private BareMotor makeMotor(LoggerFactory logger, TotalCurrentLog currentLog, CanId canId) {
-        SimpleDynamics ff = new SimpleDynamics(logger, 0, 0);
         Friction friction = new Friction(logger, 0, 0, 0, 0);
         PIDConstants pid = PIDConstants.makePositionPID(logger, 2.0);
         return new Falcon500Motor(
@@ -89,7 +87,6 @@ public class FiveBarBare extends SubsystemBase {
                 NeutralMode100.COAST,
                 MotorPhase.REVERSE,
                 new CurrentLimit(STATOR_LIMIT, SUPPLY_LIMIT),
-                ff,
                 friction,
                 pid);
     }

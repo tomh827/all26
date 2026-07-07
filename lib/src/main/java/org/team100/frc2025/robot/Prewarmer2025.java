@@ -5,10 +5,10 @@ import java.util.List;
 
 import org.team100.lib.coherence.Takt;
 import org.team100.lib.geometry.DirectionSE2;
-import org.team100.lib.geometry.VelocitySE2;
 import org.team100.lib.geometry.WaypointSE2;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.Logging;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.trajectory.TrajectorySE2Factory;
 import org.team100.lib.trajectory.TrajectorySE2Planner;
 import org.team100.lib.trajectory.constraint.TimingConstraint;
@@ -48,7 +48,7 @@ public class Prewarmer2025 {
         planner.restToRest(waypoints);
 
         // Exercise the drive motors.
-        machinery.m_drive.setVelocity(new VelocitySE2(0, 0, 0));
+        machinery.m_drive.set(new VelocityControlSE2(0, 0, 0));
 
         // Exercise some mechanism commands.
         Command c = machinery.m_mech.homeToL4();

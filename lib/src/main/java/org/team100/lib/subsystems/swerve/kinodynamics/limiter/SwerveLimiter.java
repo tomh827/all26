@@ -7,6 +7,7 @@ import org.team100.lib.logging.Level;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.LoggerFactory.DoubleLogger;
 import org.team100.lib.logging.LoggerFactory.VelocitySE2Logger;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.swerve.kinodynamics.SwerveKinodynamics;
 
 /**
@@ -48,8 +49,11 @@ public class SwerveLimiter {
     /**
      * Find a feasible setpoint in the direction of the target, and remember it for
      * next time.
+     * 
+     * TODO: add acceleration here.
      */
-    public VelocitySE2 apply(VelocitySE2 nextReference) {
+    public VelocityControlSE2 apply(VelocityControlSE2 control) {
+        VelocitySE2 nextReference = control.velocity();
         m_log_next.log(() -> nextReference);
         m_log_normIn.log(nextReference::norm);
         if (DEBUG) {
@@ -76,22 +80,24 @@ public class SwerveLimiter {
             System.out.printf("accel limited %s\n", result);
         }
 
-        updateSetpoint(result);
+        updateSetpoint(new VelocityControlSE2(result));
 
         if (DEBUG) {
             System.out.printf("result %s\n", result);
         }
         m_log_norm.log(result::norm);
 
-        return result;
+        return new VelocityControlSE2(result);
     }
 
     /**
      * Set the current setpoint to the current velocity measurement.
      * This is required to make resumption of manual control smooth.
+     * 
+     * TODO: support acceleration here
      */
-    public void updateSetpoint(VelocitySE2 setpoint) {
-        m_current = setpoint;
+    public void updateSetpoint(VelocityControlSE2 setpoint) {
+        m_current = setpoint.velocity();
     }
 
 }

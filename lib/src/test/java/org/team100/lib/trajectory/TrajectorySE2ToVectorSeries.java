@@ -53,7 +53,7 @@ public class TrajectorySE2ToVectorSeries {
         double dt = duration / POINTS;
         for (double time = 0; time < duration; time += dt) {
             TrajectorySE2Point point = trajectory.sample(time).point();
-            ControlSE2 control = ControlSE2.fromTrajectorySE2Point(point);
+            ControlSE2 control = point.control();
             double x = control.x().x();
             double y = control.y().x();
             double ax = m_scale * control.x().a();

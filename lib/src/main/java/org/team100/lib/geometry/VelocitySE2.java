@@ -21,6 +21,9 @@ import edu.wpi.first.math.numbers.N3;
  * 
  * Everything here is in the R3 tangent space to SE(2).
  * 
+ * Be careful of the context: this specifies velocity relative to some
+ * coordinate system, often the global (field) one, but not always.
+ * 
  * See README.md for details.
  */
 public record VelocitySE2(double x, double y, double theta) {
@@ -72,6 +75,11 @@ public record VelocitySE2(double x, double y, double theta) {
                 initial.getRotation().plus(new Rotation2d(theta * dt)));
     }
 
+    /**
+     * Simple backwards finite difference, componentwise.
+     * Centrifugal force is not relevant here, because the inputs
+     * are field-relative velocities.
+     */
     public AccelerationSE2 accel(VelocitySE2 previous, double dt) {
         VelocitySE2 v = minus(previous).div(dt);
         return new AccelerationSE2(v.x(), v.y(), v.theta());

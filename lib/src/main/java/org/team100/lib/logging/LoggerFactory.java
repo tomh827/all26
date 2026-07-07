@@ -21,6 +21,7 @@ import org.team100.lib.state.ControlSE2;
 import org.team100.lib.state.ModelR1;
 import org.team100.lib.state.ModelSE2;
 import org.team100.lib.state.VelocityControlR1;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.prr.EAWConfig;
 import org.team100.lib.subsystems.prr.JointAccelerations;
 import org.team100.lib.subsystems.prr.JointForce;
@@ -812,6 +813,33 @@ public class LoggerFactory {
 
     public ControlSE2Logger controlSE2Logger(Level level, String leaf) {
         return new ControlSE2Logger(level, leaf);
+    }
+
+    public class VelocityControlSE2Logger {
+        private final Level m_level;
+        private final VelocityControlR1Logger m_xLogger;
+        private final VelocityControlR1Logger m_yLogger;
+        private final VelocityControlR1Logger m_thetaLogger;
+
+        VelocityControlSE2Logger(Level level, String leaf) {
+            m_level = level;
+            m_xLogger = VelocityControlR1Logger(level, join(leaf, "x"));
+            m_yLogger = VelocityControlR1Logger(level, join(leaf, "y"));
+            m_thetaLogger = VelocityControlR1Logger(level, join(leaf, "theta"));
+        }
+
+        public void log(Supplier<VelocityControlSE2> vals) {
+            if (!allow(m_level))
+                return;
+            VelocityControlSE2 val = vals.get();
+            m_xLogger.log(val::x);
+            m_yLogger.log(val::y);
+            m_thetaLogger.log(val::theta);
+        }
+    }
+
+    public VelocityControlSE2Logger velocityControlSE2Logger(Level level, String leaf) {
+        return new VelocityControlSE2Logger(level, leaf);
     }
 
     public ModelR1Logger ModelR1Logger(Level level, String leaf) {

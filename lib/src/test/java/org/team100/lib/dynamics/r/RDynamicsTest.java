@@ -9,67 +9,59 @@ public class RDynamicsTest {
 
     @Test
     void test0() {
-        RDynamics d = new RDynamics(1, 1, 0.5, 1);
+        RDynamics d = new RDynamics(1, 0.5, 1);
         // straight up
-        RTorque t = d.torque(
+        REffort t = d.effort(
                 new RConfig(0),
-                new RVelocity(0),
                 new RAcceleration(0));
         // no torque
-        assertEquals(0, t.f1(), DELTA);
+        assertEquals(0, t.t(), DELTA);
     }
 
     @Test
     void test1() {
-        RDynamics d = new RDynamics(1, 1, 0.5, 1);
+        RDynamics d = new RDynamics(1, 0.5, 1);
         // to the side
-        RTorque t = d.torque(
+        REffort t = d.effort(
                 new RConfig(Math.PI / 2),
-                new RVelocity(0),
                 new RAcceleration(0));
         // 1 kg is 0.5 m away, so 5Nm
-        assertEquals(-4.9, t.f1(), DELTA);
-
-    }
-
-
-    @Test
-    void test3() {
-        RDynamics d = new RDynamics(1, 1, 0.5, 1);
-        // moving
-        RTorque t = d.torque(
-                new RConfig(0),
-                new RVelocity(1),
-                new RAcceleration(0));
-        // no gravity force
-        assertEquals(0, t.f1(), DELTA);
-
+        assertEquals(-4.9, t.t(), DELTA);
     }
 
     @Test
     void test4() {
-        RDynamics d = new RDynamics(1, 1, 0.5, 1);
-        //  accelerating 
-        RTorque t = d.torque(
+        RDynamics d = new RDynamics(1, 0.5, 1);
+        // accelerating
+        REffort t = d.effort(
                 new RConfig(0),
-                new RVelocity(0),
                 new RAcceleration(1));
         // mass torque 0.25 + inertia 1 = 1.25
-        assertEquals(1.25, t.f1(), DELTA);
+        assertEquals(1.25, t.t(), DELTA);
 
     }
 
     @Test
     void test5() {
-        RDynamics d = new RDynamics(1, 1,0.5, 1);
-        //  slowing down 
-        RTorque t = d.torque(
+        RDynamics d = new RDynamics(1, 0.5, 1);
+        // slowing down
+        REffort t = d.effort(
                 new RConfig(0),
-                new RVelocity(1),
                 new RAcceleration(-1));
-        // slowing is the same, velocity doesn't matter
-        assertEquals(-1.25, t.f1(), DELTA);
+        // slowing is the same
+        assertEquals(-1.25, t.t(), DELTA);
+    }
 
+    @Test
+    void testFlywheel() {
+        // flywheel is an arm whose center of mass is at the pivot
+        RDynamics d = new RDynamics(1, 0, 2);
+        // speeding up
+        REffort t = d.effort(
+                new RConfig(0), // doesn't matter
+                new RAcceleration(3));
+        // t = I alpha
+        assertEquals(6, t.t(), DELTA);
     }
 
 }

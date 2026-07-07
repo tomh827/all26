@@ -4,13 +4,17 @@ import java.util.List;
 
 import org.team100.lib.coherence.Takt;
 import org.team100.lib.framework.TimedRobot100;
+import org.team100.lib.geometry.AccelerationSE2;
+import org.team100.lib.geometry.ChassisAcceleration;
 import org.team100.lib.geometry.WaypointSE2;
 import org.team100.lib.logging.LoggerFactory;
+import org.team100.lib.state.ControlSE2;
 import org.team100.lib.subsystems.tank.TankDrive;
 import org.team100.lib.trajectory.TrajectorySE2Entry;
 import org.team100.lib.trajectory.TrajectorySE2;
 import org.team100.lib.trajectory.TrajectorySE2Factory;
 import org.team100.lib.trajectory.TrajectorySE2Planner;
+import org.team100.lib.trajectory.TrajectorySE2Point;
 import org.team100.lib.trajectory.constraint.ConstantConstraint;
 import org.team100.lib.trajectory.constraint.TimingConstraint;
 import org.team100.lib.trajectory.path.PathSE2Factory;
@@ -71,11 +75,23 @@ public class ToPoseWithTrajectory extends Command {
             TrajectorySE2Entry next = m_trajectory.sample(t + TimedRobot100.LOOP_PERIOD_S);
             Pose2d currentPose = m_drive.getPose();
             Pose2d poseReference = current.point().point().waypoint().pose();
-            double velocityReference = next.point().velocity();
-            double omegaReference = next.point().velocity() * next.point().point().waypoint().course().headingRate();
+            // feedforward velocity
+            TrajectorySE2Point nextPoint = next.point();
+            ControlSE2 nextControl = nextPoint.control();
+            double velocityReference = nextControl.velocity().norm();
+            // feedforward velocity
+            double omegaReference = nextControl.velocity().theta();
+            // Control is proportional to pose error, producing CCW omega to fix +y,
+            // -vx to fix +x. Includes the feedforward velocities.
+            // It might be more correct to include the change in controller output in the
+            // acceleration term.
             ChassisSpeeds speeds = m_controller.calculate(
                     currentPose, poseReference, velocityReference, omegaReference);
-            m_drive.setVelocity(speeds.vxMetersPerSecond, speeds.omegaRadiansPerSecond);
+            // accel feedforward
+            AccelerationSE2 fieldRelativeAccel = nextControl.acceleration();
+            ChassisAcceleration accel = ChassisAcceleration.fromFieldRelative(
+                    fieldRelativeAccel, nextControl.rotation());
+            m_drive.setVelocity(speeds, accel);
         } catch (IllegalStateException e) {
         }
     }

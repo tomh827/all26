@@ -9,13 +9,13 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.team100.lib.geometry.DirectionSE2;
-import org.team100.lib.geometry.VelocitySE2;
 import org.team100.lib.geometry.WaypointSE2;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.TestLoggerFactory;
 import org.team100.lib.logging.primitive.TestPrimitiveLogger;
 import org.team100.lib.reference.se2.TrajectoryReferenceSE2;
 import org.team100.lib.state.ModelSE2;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.se2.MockSubsystemSE2;
 import org.team100.lib.subsystems.se2.commands.helper.VelocityReferenceControllerSE2;
 import org.team100.lib.subsystems.swerve.kinodynamics.SwerveKinodynamics;
@@ -79,23 +79,23 @@ public class ReferenceControllerSE2Test implements Timeless {
 
         stepTime();
         c.execute();
-        assertEquals(0.139, drive.m_setpoint.x(), DELTA);
-        assertEquals(0, drive.m_setpoint.y(), DELTA);
-        assertEquals(0, drive.m_setpoint.theta(), DELTA);
+        assertEquals(0.139, drive.m_setpoint.x().v(), DELTA);
+        assertEquals(0, drive.m_setpoint.y().v(), DELTA);
+        assertEquals(0, drive.m_setpoint.theta().v(), DELTA);
 
         // more normal driving
         stepTime();
         c.execute();
-        assertEquals(0.179, drive.m_setpoint.x(), DELTA);
-        assertEquals(0, drive.m_setpoint.y(), DELTA);
-        assertEquals(0, drive.m_setpoint.theta(), DELTA);
+        assertEquals(0.179, drive.m_setpoint.x().v(), DELTA);
+        assertEquals(0, drive.m_setpoint.y().v(), DELTA);
+        assertEquals(0, drive.m_setpoint.theta().v(), DELTA);
 
         // etc
         stepTime();
         c.execute();
-        assertEquals(0.221, drive.m_setpoint.x(), DELTA);
-        assertEquals(0, drive.m_setpoint.y(), DELTA);
-        assertEquals(0, drive.m_setpoint.theta(), DELTA);
+        assertEquals(0.221, drive.m_setpoint.x().v(), DELTA);
+        assertEquals(0, drive.m_setpoint.y().v(), DELTA);
+        assertEquals(0, drive.m_setpoint.theta().v(), DELTA);
     }
 
     @Test
@@ -181,7 +181,7 @@ public class ReferenceControllerSE2Test implements Timeless {
                 logger, drive, swerveController, reference);
 
         Pose2d pose = trajectory.sample(0).point().point().waypoint().pose();
-        VelocitySE2 velocity = VelocitySE2.ZERO;
+        VelocityControlSE2 velocity = VelocityControlSE2.ZERO;
 
         double mDt = 0.02;
         int i = 0;
@@ -189,13 +189,14 @@ public class ReferenceControllerSE2Test implements Timeless {
             if (++i > 500)
                 break;
             stepTime();
-            drive.m_state = new ModelSE2(pose, velocity);
+            drive.m_state = new ModelSE2(pose, velocity.velocity());
             referenceController.execute();
             velocity = drive.m_recentSetpoint;
+            // TODO: add acceleration term here
             pose = new Pose2d(
-                    pose.getX() + velocity.x() * mDt,
-                    pose.getY() + velocity.y() * mDt,
-                    new Rotation2d(pose.getRotation().getRadians() + velocity.theta() * mDt));
+                    pose.getX() + velocity.x().v() * mDt,
+                    pose.getY() + velocity.y().v() * mDt,
+                    new Rotation2d(pose.getRotation().getRadians() + velocity.theta().v() * mDt));
             if (DEBUG)
                 System.out.printf("pose %s vel %s\n", pose, velocity);
         }

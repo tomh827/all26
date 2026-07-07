@@ -2,6 +2,8 @@ package org.team100.lib.geometry;
 
 import java.util.Optional;
 
+import org.team100.lib.state.VelocityControlSE2;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -116,6 +118,13 @@ public class GeometryUtil {
 
     public static VelocitySE2 scale(VelocitySE2 v, double scale) {
         return new VelocitySE2(v.x() * scale, v.y() * scale, v.theta() * scale);
+    }
+
+    public static VelocityControlSE2 scale(VelocityControlSE2 v, double scale) {
+        return new VelocityControlSE2(
+                v.x().times(scale),
+                v.y().times(scale),
+                v.theta().times(scale));
     }
 
     public static Pose2d transformBy(Pose2d a, Pose2d b) {
@@ -373,12 +382,28 @@ public class GeometryUtil {
         return VecBuilder.fill(t.getX(), t.getY());
     }
 
+    public static Rotation2d fromVec(Vector<N2> v) {
+        return new Rotation2d(v.get(0), v.get(1));
+    }
+
     /** 3-vector for translation */
     public static Vector<N3> toVec3(Translation2d t) {
         return VecBuilder.fill(t.getX(), t.getY(), 0);
     }
 
+    public static Vector<N3> toVec(ChassisSpeeds s) {
+        return VecBuilder.fill(
+                s.vxMetersPerSecond,
+                s.vyMetersPerSecond,
+                s.omegaRadiansPerSecond);
+    }
+
     public static double cross(Vector<N2> a, Vector<N2> b) {
+        return a.get(0) * b.get(1) - a.get(1) * b.get(0);
+    }
+
+    /** Vector determinant, like the cross product in R2 */
+    public static double det(Vector<N2> a, Vector<N2> b) {
         return a.get(0) * b.get(1) - a.get(1) * b.get(0);
     }
 

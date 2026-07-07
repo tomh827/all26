@@ -10,6 +10,8 @@ import org.team100.lib.sensor.position.absolute.RotaryPositionSensor;
 import org.team100.lib.sensor.position.incremental.IncrementalBareEncoder;
 import org.team100.lib.state.ModelR1;
 
+import edu.wpi.first.math.MathUtil;
+
 /**
  * Uses a motor and gears to produce rotational output, e.g. an arm joint.
  * 
@@ -89,21 +91,28 @@ public class RotaryMechanism implements Player {
         m_motor.setTorqueLimit(torqueNm / m_gearRatio);
     }
 
-    /** Should actuate immediately. Use for homing. */
+    /**
+     * Should actuate immediately. Use for homing.
+     * 
+     * Previously this included an accel term. Acceleration should be
+     * addressed with Subsystem-level dynamics.
+     */
     public void setVelocityUnlimited(
             double outputRad_S,
-            double outputAccelRad_S2,
             double outputTorqueNm) {
         m_motor.setVelocity(
                 outputRad_S * m_gearRatio,
-                outputAccelRad_S2 * m_gearRatio,
                 outputTorqueNm / m_gearRatio);
     }
 
-    /** Should actuate immediately. Enforces position limit using the encoder. */
+    /**
+     * Should actuate immediately. Enforces position limit using the encoder.
+     * 
+     * Previously this included an accel term. Acceleration should be
+     * addressed with Subsystem-level dynamics.
+     */
     public void setVelocity(
             double velocityRad_S,
-            double accelRad_S2,
             double torqueNm) {
         double posRad = getWrappedPositionRad();
         if (velocityRad_S < 0 && posRad < m_minPositionRad) {
@@ -116,8 +125,30 @@ public class RotaryMechanism implements Player {
         }
         m_motor.setVelocity(
                 velocityRad_S * m_gearRatio,
-                accelRad_S2 * m_gearRatio,
                 torqueNm / m_gearRatio);
+    }
+
+    /**
+     * Choose a nearby unwrapped position.
+     * 
+     * Does not implement "spotting".  If the nearest unwrapped
+     * position is outside the bounds, it does nothing.  If you
+     * want spotting, use an AngularPositionServo.
+     */
+    public void setWrappedPosition(
+            double positionRad,
+            double velocityRad_S,
+            double torqueNm) {
+        double unwrappedMeasurement = getUnwrappedPositionRad();
+        double dx = MathUtil.angleModulus(positionRad - unwrappedMeasurement);
+        double unwrappedRad = unwrappedMeasurement + dx;
+        if (unwrappedRad > getMaxPositionRad()) {
+                return;
+        }
+        if (unwrappedRad < getMinPositionRad()) {
+                return;
+        }
+        setUnwrappedPosition(unwrappedRad, velocityRad_S, torqueNm);
     }
 
     /**
@@ -128,12 +159,12 @@ public class RotaryMechanism implements Player {
      * 
      * Should actuate immediately.
      * 
-     * Make sure you don't double-count factors of torque/accel.
+     * Previously this included an accel term. Acceleration should be
+     * addressed with Subsystem-level dynamics.
      */
     public void setUnwrappedPosition(
             double positionRad,
             double velocityRad_S,
-            double accelRad_S2,
             double torqueNm) {
         m_log_desired_position.log(() -> positionRad);
         if (positionRad < m_minPositionRad) {
@@ -151,7 +182,6 @@ public class RotaryMechanism implements Player {
         m_motor.setUnwrappedPosition(
                 positionRad * m_gearRatio,
                 velocityRad_S * m_gearRatio,
-                accelRad_S2 * m_gearRatio,
                 torqueNm / m_gearRatio);
     }
 

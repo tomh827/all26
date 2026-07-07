@@ -42,7 +42,9 @@ public class DriveToPoseWithProfileTest implements Timeless {
             System.out.println("x, y, theta");
         for (int i = 0; i < 200; ++i) {
             drive.execute();
-            subsystem.m_state = new ModelSE2(subsystem.m_state.pose(), subsystem.m_setpoint);
+            subsystem.m_state = new ModelSE2(
+                    subsystem.m_state.pose(),
+                    subsystem.m_setpoint.velocity());
             subsystem.m_state = subsystem.m_state.evolve(0.02);
             Pose2d p = subsystem.m_state.pose();
             if (DEBUG)
