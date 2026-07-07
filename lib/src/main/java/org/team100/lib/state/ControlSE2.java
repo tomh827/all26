@@ -54,7 +54,7 @@ public class ControlSE2 {
     }
 
     public ControlSE2(Pose2d x) {
-        this(x, new VelocitySE2(0, 0, 0));
+        this(x, VelocitySE2.ZERO);
     }
 
     public ControlSE2(Rotation2d x) {

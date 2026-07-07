@@ -57,7 +57,7 @@ public class SwerveHistory implements DoubleFunction<ModelSE2> {
         m_log_timestamp = parent.type(this).doubleLogger(Level.TRACE, "sample timestamp");
         SwerveStateInterpolator interpolator = new SwerveStateInterpolator(
                 kinodynamics.getKinematics());
-        ModelSE2 state = new ModelSE2(initialPoseMeters, new VelocitySE2(0, 0, 0));
+        ModelSE2 state = new ModelSE2(initialPoseMeters, VelocitySE2.ZERO);
         SwerveState initialState = new SwerveState(
                 state, noise, modulePositions, gyroAngle, gyroBias);
         m_poseBuffer = new TimeInterpolatableBuffer100<>(
@@ -81,7 +81,7 @@ public class SwerveHistory implements DoubleFunction<ModelSE2> {
             double timestampSeconds,
             Rotation2d gyroYaw,
             VariableR1 gyroBias) {
-        ModelSE2 model = new ModelSE2(pose, new VelocitySE2(0, 0, 0));
+        ModelSE2 model = new ModelSE2(pose, VelocitySE2.ZERO);
         SwerveState state = new SwerveState(
                 model,
                 noise,

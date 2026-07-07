@@ -71,7 +71,8 @@ public abstract class ReferenceControllerSE2Base {
             ModelSE2 error = current.minus(measurement);
             // u represents the time from now until now+dt, so it's also
             // what the mechanism should be doing at the next time step
-            VelocityControlSE2 u = m_controller.calculate(measurement, current, next);
+            VelocityControlSE2 u = m_controller.calculate(
+                measurement, current, next);
             execute100(next, u);
             m_log_measurement.log(() -> measurement);
             m_log_current.log(() -> current);

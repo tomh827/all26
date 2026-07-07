@@ -47,7 +47,7 @@ public class ModelSE2 {
 
     /** Motionless with the specified pose */
     public ModelSE2(Pose2d x) {
-        this(x, new VelocitySE2(0, 0, 0));
+        this(x, VelocitySE2.ZERO);
     }
 
     /** Motionless at the origin with the specified heading */

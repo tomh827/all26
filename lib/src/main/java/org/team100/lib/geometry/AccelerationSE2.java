@@ -51,8 +51,7 @@ public record AccelerationSE2(double x, double y, double theta) {
             VelocitySE2 v1,
             VelocitySE2 v2,
             double dtSec) {
-        VelocitySE2 dv = v2.minus(v1);
-        return new AccelerationSE2(dv.x() / dtSec, dv.y() / dtSec, dv.theta() / dtSec);
+        return v2.accel(v1, dtSec);
     }
 
     public AccelerationSE2 clamp(double maxAccel, double maxAlpha) {
