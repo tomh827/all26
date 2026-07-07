@@ -2,6 +2,8 @@ package org.team100.lib.geometry;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N3;
 
@@ -41,6 +43,12 @@ public record ChassisAcceleration(double x, double y, double theta) {
 
     public static ChassisAcceleration fromVector(Vector<N3> v) {
         return new ChassisAcceleration(v.get(0), v.get(1), v.get(2));
+    }
+
+    public static ChassisAcceleration fromFieldRelative(
+            AccelerationSE2 accel, Rotation2d angle) {
+        Translation2d rotated = new Translation2d(accel.x(), accel.y()).rotateBy(angle.unaryMinus());
+        return new ChassisAcceleration(rotated.getX(), rotated.getY(), accel.theta());
     }
 
 }

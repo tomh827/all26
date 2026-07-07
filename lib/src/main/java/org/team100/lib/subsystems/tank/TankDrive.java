@@ -2,7 +2,6 @@ package org.team100.lib.subsystems.tank;
 
 import org.team100.lib.dynamics.differential.DifferentialDriveDynamics;
 import org.team100.lib.dynamics.differential.DifferentialDriveEffort;
-import org.team100.lib.framework.TimedRobot100;
 import org.team100.lib.geometry.ChassisAcceleration;
 import org.team100.lib.logging.Level;
 import org.team100.lib.logging.LoggerFactory;
@@ -40,7 +39,6 @@ public class TankDrive extends SubsystemBase {
     private final DoubleLogger m_logLeft;
     private final DoubleLogger m_logRight;
 
-    private ChassisSpeeds m_speed;
     private DifferentialDriveWheelPositions m_positions;
     private Pose2d m_pose;
 
@@ -79,31 +77,30 @@ public class TankDrive extends SubsystemBase {
      * Use inverse kinematics to set wheel speeds.
      * 
      * New! Uses dynamics to compute motor forces.
+     * 
+     * Ignores lateral acceleration.
      */
-    public void setVelocity(double translationM_S, double rotationRad_S) {
-        ChassisSpeeds speed = new ChassisSpeeds(translationM_S, 0, rotationRad_S);
+    public void setVelocity(ChassisSpeeds speed, ChassisAcceleration accel) {
         DifferentialDriveWheelSpeeds wheelSpeeds = m_kinematics.toWheelSpeeds(speed);
-        wheelSpeeds.desaturate(m_maxSpeedM_S);
-        ChassisSpeeds actual = m_kinematics.toChassisSpeeds(wheelSpeeds);
-
-        // accel includes centrifugal force, which includes a "y" component,
-        // which can only be supplied by this drivetrain if there is
-        // a tire slip angle, and that is not supported: the kinematics
-        // assumes zero slip. So here we ignore the centrifugal part.
-        // If you make a *fast* differential drive, you may want to
-        // revisit this simplification.
-        ChassisAcceleration accel = accel(actual);
-        DifferentialDriveEffort t = m_dynamics.effort(accel);
-
         double left = wheelSpeeds.leftMetersPerSecond;
         double right = wheelSpeeds.rightMetersPerSecond;
 
-        m_left.setVelocity(left, t.F1());
-        m_right.setVelocity(right, t.F2());
+        DifferentialDriveEffort effort = m_dynamics.effort(accel);
+        m_left.setVelocity(left, effort.F1());
+        m_right.setVelocity(right, effort.F2());
 
-        m_logChassisSpeeds.log(() -> actual);
+        m_logChassisSpeeds.log(() -> speed);
         m_logLeft.log(() -> left);
         m_logRight.log(() -> right);
+    }
+
+    /** For manual driving, to derive a feasible setpoint */
+    public ChassisSpeeds desaturate(double translationM_S, double rotationRad_S) {
+        ChassisSpeeds speed = new ChassisSpeeds(translationM_S, 0, rotationRad_S);
+        DifferentialDriveWheelSpeeds ws = m_kinematics.toWheelSpeeds(speed);
+        ws.desaturate(m_maxSpeedM_S);
+        ChassisSpeeds actual = m_kinematics.toChassisSpeeds(ws);
+        return actual;
     }
 
     public void stop() {
@@ -127,10 +124,15 @@ public class TankDrive extends SubsystemBase {
         return m_pose;
     }
 
-    /** Set the drive velocity. */
-    public Command driveWithVelocity(double translationM_S, double rotationRad_s) {
-        return run(() -> setVelocity(translationM_S, rotationRad_s))
-                .withName("drive with velocity");
+    /** Set the drive velocity to a constant, for very simple auto. */
+    public Command driveWithVelocity(
+            double velM_S, double omegaRad_S,
+            double accelM_S2, double alphaRad_S2) {
+        return run(() -> {
+            ChassisSpeeds speed = new ChassisSpeeds(velM_S, 0, omegaRad_S);
+            ChassisAcceleration accel = new ChassisAcceleration(accelM_S2, 0, alphaRad_S2);
+            setVelocity(speed, accel);
+        }).withName("drive with velocity");
     }
 
     private void updatePose() {
@@ -152,18 +154,5 @@ public class TankDrive extends SubsystemBase {
 
     private double[] poseArray() {
         return VizUtil.poseToArray(m_pose);
-    }
-
-    /**
-     * Compute acceleration using backwards finite difference
-     * on chassis speed, using a constant DT.
-     * 
-     * This acceleration includes centrifugal force.
-     */
-    private ChassisAcceleration accel(ChassisSpeeds speed) {
-        ChassisAcceleration a = ChassisAcceleration.diff(
-                m_speed, speed, TimedRobot100.LOOP_PERIOD_S);
-        m_speed = speed;
-        return a;
     }
 }

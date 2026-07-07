@@ -2,11 +2,7 @@ package org.team100.lib.dynamics.swerve;
 
 import java.util.Optional;
 
-import org.team100.lib.geometry.ForceR2;
-
-import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.numbers.N8;
 
 /**
  * The swerve produces corner forces using two mechanisms:
@@ -21,7 +17,6 @@ import edu.wpi.first.math.numbers.N8;
  */
 public record SwerveEffort(
         ModuleEffort fl, ModuleEffort fr, ModuleEffort rl, ModuleEffort rr) {
-
 
     /**
      * Analogous to SwerveModuleState, but for force, and the adjusted angle.
