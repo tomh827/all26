@@ -48,9 +48,10 @@ public class DiscusServo extends SubsystemBase {
         LoggerFactory loggerP1 = logger.name("p1");
 
         // zeros
-        PIDConstants pid = PIDConstants.makePositionPID(logger, 1.0, 0, 0.05); // d = 0.12 was experimentally found
+        // PID = 1.0, 0.0, 0.05
+        PIDConstants pid = PIDConstants.makePositionPID(logger, 1.0, 0, 0); // d = 0.12 was experimentally found
         SimpleDynamics ff = new SimpleDynamics(logger, 0, 0);
-        Friction friction = new Friction(logger, 0, 0, 0, 0);
+        Friction friction = new Friction(logger, 0.16, 0.15 , 0, 0);
         ProfileR1 profile = new TrapezoidProfileR1(
                 logger, MAX_VELOCITY, MAX_ACCEL, POSITION_TOLERANCE);
         ReferenceR1 refP1 = new ProfileReferenceR1(
