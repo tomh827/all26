@@ -5,14 +5,15 @@ import java.util.Optional;
 
 import org.team100.lib.coherence.Takt;
 import org.team100.lib.config.Identity;
+import org.team100.lib.dynamics.swerve.SwerveEffort.ModuleEffort;
 import org.team100.lib.experiments.Experiment;
 import org.team100.lib.experiments.Experiments;
 import org.team100.lib.logging.Level;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.LoggerFactory.DoubleLogger;
+import org.team100.lib.mechanism.LinearMechanism;
+import org.team100.lib.mechanism.RotaryMechanism;
 import org.team100.lib.music.Player;
-import org.team100.lib.servo.AngularPositionServo;
-import org.team100.lib.servo.LinearVelocityServo;
 import org.team100.lib.subsystems.swerve.module.state.SwerveModulePosition100;
 import org.team100.lib.subsystems.swerve.module.state.SwerveModuleState100;
 
@@ -42,8 +43,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 public abstract class SwerveModule100 implements Player {
     private static final boolean DEBUG = false;
 
-    private final LinearVelocityServo m_driveServo;
-    private final AngularPositionServo m_turningServo;
+    private final LinearMechanism m_drive;
+    private final RotaryMechanism m_steer;
     /** For steer/drive coupling. */
     private final double m_wheelRadiusM;
     /**
@@ -71,27 +72,27 @@ public abstract class SwerveModule100 implements Player {
 
     protected SwerveModule100(
             LoggerFactory log,
-            LinearVelocityServo driveServo,
-            AngularPositionServo turningServo,
+            LinearMechanism drive,
+            RotaryMechanism steer,
             double wheelDiameterM,
             double finalDriveRatio) {
         m_log_dt = log.doubleLogger(Level.TRACE, "dt");
         m_log_speed = log.doubleLogger(Level.TRACE, "speed");
         m_log_omega = log.doubleLogger(Level.TRACE, "omega");
-        m_driveServo = driveServo;
-        m_turningServo = turningServo;
+        m_drive = drive;
+        m_steer = steer;
         m_wheelRadiusM = wheelDiameterM / 2;
         // The initial previous angle is the measurement.
-        m_previousDesiredWrappedAngle = new Rotation2d(m_turningServo.getWrappedPositionRad());
+        m_previousDesiredWrappedAngle = new Rotation2d(m_steer.getWrappedPositionRad());
         m_previousTime = Takt.get();
         m_finalDriveRatio = finalDriveRatio;
-        m_players = List.of(m_driveServo, m_turningServo);
+        m_players = List.of(m_drive, m_steer);
     }
 
     @Override
     public void play(double freq) {
-        m_driveServo.play(freq);
-        m_turningServo.play(freq);
+        m_drive.play(freq);
+        m_steer.play(freq);
     }
 
     @Override
@@ -109,10 +110,10 @@ public abstract class SwerveModule100 implements Player {
      * 
      * @param desiredWrapped for now+dt
      */
-    void setDesiredState(SwerveModuleState100 desiredWrapped) {
+    void setDesiredState(SwerveModuleState100 desiredWrapped, ModuleEffort effort) {
         desiredWrapped = usePreviousAngleIfEmpty(desiredWrapped);
         desiredWrapped = optimize(desiredWrapped);
-        actuate(desiredWrapped);
+        actuate(desiredWrapped, effort);
     }
 
     /**
@@ -120,25 +121,26 @@ public abstract class SwerveModule100 implements Player {
      * 
      * Given an empty angle, it uses the previous one.
      */
-    void setRawDesiredState(SwerveModuleState100 desired) {
+    void setRawDesiredState(SwerveModuleState100 desired, ModuleEffort effort) {
         desired = usePreviousAngleIfEmpty(desired);
-        actuate(desired);
+        actuate(desired, effort);
     }
 
-    /** Set turning setpoint to measurement, zero drive encoder. */
+    /**
+     * Set turning setpoint to measurement, zero drive encoder.
+     * TODO: remove this.
+     */
     void reset() {
-        m_turningServo.reset();
-        m_driveServo.reset();
     }
 
     void close() {
-        m_turningServo.close();
+        m_steer.close();
     }
 
     /** FOR TEST ONLY */
     SwerveModuleState100 getState() {
-        double driveVelocity = m_driveServo.getVelocity();
-        double turningPosition = m_turningServo.getWrappedPositionRad();
+        double driveVelocity = m_drive.getVelocityM_S();
+        double turningPosition = m_steer.getWrappedPositionRad();
 
         return new SwerveModuleState100(
                 driveVelocity,
@@ -147,8 +149,8 @@ public abstract class SwerveModule100 implements Player {
 
     /** Uses Cache so the position is fresh and coherent. */
     SwerveModulePosition100 getPosition() {
-        double driveM = m_driveServo.getDistance();
-        double unwrappedAngleRad = m_turningServo.getUnwrappedPositionRad();
+        double driveM = m_drive.getPositionM();
+        double unwrappedAngleRad = m_steer.getUnwrappedPositionRad();
         switch (Identity.instance) {
             case SWERVE_ONE:
             case SWERVE_TWO:
@@ -164,36 +166,45 @@ public abstract class SwerveModule100 implements Player {
                 Optional.of(new Rotation2d(unwrappedAngleRad)));
     }
 
-    boolean atSetpoint() {
-        return m_turningServo.atSetpoint();
-    }
-
     void stop() {
-        m_driveServo.stop();
-        m_turningServo.stop();
+        m_drive.stop();
+        m_steer.stop();
     }
 
     /** Update logs. */
     void periodic() {
-        m_driveServo.periodic();
-        m_turningServo.periodic();
+        m_drive.periodic();
+        m_steer.periodic();
     }
 
     /**
      * Turning servo commands compute the velocity based on the previous desired
      * angle.
      * 
+     * TODO: implement force
+     * 
      * @param nextWrapped for now+dt, i.e. "next"
+     * @param effort      force and slip angle from dynamics
      */
-    void actuate(SwerveModuleState100 nextWrapped) {
+    void actuate(SwerveModuleState100 nextWrapped, ModuleEffort effort) {
         if (nextWrapped.angle().isEmpty())
             throw new IllegalArgumentException("actuation needs a real angle");
-        Rotation2d nextWrappedAngle = nextWrapped.angle().get();
+        final Rotation2d nextWrappedAngle;
+        if (effort.angle().isPresent()
+                && Experiments.instance.enabled(
+                        Experiment.SwerveDynamicsLateral)) {
+            // use the slip angle from dynamics.
+            nextWrappedAngle = effort.angle().get();
+        } else {
+            // use the kinematics (zero slip) angle.
+            nextWrappedAngle = nextWrapped.angle().get();
+        }
         // TODO: Experiment with fixed DT here.
         double dt = dt();
         m_log_dt.log(() -> dt);
 
         // Deduce the desired omega using backward finite difference.
+        // TODO: maybe filter this.
         double nextOmega = omega(nextWrappedAngle, dt);
         m_log_omega.log(() -> nextOmega);
 
@@ -203,16 +214,13 @@ public abstract class SwerveModule100 implements Player {
                 nextOmega,
                 dt);
         m_log_speed.log(() -> nextSpeed);
-
-        // Acceleration may be a source of noise, so optionally ignore it.
-        if (Experiments.instance.enabled(Experiment.DriveWithoutAccel)) {
-            // Zero acceleration.
-            m_driveServo.setVelocityDirect(nextSpeed, 0);
+        if (Experiments.instance.enabled(Experiment.SwerveDynamicsLongitudinal)) {
+            // add the force from dynamics.
+            m_drive.setVelocity(nextSpeed, effort.f());
         } else {
-            // Deduces acceleration.
-            m_driveServo.setVelocityDirect(nextSpeed);
+            // use zero extra force.
+            m_drive.setVelocity(nextSpeed, 0);
         }
-
         // Steering omega may be a source of noise, so optionally ignore it.
         double omega = nextOmega;
         if (Experiments.instance.enabled(Experiment.SteerWithoutVelocity)) {
@@ -231,10 +239,10 @@ public abstract class SwerveModule100 implements Player {
         // regulate the impact on the battery. This will induce some delay,
         // and controller error, but it's not bad: it's using the actual
         // constraint (current) instead of a proxy (profile acceleration).
-        m_turningServo.setPositionDirect(nextWrappedAngle.getRadians(), omega, 0);
-
-        // This is the alternative profiled steering used in 2025.
-        // m_turningServo.setPositionProfiled(nextWrappedAngle.getRadians(), omega);
+        //
+        // TODO: implement torque.
+        //
+        m_steer.setWrappedPosition(nextWrappedAngle.getRadians(), omega, 0);
 
         m_previousDesiredWrappedAngle = nextWrappedAngle;
     }
@@ -289,12 +297,12 @@ public abstract class SwerveModule100 implements Player {
     }
 
     /**
-     * Use the current turning servo position to optimize the desired state.
+     * Use the current steering position to optimize the desired state.
      */
     private SwerveModuleState100 optimize(SwerveModuleState100 desiredWrapped) {
         return SwerveModuleState100.optimize(
                 desiredWrapped,
-                new Rotation2d(m_turningServo.getWrappedPositionRad()));
+                new Rotation2d(m_steer.getWrappedPositionRad()));
     }
 
     /**

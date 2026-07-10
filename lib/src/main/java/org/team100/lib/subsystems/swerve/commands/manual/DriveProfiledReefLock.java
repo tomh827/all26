@@ -9,6 +9,7 @@ import org.team100.lib.controller.r1.FeedbackR1;
 import org.team100.lib.experiments.Experiment;
 import org.team100.lib.experiments.Experiments;
 import org.team100.lib.framework.TimedRobot100;
+import org.team100.lib.geometry.AccelerationSE2;
 import org.team100.lib.geometry.GeometryUtil;
 import org.team100.lib.geometry.VelocitySE2;
 import org.team100.lib.hid.Velocity;
@@ -21,6 +22,7 @@ import org.team100.lib.profile.r1.TrapezoidProfileR1;
 import org.team100.lib.state.ControlR1;
 import org.team100.lib.state.ModelR1;
 import org.team100.lib.state.ModelSE2;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.swerve.SwerveDriveSubsystem;
 import org.team100.lib.subsystems.swerve.kinodynamics.SwerveKinodynamics;
 import org.team100.lib.subsystems.swerve.kinodynamics.limiter.SwerveLimiter;
@@ -85,6 +87,8 @@ public class DriveProfiledReefLock extends Command {
 
     // package private for testing
 
+    private VelocitySE2 m_v;
+
     ControlR1 m_thetaSetpoint = null;
 
     public DriveProfiledReefLock(
@@ -114,6 +118,7 @@ public class DriveProfiledReefLock extends Command {
         m_log_theta_FF = m_log.doubleLogger(Level.TRACE, "thetaFF");
         m_log_theta_FB = m_log.doubleLogger(Level.TRACE, "thetaFB");
         m_log_output_omega = m_log.doubleLogger(Level.TRACE, "output/omega");
+        m_v = VelocitySE2.ZERO;
         addRequirements(m_drive);
     }
 
@@ -121,7 +126,7 @@ public class DriveProfiledReefLock extends Command {
     public void initialize() {
         m_heedRadiusM.accept(HEED_RADIUS_M);
         // make sure the limiter knows what we're doing
-        m_limiter.updateSetpoint(m_drive.getVelocity());
+        m_limiter.updateSetpoint(new VelocityControlSE2(m_drive.getVelocity()));
 
         ModelSE2 p = m_drive.getState();
 
@@ -137,22 +142,28 @@ public class DriveProfiledReefLock extends Command {
         Velocity t = m_twistSupplier.get();
         ModelSE2 s = m_drive.getState();
 
-        VelocitySE2 v = apply(s, t);
         // scale for driver skill.
-        VelocitySE2 scaled = GeometryUtil.scale(v, DriverSkill.level().scale());
+        VelocityControlSE2 scaled = GeometryUtil.scale(apply(s, t), DriverSkill.level().scale());
 
         // Apply field-relative limits.
         if (Experiments.instance.enabled(Experiment.UseSwerveLimiter)) {
             scaled = m_limiter.apply(scaled);
         }
-        m_drive.setVelocity(scaled);
+
+        // Compute field-relative accel from backwards finite difference.
+        VelocitySE2 v = scaled.velocity();
+        // Because this is field-relative, there is no centrifugal force.
+        AccelerationSE2 a = v.accel(m_v, TimedRobot100.LOOP_PERIOD_S);
+        m_v = v;
+
+        m_drive.set(new VelocityControlSE2(v, a));
 
     }
 
-    public VelocitySE2 apply(
+    public VelocityControlSE2 apply(
             final ModelSE2 state,
             final Velocity twist1_1) {
-        final VelocitySE2 control = clipAndScale(twist1_1);
+        final VelocityControlSE2 control = clipAndScale(twist1_1);
 
         if (!m_lockToReef.get()) {
             // not locked, just return the input.
@@ -192,7 +203,9 @@ public class DriveProfiledReefLock extends Command {
                 -m_swerveKinodynamics.getMaxAngleSpeedRad_S(),
                 m_swerveKinodynamics.getMaxAngleSpeedRad_S());
 
-        VelocitySE2 twistWithSnapM_S = new VelocitySE2(control.x(), control.y(), omega);
+        // TODO: accel
+        VelocityControlSE2 twistWithSnapM_S = new VelocityControlSE2(
+                control.x().v(), control.y().v(), omega);
 
         m_log_snap_mode.log(() -> true);
         m_log_goal_theta.log(m_goal::getRadians);
@@ -204,12 +217,12 @@ public class DriveProfiledReefLock extends Command {
         return twistWithSnapM_S;
     }
 
-    public VelocitySE2 clipAndScale(Velocity twist1_1) {
+    public VelocityControlSE2 clipAndScale(Velocity twist1_1) {
         // clip the input to the unit circle
         final Velocity clipped = twist1_1.clip(1.0);
 
         // scale to max in both translation and rotation
-        return VelocitySE2.scale(
+        return VelocityControlSE2.scale(
                 clipped,
                 m_swerveKinodynamics.getMaxDriveVelocityM_S(),
                 m_swerveKinodynamics.getMaxAngleSpeedRad_S());

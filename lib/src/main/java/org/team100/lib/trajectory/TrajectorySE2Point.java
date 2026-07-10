@@ -1,11 +1,17 @@
 package org.team100.lib.trajectory;
 
+import org.team100.lib.geometry.DirectionSE2;
+import org.team100.lib.geometry.WaypointSE2;
+import org.team100.lib.state.ControlR1;
+import org.team100.lib.state.ControlSE2;
 import org.team100.lib.trajectory.path.PathSE2Point;
 import org.team100.lib.util.Math100;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+
 public class TrajectorySE2Point {
     private static final boolean DEBUG = false;
-
     /**
      * Point on a path, with heading rate and curvature.
      */
@@ -21,6 +27,7 @@ public class TrajectorySE2Point {
     /**
      * Pathwise acceleration for the timespan after this state, m/s^2. It's computed
      * by looking at the velocity of the next state, and the distance to get there.
+     * NOTE: *PATHWISE ONLY* not centrifugal acceleration.
      */
     private final double m_accelM_S_S;
 
@@ -80,6 +87,48 @@ public class TrajectorySE2Point {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Control required for this point.
+     * 
+     * Correctly computes centripetal acceleration.
+     */
+    public ControlSE2 control() {
+        WaypointSE2 waypoint = m_point.waypoint();
+        Pose2d pose = waypoint.pose();
+        DirectionSE2 course = waypoint.course();
+
+        // Pose.
+        double pX = pose.getTranslation().getX();
+        double pY = pose.getTranslation().getY();
+        double pTheta = pose.getRotation().getRadians();
+
+        // Velocity.
+        Rotation2d R = course.toRotation();
+        double velX = R.getCos() * m_velocityM_S;
+        double velY = R.getSin() * m_velocityM_S;
+        double velTheta = course.headingRate() * m_velocityM_S;
+
+        // Pathwise acceleration.
+        double pathAX = R.getCos() * m_accelM_S_S;
+        double pathAY = R.getSin() * m_accelM_S_S;
+        double pathATheta = course.headingRate() * m_accelM_S_S;
+
+        // Centripetal acceleration.
+        // a = v^2/r = v^2 * curvature
+        // this works because the acceleration vector is always normal
+        // to the course vector, and in 2d, with signed curvature, that
+        // determines the vector.
+        double curvatureRad_M = m_point.k();
+        double centripetalAccelM_s_s = m_velocityM_S * m_velocityM_S * curvatureRad_M;
+        double centripetalAX = -1.0 * R.getSin() * centripetalAccelM_s_s;
+        double centripetalAY = R.getCos() * centripetalAccelM_s_s;
+
+        return new ControlSE2(
+                new ControlR1(pX, velX, pathAX + centripetalAX),
+                new ControlR1(pY, velY, pathAY + centripetalAY),
+                new ControlR1(pTheta, velTheta, pathATheta));
     }
 
 }

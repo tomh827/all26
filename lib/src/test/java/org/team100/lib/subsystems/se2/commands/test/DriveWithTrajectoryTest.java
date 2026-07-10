@@ -95,23 +95,23 @@ public class DriveWithTrajectoryTest implements Timeless {
 
         stepTime();
         c.execute();
-        assertEquals(0.102, d.m_setpoint.x(), DELTA);
-        assertEquals(0, d.m_setpoint.y(), DELTA);
-        assertEquals(0, d.m_setpoint.theta(), DELTA);
+        assertEquals(0.102, d.m_setpoint.x().v(), DELTA);
+        assertEquals(0, d.m_setpoint.y().v(), DELTA);
+        assertEquals(0, d.m_setpoint.theta().v(), DELTA);
 
         // more normal driving
         stepTime();
         c.execute();
-        assertEquals(0.139, d.m_setpoint.x(), DELTA);
-        assertEquals(0, d.m_setpoint.y(), DELTA);
-        assertEquals(0, d.m_setpoint.theta(), DELTA);
+        assertEquals(0.139, d.m_setpoint.x().v(), DELTA);
+        assertEquals(0, d.m_setpoint.y().v(), DELTA);
+        assertEquals(0, d.m_setpoint.theta().v(), DELTA);
 
         // etc
         stepTime();
         c.execute();
-        assertEquals(0.179, d.m_setpoint.x(), DELTA);
-        assertEquals(0, d.m_setpoint.y(), DELTA);
-        assertEquals(0, d.m_setpoint.theta(), DELTA);
+        assertEquals(0.179, d.m_setpoint.x().v(), DELTA);
+        assertEquals(0, d.m_setpoint.y().v(), DELTA);
+        assertEquals(0, d.m_setpoint.theta().v(), DELTA);
     }
 
     @Test

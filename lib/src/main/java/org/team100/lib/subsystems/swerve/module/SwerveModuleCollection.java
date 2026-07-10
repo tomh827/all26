@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.team100.lib.config.CurrentLimit;
 import org.team100.lib.config.Identity;
+import org.team100.lib.dynamics.swerve.SwerveEffort;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.TotalCurrentLog;
 import org.team100.lib.motor.MotorPhase;
@@ -87,7 +88,7 @@ public class SwerveModuleCollection implements Player {
                                 new CanId(22), // drive
                                 DriveRatio.MEDIUM,
                                 new CanId(18), // steer
-                                  new RoboRioChannel(6),
+                                new RoboRioChannel(6),
                                 0.361342,
                                 kinodynamics,
                                 EncoderDrive.INVERSE, NeutralMode100.COAST, MotorPhase.REVERSE),
@@ -200,19 +201,19 @@ public class SwerveModuleCollection implements Player {
                  * {@link Timeless}).
                  */
                 return new SwerveModuleCollection(
-                        SimulatedSwerveModule100.get(frontLeftLogger, kinodynamics),
-                        SimulatedSwerveModule100.get(frontRightLogger, kinodynamics),
-                        SimulatedSwerveModule100.get(rearLeftLogger, kinodynamics),
-                        SimulatedSwerveModule100.get(rearRightLogger, kinodynamics));
+                        SimulatedSwerveModule100.get(frontLeftLogger),
+                        SimulatedSwerveModule100.get(frontRightLogger),
+                        SimulatedSwerveModule100.get(rearLeftLogger),
+                        SimulatedSwerveModule100.get(rearRightLogger));
         }
     }
 
     public static SwerveModuleCollection forTest(LoggerFactory log, SwerveKinodynamics kinodynamics) {
         return new SwerveModuleCollection(
-                SimulatedSwerveModule100.withInstantaneousSteering(log, kinodynamics),
-                SimulatedSwerveModule100.withInstantaneousSteering(log, kinodynamics),
-                SimulatedSwerveModule100.withInstantaneousSteering(log, kinodynamics),
-                SimulatedSwerveModule100.withInstantaneousSteering(log, kinodynamics));
+                SimulatedSwerveModule100.get(log),
+                SimulatedSwerveModule100.get(log),
+                SimulatedSwerveModule100.get(log),
+                SimulatedSwerveModule100.get(log));
     }
 
     //////////////////////////////////////////////////
@@ -227,14 +228,15 @@ public class SwerveModuleCollection implements Player {
      * 
      * @param nextStates for now+dt
      */
-    public void setDesiredStates(SwerveModuleStates nextStates) {
+    public void setDesiredStates(
+            SwerveModuleStates nextStates, SwerveEffort effort) {
         if (DEBUG) {
             System.out.printf("setDesiredStates() %s\n", nextStates);
         }
-        m_frontLeft.setDesiredState(nextStates.frontLeft());
-        m_frontRight.setDesiredState(nextStates.frontRight());
-        m_rearLeft.setDesiredState(nextStates.rearLeft());
-        m_rearRight.setDesiredState(nextStates.rearRight());
+        m_frontLeft.setDesiredState(nextStates.frontLeft(), effort.fl());
+        m_frontRight.setDesiredState(nextStates.frontRight(), effort.fr());
+        m_rearLeft.setDesiredState(nextStates.rearLeft(), effort.rl());
+        m_rearRight.setDesiredState(nextStates.rearRight(), effort.rr());
     }
 
     /**
@@ -244,11 +246,12 @@ public class SwerveModuleCollection implements Player {
      * 
      * Works fine with empty angles.
      */
-    public void setRawDesiredStates(SwerveModuleStates swerveModuleStates) {
-        m_frontLeft.setRawDesiredState(swerveModuleStates.frontLeft());
-        m_frontRight.setRawDesiredState(swerveModuleStates.frontRight());
-        m_rearLeft.setRawDesiredState(swerveModuleStates.rearLeft());
-        m_rearRight.setRawDesiredState(swerveModuleStates.rearRight());
+    public void setRawDesiredStates(
+            SwerveModuleStates swerveModuleStates, SwerveEffort effort) {
+        m_frontLeft.setRawDesiredState(swerveModuleStates.frontLeft(), effort.fl());
+        m_frontRight.setRawDesiredState(swerveModuleStates.frontRight(), effort.fr());
+        m_rearLeft.setRawDesiredState(swerveModuleStates.rearLeft(), effort.rl());
+        m_rearRight.setRawDesiredState(swerveModuleStates.rearRight(), effort.rr());
     }
 
     public void stop() {
@@ -287,15 +290,6 @@ public class SwerveModuleCollection implements Player {
                 m_frontRight.getState(),
                 m_rearLeft.getState(),
                 m_rearRight.getState());
-    }
-
-    public boolean[] atSetpoint() {
-        return new boolean[] {
-                m_frontLeft.atSetpoint(),
-                m_frontRight.atSetpoint(),
-                m_rearLeft.atSetpoint(),
-                m_rearRight.atSetpoint()
-        };
     }
 
     ////////////////////////////////////////////

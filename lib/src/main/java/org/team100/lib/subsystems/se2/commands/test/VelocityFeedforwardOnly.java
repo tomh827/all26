@@ -1,11 +1,11 @@
 package org.team100.lib.subsystems.se2.commands.test;
 
 import org.team100.lib.commands.MoveAndHold;
-import org.team100.lib.geometry.VelocitySE2;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.profile.se2.ProfileSE2;
 import org.team100.lib.reference.se2.ProfileReferenceSE2;
 import org.team100.lib.state.ModelSE2;
+import org.team100.lib.state.VelocityControlSE2;
 import org.team100.lib.subsystems.se2.VelocitySubsystemSE2;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -46,10 +46,10 @@ public class VelocityFeedforwardOnly extends MoveAndHold {
 
     @Override
     public void execute() {
-        VelocitySE2 velocity = m_reference.next().velocity();
+        VelocityControlSE2 velocity = m_reference.next().velocityControl();
         if (DEBUG)
             System.out.printf("velocity %s\n", velocity);
-        m_drive.setVelocity(velocity);
+        m_drive.set(velocity);
     }
 
     @Override

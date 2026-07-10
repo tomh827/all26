@@ -48,7 +48,7 @@ J_{\omega_1} =
 \end{bmatrix}
 ```
 
-Now we can put all these terms together into the expression for the mass "matrix" (which is scalar in this case):
+Now we can put all these terms together into the expression for the mass matrix:
 
 ```math
 M =
@@ -180,4 +180,24 @@ m_1 l_{c_1}^2
 \right)
 \ddot{q}
 -m_1gl_{c_1}s_1 
+```
+
+This expression does not depend on velocity ($\dot{q}$),
+so it doesn't appear in the implementation.
+
+For setups with no length (e.g. a flywheel), the expression
+simplifies to the familiar:
+
+```math
+\tau = 
+I_{zz_1}
+\ddot{q}
+```
+
+better known as:
+
+```math
+\tau = 
+I
+\alpha
 ```

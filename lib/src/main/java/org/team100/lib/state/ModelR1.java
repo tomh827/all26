@@ -12,6 +12,8 @@ import edu.wpi.first.math.interpolation.Interpolatable;
  * The usual state-space representation would be X = (x,v) and Xdot = (v,a).
  * Units are meters, radians, and seconds.
  * 
+ * TODO: rename this to StateR1
+ * 
  * @param x position
  * @param v velocity
  */

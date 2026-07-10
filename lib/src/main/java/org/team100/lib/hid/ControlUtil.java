@@ -40,6 +40,8 @@ public class ControlUtil {
     /**
      * Applies expo to the magnitude of the cartesian input. Appropriate for
      * joysticks with round limits, like Xbox controllers.
+     * 
+     * TODO: add acceleration computation
      */
     public static Velocity velocity(
             DoubleSupplier rightYSupplier,
