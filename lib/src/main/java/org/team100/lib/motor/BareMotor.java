@@ -148,6 +148,7 @@ public interface BareMotor extends Player, TotalCurrentLog.Reporter {
      */
     default double kE() {
         return 60 * 12 / (kFreeSpeedRPM() * 2 * Math.PI);
+        // return 0;
     }
 
     default double backEMFVoltage(double motorRad_S) {
