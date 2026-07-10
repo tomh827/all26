@@ -2,7 +2,6 @@ package frc.robot;
 import org.team100.lib.config.CurrentLimit;
 import org.team100.lib.config.Friction;
 import org.team100.lib.config.PIDConstants;
-import org.team100.lib.config.SimpleDynamics;
 import org.team100.lib.logging.LoggerFactory;
 import org.team100.lib.logging.Logging;
 import org.team100.lib.logging.TotalCurrentLog;
@@ -22,7 +21,6 @@ public class Robot extends TimedRobot {
     final LoggerFactory logger = logging.rootLogger;
     TotalCurrentLog currentLog = new TotalCurrentLog(logger);
     PIDConstants pid = PIDConstants.makePositionPID(logger, 2.0);
-    SimpleDynamics ff = new SimpleDynamics(logger, 0, 0);
     Friction friction = new Friction(logger, 0, 0, 0, 0);
     KrakenX60Motor motor1;
     KrakenX60Motor motor2;
@@ -35,7 +33,6 @@ public class Robot extends TimedRobot {
                 NeutralMode100.COAST,
                 MotorPhase.REVERSE,
                 new CurrentLimit(STATOR_LIMIT, SUPPLY_LIMIT),
-                ff,
                 friction,
                 pid);
         motor2 = new KrakenX60Motor(
@@ -45,7 +42,6 @@ public class Robot extends TimedRobot {
                 NeutralMode100.COAST,
                 MotorPhase.FORWARD,
                 new CurrentLimit(STATOR_LIMIT, SUPPLY_LIMIT),
-                ff,
                 friction,
                 pid);
     }
@@ -65,8 +61,8 @@ public class Robot extends TimedRobot {
         // motor1.setDutyCycle(0.5);
         // motor2.setDutyCycle(0.5);
 
-        motor1.setVelocity(600, 0, 0);
-        motor2.setVelocity(600, 0, 0);
+        motor1.setVelocity(600, 0);
+        motor2.setVelocity(600, 0);
 
     }
 
