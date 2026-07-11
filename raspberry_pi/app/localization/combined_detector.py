@@ -30,7 +30,7 @@ class CombinedDetector(Interpreter):
         network: Network,
         timestamps: Timestamps,
         object_lower: NDArray[np.int32],
-        object_higher: NDArray[np.int32],  # type: ignore
+        object_higher: NDArray[np.int32],
     ) -> None:
         """
         Note: hue values are 0-180, half the usual range.

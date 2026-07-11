@@ -70,8 +70,29 @@ python3 -m pip install numpy==1.26.4 --break-system-packages
 
 ```
 
+# Developing on Linux
 
-# For Windows
+If you're using Linux for development, we're currently using Ubuntu 26.04,
+which uses python 3.14.14.
+
+* create a venv for the build
+    * `python -m venv ./env` (or wherever)
+* upgrade the environment
+    * `source env/bin/activate`
+    * `python -m ensurepip --default-pip`
+    * `python -m pip install --upgrade pip`
+    * `python -m pip install numpy`
+    * `python -m pip install robotpy`
+    * `python -m pip install robotpy-apriltag`
+    * `python -m pip install robotpy-cscore`
+    * `python -m pip install opencv-python`
+
+finally, choose this venv  as the interpreter in vscode.
+
+* shift-ctrl-p, "Python: select interpreter"
+
+
+# Developing on Windows
 
 If you're writing code on windows, and you want to run the tests,
 you'll have to install:

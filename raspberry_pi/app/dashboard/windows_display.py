@@ -24,4 +24,4 @@ class WindowsDisplay(Display):
     @override
     def put(self, img: MatLike) -> None:
         img_out = cv2.resize(img, (self._width, self._height))
-        self._stream.set_frame(img_out)  # type: ignore
+        self._stream.set_frame(img_out)

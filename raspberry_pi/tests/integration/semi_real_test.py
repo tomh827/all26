@@ -7,7 +7,6 @@ from app.camera.camera_protocol import Camera
 from app.camera.fake_camera import FakeCamera
 from app.config.identity import Identity
 from app.dashboard.display_protocol import Display
-from app.dashboard.fake_display import FakeDisplay
 from app.dashboard.linux_display import LinuxDisplay
 from app.interpreter.interpreter_protocol import Interpreter
 from app.localization.tag_detector import TagDetector

@@ -3,7 +3,7 @@
 from typing_extensions import override
 import cv2
 from cv2.typing import MatLike
-from cscore import CameraServer  # type: ignore
+from cscore import CameraServer
 from app.dashboard.display_protocol import Display
 
 
@@ -20,4 +20,4 @@ class LinuxDisplay(Display):
     @override
     def put(self, img: MatLike) -> None:
         img_out = cv2.resize(img, (self._width, self._height))
-        self._cvsource.putFrame(img_out)  # type: ignore
+        self._cvsource.putFrame(img_out)

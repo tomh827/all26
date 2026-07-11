@@ -1,4 +1,3 @@
-
 # pylint: disable=C0103,E1101,E1121,R0902,R0903,R0913,R0914,R0917,W0612
 import cv2
 import numpy as np
@@ -28,7 +27,7 @@ class TargetDetector(Interpreter):
         network: Network,
         timestamps: Timestamps,
         object_lower: NDArray[np.int32],
-        object_higher: NDArray[np.int32], # type: ignore
+        object_higher: NDArray[np.int32],
     ) -> None:
         """
         Note: hue values are 0-180, half the usual range.
@@ -84,7 +83,9 @@ class TargetDetector(Interpreter):
             delay_us = Timestamps.delta_us(timestamp_boottime_us)
 
             # Capture timestamp in servertime.
-            servertime: int = self._timestamps.boot_time_to_server_time(timestamp_boottime_us)
+            servertime: int = self._timestamps.boot_time_to_server_time(
+                timestamp_boottime_us
+            )
 
             img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
             img_hsv = np.ascontiguousarray(img_hsv)
