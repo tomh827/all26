@@ -5,6 +5,9 @@
 We use the `black` formatter.  Don't try to do your own
 formatting, just use the formatter.
 
+Install the "Black Formatter" extension in vscode, which binds to __ctrl-shift-I__ on Linux, and __shift-alt-F__ on Windows.
+
+
 ## Imports
 Python offers two import styles:
 

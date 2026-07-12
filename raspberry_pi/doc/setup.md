@@ -30,7 +30,7 @@ python -m venv ./env
 ```
 * Install required libraries (on windows, use 'py' not 'python')
 ```
-source env/bin/activate
+source ./env/bin/activate
 python -m ensurepip --default-pip
 python -m pip install --upgrade pip
 python -m pip install numpy
@@ -48,3 +48,14 @@ python -m pip install aiohttp
     * choose "Python: select interpreter"
     * select ./env
 
+
+## Testing in vscode
+
+Use the "Python" extension in vscode, which should populate the "test" pane once it
+is set up.
+
+## Testing in Github Actions
+
+There's a Github workflow file that runs the raspberry pi
+tests, using pytest.  It's in
+`all26/.github/workflows`

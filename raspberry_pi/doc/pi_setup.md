@@ -58,7 +58,7 @@ python -m venv ./env
 ```
 * Install required libraries
 ```
-source env/bin/activate
+source ./env/bin/activate
 python -m ensurepip --default-pip
 python -m pip install --upgrade pip
 python -m pip install numpy
