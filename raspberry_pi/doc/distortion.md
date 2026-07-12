@@ -8,11 +8,11 @@ But because the detector looks for *straight* lines, this approach limits the di
 
 The highest level of allowed distortion looks something like this, using the full resolution of the source image:
 
-<img src="image-1.png" width=500/>
+<img src="images/image-1.png" width=500/>
 
 At a real-time-practical resolution (1/4 scale), it might look like this:
 
-<img src="image.png" width=500/>
+<img src="images/image.png" width=500/>
 
 Note how the drawn tag box misses the actual corner of the tag.  The line is chosen as a best-fit to the whole edge, which means that distortion will create this kind of corner error.  It's not just a one-pixel error.  I tried experimenting with config settings (e.g. maximum fit MSE) to make the detector more forgiving, but I couldn't make that work.
 
@@ -24,7 +24,12 @@ For comparison, here's the original:
 
 The distorted images are obviously very distorted -- more distorted than our the images our GS+6mm camera setup produces, so maybe this isn't an issue.  But if the detector seems to fail for close-up tags, maybe this is the reason.
 
-We might also want to repeat these examples using real GS+6mm images, to estimate the pixel error of the camera -- I'm guessing it would be something like 1 or 2 pixels.
+We might also want to repeat these examples using real images, to estimate the pixel error of the camera -- I'm guessing it would be something like 1 or 2 pixels.
+
+We may want to reconsider undistorting all the pixels, for
+very distorted lenses.
+
+## Background
 
 For more about the detection algorithm, see 
 
@@ -32,7 +37,7 @@ For more about the detection algorithm, see
 * the [AprilTag 2 paper](https://april.eecs.umich.edu/media/pdfs/wang2016iros.pdf)
 * the [AprilTag 3 paper](https://april.eecs.umich.edu/media/pdfs/krogius2019iros.pdf)
 
-# Distortion models
+## Distortion models
 
 The distortion topic is very confusing, because both "forward" and "inverse" models exist, which use the very same names for analogous (but not identical) parameters.
 

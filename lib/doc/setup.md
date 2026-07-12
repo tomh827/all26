@@ -68,8 +68,9 @@ How to setup to edit Java code, e.g. for a mechanism test.
       * Do not use the Windows search feature to find vscode
    * Go to "File >> Open Folder..."
       * Navigate to the project you want to use
-         * the top-level "comp" folder is for competition or competition-like robots.
-         * smaller test projects are in the "studies" folder
+         * The top-level "comp" folder is for competition or competition-like robots.
+         * Smaller test projects are in the "studies" folder.
+         * If you're just starting out, start with "studies/discus".
    * VsCode will start trying to build the project
       * This can take a long time (many minutes)
    * Go to "File >> Auto Save" and make sure it's checked.
