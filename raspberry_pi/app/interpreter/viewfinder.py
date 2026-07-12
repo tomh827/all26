@@ -1,6 +1,7 @@
 # pylint: disable=C0103,E1101,R0903
+from typing import  override
+from collections.abc import Buffer
 from cv2.typing import MatLike
-from typing_extensions import Buffer, override
 from app.camera.camera_protocol import Request
 from app.dashboard.display_protocol import Display
 from app.dashboard.display_util import DisplayUtil
@@ -11,7 +12,7 @@ from app.util.timestamps import Timestamps
 
 
 class Viewfinder(Interpreter):
-    """A detector that does nothing but publish its input."""
+    """An interpreter that does nothing but publish its input."""
 
     def __init__(
         self,
@@ -27,7 +28,7 @@ class Viewfinder(Interpreter):
 
 
     @override
-    def analyze(self, req: Request) -> None:
+    def interpret(self, req: Request) -> None:
         buffer: Buffer
         with req.buffer() as buffer:
             decoder: Decoder = req.decoder()
@@ -37,7 +38,7 @@ class Viewfinder(Interpreter):
             fps = req.fps()
             self._fps.send(fps)
             delay_us = Timestamps.delta_us(req.timestamp_boottime_us())
-            DisplayUtil.text(img_bgr, f"FPS {fps:2.0f}", (5, 65))
-            DisplayUtil.text(img_bgr, f"delay (ms) {delay_us/1000:2.0f}", (5, 105))
+            DisplayUtil.text(img_bgr, f"FPS {fps:2.0f}", (5, 5), 0)
+            DisplayUtil.text(img_bgr, f"delay (ms) {delay_us/1000:2.0f}", (5, 5), 1)
             self._display1.put(img_bgr)
             self._display2.put(img_bgr)

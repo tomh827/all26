@@ -7,9 +7,9 @@ from app.config.identity import Identity
 from app.dashboard.display_protocol import Display
 from app.interpreter.interpreter_protocol import Interpreter
 from app.interpreter.viewfinder import Viewfinder
-from app.localization.combined_detector import CombinedDetector
-from app.localization.tag_detector import TagDetector
-from app.localization.target_detector import TargetDetector
+from app.analysis.apriltags import AprilTags
+from app.analysis.blobs import Blobs
+from app.interpreter.dual_interpreter import DualInterpreter
 from app.network.network_protocol import Network
 from app.util.timestamps import Timestamps
 
@@ -41,18 +41,24 @@ class InterpreterFactory:
 
         match identity:
             case Identity.FUNNEL:
-                return TagDetector(
-                    identity, cam, display1, display2, network, timestamps
-                )
-            case Identity.GAME_PIECE:
-                return TargetDetector(
+                return DualInterpreter(
                     cam,
                     display1,
                     display2,
                     network,
                     timestamps,
-                    object_lower,
-                    object_higher,
+                    AprilTags(identity, cam, network),
+                    None
+                )
+            case Identity.GAME_PIECE:
+                return DualInterpreter(
+                    cam,
+                    display1,
+                    display2,
+                    network,
+                    timestamps,
+                    None,
+                    Blobs(cam, network, object_lower, object_higher),
                 )
             case (
                 Identity.CAMERA_FRONT
@@ -68,21 +74,32 @@ class InterpreterFactory:
                 | Identity.SWERVE_RIGHT
                 | Identity.SWERVE_LEFT
             ):
-                return TagDetector(
-                    identity, cam, display1, display2, network, timestamps
-                )
-            case Identity.DEV2:
-                return CombinedDetector(
-                    identity,
+                return DualInterpreter(
                     cam,
                     display1,
                     display2,
                     network,
                     timestamps,
-                    object_lower,
-                    object_higher,
+                    AprilTags(identity, cam, network),
+                    None
+                )
+            case Identity.DEV2:
+                return DualInterpreter(
+                    cam,
+                    display1,
+                    display2,
+                    network,
+                    timestamps,
+                    AprilTags(identity, cam, network),
+                    Blobs(cam, network, object_lower, object_higher),
                 )
             case _:
-                return TagDetector(
-                    identity, cam, display1, display2, network, timestamps
+                return DualInterpreter(
+                    cam,
+                    display1,
+                    display2,
+                    network,
+                    timestamps,
+                    AprilTags(identity, cam, network),
+                    None
                 )

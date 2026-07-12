@@ -1,4 +1,4 @@
-# pylint: disable=E1101,R0903,R1732
+# pylint: disable=E1101,W0212
 
 import unittest
 from wpimath.geometry import Transform3d, Translation3d, Rotation3d
@@ -8,28 +8,20 @@ import cv2
 
 from app.camera.fake_camera import FakeCamera
 from app.config.identity import Identity
-from app.dashboard.fake_display import FakeDisplay
-from app.localization.tag_detector import TagDetector
+from app.analysis.apriltags import AprilTags
 from app.network.fake_network import FakeNetwork
-from app.util.timestamps import Timestamps
 
 
-class TagDetectorTest(unittest.TestCase):
-    """A series of tests of progressively smaller targets.
-    Some of these are sensitive to decimation."""
+class AprilTagTest(unittest.TestCase):
+    """Mostly tests that show the analyzer puts
+    the right results on the network."""
 
     def test_big_sharp(self) -> None:
         identity = Identity.UNKNOWN
         network = FakeNetwork()
-        timestamps = Timestamps(network)
         camera = FakeCamera("images/big_sharp.png")
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        tag_detector = TagDetector(
-            identity, camera, display1, display2, network, timestamps
-        )
-        request = camera.capture_request()
-        tag_detector.analyze(request)
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type: ignore
 
         self.assertEqual(1, len(network.blips))
         pose = network.blips[0].pose
@@ -47,21 +39,13 @@ class TagDetectorTest(unittest.TestCase):
         self.assertAlmostEqual(410, b.x0, delta=1)
         self.assertAlmostEqual(814, b.y0, delta=1)
 
-        self.assertEqual(1, display1.frame_count)
-
     def test_big_sharp90(self) -> None:
         """This image is rotated."""
         identity = Identity.UNKNOWN
         network = FakeNetwork()
-        timestamps = Timestamps(network)
         camera = FakeCamera("images/big_sharp90.png")
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        tag_detector = TagDetector(
-            identity, camera, display1, display2, network, timestamps
-        )
-        request = camera.capture_request()
-        tag_detector.analyze(request)
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
 
         self.assertEqual(1, len(network.blips))
         pose = network.blips[0].pose
@@ -81,21 +65,13 @@ class TagDetectorTest(unittest.TestCase):
         self.assertAlmostEqual(409, b.x0, delta=1)
         self.assertAlmostEqual(229, b.y0, delta=1)
 
-        self.assertEqual(1, display1.frame_count)
-
     def test_big_sharp_y(self) -> None:
         """This image uses the "perspective" transform in gimp."""
         identity = Identity.UNKNOWN
         network = FakeNetwork()
-        timestamps = Timestamps(network)
         camera = FakeCamera("images/big_sharpY.png")
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        tag_detector = TagDetector(
-            identity, camera, display1, display2, network, timestamps
-        )
-        request = camera.capture_request()
-        tag_detector.analyze(request)
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
 
         self.assertEqual(1, len(network.blips))
         pose = network.blips[0].pose
@@ -115,20 +91,12 @@ class TagDetectorTest(unittest.TestCase):
         self.assertAlmostEqual(512, b.x0, delta=1)
         self.assertAlmostEqual(815, b.y0, delta=1)
 
-        self.assertEqual(1, display1.frame_count)
-
     def test_scale1(self) -> None:
         identity = Identity.UNKNOWN
         network = FakeNetwork()
-        timestamps = Timestamps(network)
         camera = FakeCamera("images/scale1.png")
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        tag_detector = TagDetector(
-            identity, camera, display1, display2, network, timestamps
-        )
-        request = camera.capture_request()
-        tag_detector.analyze(request)
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
 
         self.assertEqual(1, len(network.blips))
         pose = network.blips[0].pose
@@ -145,20 +113,12 @@ class TagDetectorTest(unittest.TestCase):
         self.assertAlmostEqual(557, b.x0, delta=1)
         self.assertAlmostEqual(679, b.y0, delta=1)
 
-        self.assertEqual(1, display1.frame_count)
-
     def test_scale2(self) -> None:
         identity = Identity.UNKNOWN
         network = FakeNetwork()
-        timestamps = Timestamps(network)
         camera = FakeCamera("images/scale2.png")
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        tag_detector = TagDetector(
-            identity, camera, display1, display2, network, timestamps
-        )
-        request = camera.capture_request()
-        tag_detector.analyze(request)
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
 
         self.assertEqual(1, len(network.blips))
         pose = network.blips[0].pose
@@ -176,20 +136,12 @@ class TagDetectorTest(unittest.TestCase):
         self.assertAlmostEqual(630, b.x0, delta=1)
         self.assertAlmostEqual(610, b.y0, delta=1)
 
-        self.assertEqual(1, display1.frame_count)
-
     def test_scale3(self) -> None:
         identity = Identity.UNKNOWN
         network = FakeNetwork()
-        timestamps = Timestamps(network)
         camera = FakeCamera("images/scale3.pnm")
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        tag_detector = TagDetector(
-            identity, camera, display1, display2, network, timestamps
-        )
-        request = camera.capture_request()
-        tag_detector.analyze(request)
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
 
         self.assertEqual(1, len(network.blips))
         pose = network.blips[0].pose
@@ -207,20 +159,12 @@ class TagDetectorTest(unittest.TestCase):
         self.assertAlmostEqual(666, b.x0, delta=1)
         self.assertAlmostEqual(578, b.y0, delta=1)
 
-        self.assertEqual(1, display1.frame_count)
-
     def test_scale4(self) -> None:
         identity = Identity.UNKNOWN
         network = FakeNetwork()
-        timestamps = Timestamps(network)
         camera = FakeCamera("images/scale4.pnm")
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        tag_detector = TagDetector(
-            identity, camera, display1, display2, network, timestamps
-        )
-        request = camera.capture_request()
-        tag_detector.analyze(request)
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
 
         self.assertEqual(1, len(network.blips))
         pose = network.blips[0].pose
@@ -238,23 +182,14 @@ class TagDetectorTest(unittest.TestCase):
         self.assertAlmostEqual(685, b.x0, delta=1)
         self.assertAlmostEqual(561, b.y0, delta=1)
 
-        self.assertEqual(1, display1.frame_count)
-
     def test_scale5(self) -> None:
         """It's kind of amazing that this one works.
         This does not work when quadDecimate is set to 4."""
-
         identity = Identity.UNKNOWN
         network = FakeNetwork()
-        timestamps = Timestamps(network)
         camera = FakeCamera("images/scale5.pnm")
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        tag_detector = TagDetector(
-            identity, camera, display1, display2, network, timestamps
-        )
-        request = camera.capture_request()
-        tag_detector.analyze(request)
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
 
         self.assertEqual(1, len(network.blips))
         pose = network.blips[0].pose
@@ -272,37 +207,22 @@ class TagDetectorTest(unittest.TestCase):
         self.assertAlmostEqual(694, b.x0, delta=1)
         self.assertAlmostEqual(552, b.y0, delta=1)
 
-        self.assertEqual(1, display1.frame_count)
-
     def test_scale6(self) -> None:
         """This is too small."""
-
         identity = Identity.UNKNOWN
         network = FakeNetwork()
-        timestamps = Timestamps(network)
         camera = FakeCamera("images/scale6.pnm")
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        tag_detector = TagDetector(
-            identity, camera, display1, display2, network, timestamps
-        )
-        request = camera.capture_request()
-        tag_detector.analyze(request)
-
-        self.assertEqual(1, display1.frame_count)
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
+        self.assertEqual(0, len(network.blips))
+        self.assertEqual(0, len(network.blips_with_corners))
 
     def test_one_tag_found(self) -> None:
         identity = Identity.UNKNOWN
         network = FakeNetwork()
-        timestamps = Timestamps(network)
         camera = FakeCamera("images/tag_and_board.jpg", (1100, 620))
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        tag_detector = TagDetector(
-            identity, camera, display1, display2, network, timestamps
-        )
-        request = camera.capture_request()
-        tag_detector.analyze(request)
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
 
         self.assertEqual(1, len(network.blips))
         pose = network.blips[0].pose
@@ -321,24 +241,16 @@ class TagDetectorTest(unittest.TestCase):
         self.assertAlmostEqual(191, b.x0, delta=1)
         self.assertAlmostEqual(496, b.y0, delta=1)
 
-        self.assertEqual(1, display1.frame_count)
-
     def test_zero_tags_found(self) -> None:
         identity = Identity.UNKNOWN
         network = FakeNetwork()
-        timestamps = Timestamps(network)
         # nothing in this image
         camera = FakeCamera("images/white_square.jpg")
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        tag_detector = TagDetector(
-            identity, camera, display1, display2, network, timestamps
-        )
-        request = camera.capture_request()
-        tag_detector.analyze(request)
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
 
         self.assertEqual(0, len(network.blips))
-        self.assertEqual(1, display1.frame_count)
+        self.assertEqual(0, len(network.blips_with_corners))
 
     def verify_pose(self, pose: Transform3d, delta: float) -> None:
         print("\n*** pose: ", pose)
@@ -355,26 +267,20 @@ class TagDetectorTest(unittest.TestCase):
         """How much distortion can there be in the image?"""
         identity = Identity.UNKNOWN
         network = FakeNetwork()
-        timestamps = Timestamps(network)
 
         # No distortion.
         camera = FakeCamera("images/tag_and_board.jpg", (1100, 620), 0)
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        TagDetector(identity, camera, display1, display2, network, timestamps).analyze(
-            camera.capture_request()
-        )
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
+
         self.assertEqual(1, len(network.blips))
         self.verify_pose(network.blips[0].pose, 0.001)
 
         # A moderate amount of distortion
         network = FakeNetwork()
         camera = FakeCamera("images/tag_and_board.jpg", (1100, 620), -0.1)
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        TagDetector(identity, camera, display1, display2, network, timestamps).analyze(
-            camera.capture_request()
-        )
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
         self.assertEqual(1, len(network.blips))
         # A tiny bit more tolerance
         self.verify_pose(network.blips[0].pose, 0.002)
@@ -382,11 +288,8 @@ class TagDetectorTest(unittest.TestCase):
         # A realistic amount of distortion
         network = FakeNetwork()
         camera = FakeCamera("images/tag_and_board.jpg", (1100, 620), -0.3)
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        TagDetector(identity, camera, display1, display2, network, timestamps).analyze(
-            camera.capture_request()
-        )
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
         self.assertEqual(1, len(network.blips))
         # A bit more tolerance
         self.verify_pose(network.blips[0].pose, 0.003)
@@ -395,11 +298,8 @@ class TagDetectorTest(unittest.TestCase):
         # Note: this is a truly enormous amount of distortion.
         network = FakeNetwork()
         camera = FakeCamera("images/tag_and_board.jpg", (1100, 620), -2)
-        display1 = FakeDisplay()
-        display2 = FakeDisplay()
-        TagDetector(identity, camera, display1, display2, network, timestamps).analyze(
-            camera.capture_request()
-        )
+        apriltags = AprilTags(identity, camera, network)
+        apriltags.analyze_mono(camera._mono, None, 0)  # type:ignore
 
     def test_redistort(self) -> None:
         """This is just to see what it's doing."""

@@ -1,5 +1,6 @@
+# pylint: disable=R0903
+from typing import override
 from cv2.typing import MatLike
-from typing_extensions import override
 from app.dashboard.display_protocol import Display
 
 
