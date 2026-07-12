@@ -3,12 +3,14 @@
 import unittest
 import numpy as np
 from app.camera.fake_camera import FakeCamera
-from app.localization.blobs import Blobs
+from app.analysis.blobs import Blobs
 from app.network.structs import Target
 from app.network.fake_network import FakeNetwork
 
 
 class BlobTest(unittest.TestCase):
+    """Mostly tests that show the analyzer puts
+    the right results on the network."""
 
     def test_one_note_found(self) -> None:
         network = FakeNetwork()

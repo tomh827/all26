@@ -13,9 +13,11 @@ class MonoAnalysis(Protocol):
         img_display: MatLike,
         servertime: int,
     ) -> None:
-        """Analysis of a monochrome image
+        """Analysis of a monochrome image.
 
         :img: must be 8 bit mono.
+        :img_display: for display, may be mono or color.
+        :servertime: drift-corrected server-time microsecond timestamp.
         """
         ...
 
@@ -29,8 +31,10 @@ class ColorAnalysis(Protocol):
         img_display: MatLike,
         servertime: int,
     ) -> None:
-        """Analysis of a color image
+        """Analysis of a color image.
 
         :img: must be 24 bit color.
+        :img_display: for display, may be mono or color.
+        :servertime: drift-corrected server-time microsecond timestamp.
         """
         ...

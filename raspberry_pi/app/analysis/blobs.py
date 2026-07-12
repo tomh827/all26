@@ -7,7 +7,7 @@ from numpy.typing import NDArray
 from wpimath.geometry import Rotation3d
 from app.camera.camera_protocol import Camera, Size
 from app.dashboard.display_util import DisplayUtil
-from app.localization.analysis_protocol import ColorAnalysis
+from app.analysis.analysis_protocol import ColorAnalysis
 from app.network.network_protocol import Network
 from app.network.structs import Target
 
@@ -23,8 +23,12 @@ class Blobs(ColorAnalysis):
         object_higher: NDArray[np.int32],
     ) -> None:
         """
+        Finds blobs within a color range in HSV.
+        
         Note: hue values are 0-180, half the usual range.
 
+        :cam: camera implementation
+        :network: to send results
         :object_lower: ([H, S, V]) lower bound
         :object_higher: ([H, S, V]) upper bound
         """

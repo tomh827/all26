@@ -1,6 +1,10 @@
+# pylint: disable=E1101,R0903
+
 from typing import Any, override
-from cv2.typing import MatLike
+import cv2
 import numpy as np
+
+from cv2.typing import MatLike
 from numpy.typing import NDArray
 
 from robotpy_apriltag import AprilTagDetection, AprilTagDetector, AprilTagPoseEstimator
@@ -10,30 +14,35 @@ from wpimath.geometry._geometry import Transform3d
 from app.camera.camera_protocol import Camera
 from app.config.identity import Identity
 from app.dashboard.display_util import DisplayUtil
-from app.localization.analysis_protocol import MonoAnalysis
-from app.localization.detector_util import DetectorUtil
+from app.analysis.analysis_protocol import MonoAnalysis
 from app.network.network_protocol import Network
 from app.network.structs import Blip, BlipWithCorners
+
+# Tag corners for computing homography.
+SRC_POINTS = np.array([[-1, 1], [1, 1], [1, -1], [-1, -1]])
 
 
 class AprilTags(MonoAnalysis):
     """A wrapper for the AprilTag detector."""
 
-    def __init__(self, identity: Identity, cam: Camera, network: Network) -> None:
+    def __init__(
+        self,
+        identity: Identity,
+        cam: Camera,
+        network: Network,
+    ) -> None:
         """Finds Apriltags.
 
         :identity: chooses tag size
         :cam: camera implementation
-        :display1: shows annotated image
-        :display2: optionally shows undistorted image
-        :timestamps: timing source.
+        :network: to send results
         """
         print("\n*** MonoAnalysis: AprilTags")
         self._mtx: NDArray[np.float32] = cam.get_intrinsic()
         self._dist: NDArray[np.float32] = cam.get_dist()
         self._blips = network.get_blip_sender()
         self._blips_with_corners = network.get_blip_with_corners_sender()
-        self._at_detector = AprilTags.detector()
+        self._at_detector = AprilTags._get_detector()
         if identity == Identity.DIST_TEST:
             # the distortion rig uses a 33 mm, 20% scale, tag.
             tag_size = 0.033
@@ -44,7 +53,7 @@ class AprilTags(MonoAnalysis):
             # normal tag size is 6.5 inches
             tag_size = 0.1651
         print("\n*** tag size:", tag_size)
-        self._estimator = AprilTags.estimator(tag_size, self._mtx)
+        self._estimator = AprilTags._get_estimator(tag_size, self._mtx)
 
     @override
     def analyze_mono(
@@ -72,16 +81,16 @@ class AprilTags(MonoAnalysis):
             # Extract raw (x,y) corners from the tag.
             raw_corners: tuple[
                 float, float, float, float, float, float, float, float
-            ] = DetectorUtil.raw_corners(tag)
+            ] = AprilTags._raw_corners(tag)
 
             # Undistort the corners.
             undistorted_corners: tuple[
                 float, float, float, float, float, float, float, float
-            ] = DetectorUtil.undistorted_corners(self._mtx, self._dist, raw_corners)
+            ] = AprilTags._undistorted_corners(self._mtx, self._dist, raw_corners)
 
             # Redo the homography using the undistorted corners.
             homography: tuple[Any, Any, Any, Any, Any, Any, Any, Any, Any] = (
-                DetectorUtil.homography(undistorted_corners)
+                AprilTags._homography(undistorted_corners)
             )
 
             # Estimate the pose.
@@ -99,7 +108,7 @@ class AprilTags(MonoAnalysis):
         self._blips_with_corners.send(blips_with_corners)
 
     @staticmethod
-    def detector() -> AprilTagDetector:
+    def _get_detector() -> AprilTagDetector:
         at_detector = AprilTagDetector()
         config = at_detector.Config()
         # some of the detection steps can be done in parallel; this
@@ -141,9 +150,80 @@ class AprilTags(MonoAnalysis):
         return at_detector
 
     @staticmethod
-    def estimator(tag_size: float, mtx: NDArray[np.float32]) -> AprilTagPoseEstimator:
+    def _get_estimator(tag_size: float, mtx: NDArray[np.float32]) -> AprilTagPoseEstimator:
         return AprilTagPoseEstimator(
             AprilTagPoseEstimator.Config(
                 tag_size, mtx[0, 0], mtx[1, 1], mtx[0, 2], mtx[1, 2]
             )
+        )
+
+    @staticmethod
+    def _raw_corners(
+        result_item: AprilTagDetection,
+    ) -> tuple[float, float, float, float, float, float, float, float]:
+        """Return corners from a detection as a tuple.
+        The order is: lower left, lower right, upper right, upper left."""
+        return result_item.getCorners((0, 0, 0, 0, 0, 0, 0, 0))
+
+    @staticmethod
+    def _undistorted_corners(
+        mtx: NDArray[np.float32],
+        dist: NDArray[np.float32],
+        corners: tuple[float, float, float, float, float, float, float, float],
+    ) -> tuple[float, float, float, float, float, float, float, float]:
+        """Return undistorted tag corners.
+        undistortPoints is at least 10X faster than undistort on the whole image."""
+
+        # undistortImagePoints takes [u,v] pixel pairs
+        # (MatOfPoint2f in c)
+        pairs: MatLike = np.reshape(corners, [4, 2])
+        # This is just undistortPoints with mtx as the new intrinsic.
+        # The default iterates 5 times and often doesn't get there,
+        # so we iterate more times.
+        pairs = cv2.undistortImagePoints(
+            pairs,
+            mtx,
+            dist,
+            None,
+            (cv2.TermCriteria_COUNT | cv2.TermCriteria_EPS, 40, 0.01),
+        )
+
+        # The estimator wants a flat tuple: [x0, y0, x1, y1, ...];
+        # pairs has an extra dimension, so redo it:
+        corners = (
+            pairs[0][0][0],
+            pairs[0][0][1],
+            pairs[1][0][0],
+            pairs[1][0][1],
+            pairs[2][0][0],
+            pairs[2][0][1],
+            pairs[3][0][0],
+            pairs[3][0][1],
+        )
+        return corners
+
+    @staticmethod
+    def _homography(
+        corners: tuple[float, float, float, float, float, float, float, float],
+    ):
+        """Use OpenCV to compute the homography."""
+        dst_points = np.array(
+            [
+                [corners[0], corners[1]],
+                [corners[2], corners[3]],
+                [corners[4], corners[5]],
+                [corners[6], corners[7]],
+            ]
+        )
+        h, _ = cv2.findHomography(SRC_POINTS, dst_points)
+        return (
+            h[0, 0],
+            h[0, 1],
+            h[0, 2],
+            h[1, 0],
+            h[1, 1],
+            h[1, 2],
+            h[2, 0],
+            h[2, 1],
+            h[2, 2],
         )

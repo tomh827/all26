@@ -12,7 +12,7 @@ from app.util.timestamps import Timestamps
 
 
 class Viewfinder(Interpreter):
-    """A detector that does nothing but publish its input."""
+    """An interpreter that does nothing but publish its input."""
 
     def __init__(
         self,

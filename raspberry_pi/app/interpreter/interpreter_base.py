@@ -11,8 +11,8 @@ from app.network.network_protocol import Network
 IMAGE_DIR: str = "images"
 
 
-class DetectorBase(Interpreter):
-    """Base implementation for detector classes, handles logging
+class InterpreterBase(Interpreter):
+    """Base implementation for interpreter classes, handles logging
     CPU temperature and writing calibration images."""
 
     def __init__(

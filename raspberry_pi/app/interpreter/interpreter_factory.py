@@ -7,9 +7,9 @@ from app.config.identity import Identity
 from app.dashboard.display_protocol import Display
 from app.interpreter.interpreter_protocol import Interpreter
 from app.interpreter.viewfinder import Viewfinder
-from app.localization.apriltags import AprilTags
-from app.localization.blobs import Blobs
-from app.localization.combined_detector import CombinedDetector
+from app.analysis.apriltags import AprilTags
+from app.analysis.blobs import Blobs
+from app.interpreter.dual_interpreter import DualInterpreter
 from app.network.network_protocol import Network
 from app.util.timestamps import Timestamps
 
@@ -41,7 +41,7 @@ class InterpreterFactory:
 
         match identity:
             case Identity.FUNNEL:
-                return CombinedDetector(
+                return DualInterpreter(
                     cam,
                     display1,
                     display2,
@@ -51,7 +51,7 @@ class InterpreterFactory:
                     None
                 )
             case Identity.GAME_PIECE:
-                return CombinedDetector(
+                return DualInterpreter(
                     cam,
                     display1,
                     display2,
@@ -74,7 +74,7 @@ class InterpreterFactory:
                 | Identity.SWERVE_RIGHT
                 | Identity.SWERVE_LEFT
             ):
-                return CombinedDetector(
+                return DualInterpreter(
                     cam,
                     display1,
                     display2,
@@ -84,7 +84,7 @@ class InterpreterFactory:
                     None
                 )
             case Identity.DEV2:
-                return CombinedDetector(
+                return DualInterpreter(
                     cam,
                     display1,
                     display2,
@@ -94,7 +94,7 @@ class InterpreterFactory:
                     Blobs(cam, network, object_lower, object_higher),
                 )
             case _:
-                return CombinedDetector(
+                return DualInterpreter(
                     cam,
                     display1,
                     display2,

@@ -1,6 +1,7 @@
 # pylint: disable=C0103,E0611,E1101,E1121,R0902,R0903,R0913,R0914,R0917,W0212,W0612
 
 from typing import override
+from collections.abc import Buffer
 
 import cv2
 import numpy as np
@@ -12,13 +13,13 @@ from app.camera.camera_protocol import Camera, Request
 from app.dashboard.display_protocol import Display
 from app.dashboard.display_util import DisplayUtil
 from app.decoder.decoder_protocol import Decoder
-from app.localization.analysis_protocol import ColorAnalysis, MonoAnalysis
-from app.localization.detector_base import DetectorBase
+from app.analysis.analysis_protocol import ColorAnalysis, MonoAnalysis
+from app.interpreter.interpreter_base import InterpreterBase
 from app.network.network_protocol import Network
 from app.util.timestamps import Timestamps
 
 
-class CombinedDetector(DetectorBase):
+class DualInterpreter(InterpreterBase):
     """A detector for both color and monochrome analysis."""
 
     def __init__(
@@ -31,6 +32,15 @@ class CombinedDetector(DetectorBase):
         analyzer_mono: MonoAnalysis,
         analyzer_color: ColorAnalysis,
     ) -> None:
+        """
+        :cam: for intrinsic and distortion parameters
+        :display1: for dashboard
+        :display2: for debugging, switched by Network Tables
+        :network: to read flags
+        :timestamps: for timing
+        :analyzer_mono: for monochrome, use None if you don't need it
+        :analyzer_color: for color, use None if you don't need it
+        """
         super().__init__(network)
         print("\n*** Interpreter: CombinedDetector")
 
@@ -66,33 +76,10 @@ class CombinedDetector(DetectorBase):
                 timestamp_boottime_us
             )
 
-            decoder: Decoder = req.decoder()
+            (img_bgr, img_mono, img_display) = self._images(buffer, req.decoder())
 
-            # Images for analysis, do not modify.
-            img_bgr = None
-            img_mono = None
-            # Image for display, ok to modify.
-            img_display = None
-
-            if self._analyzer_color:
-                img_bgr = decoder.color(buffer)
-                if img_bgr is None:
-                    return
-            if self._analyzer_mono:
-                if img_bgr is not None:
-                    # Convert BGR to grayscale.
-                    img_mono = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-                    img_mono = np.ascontiguousarray(img_mono)
-                else:
-                    # Decode to mono.
-                    img_mono = decoder.mono(buffer)
-                    if img_mono is None:
-                        return
-
-            if img_bgr is not None:
-                img_display = img_bgr.copy()
-            else:
-                img_display = img_mono.copy()
+            if img_display is None:
+                return
 
             if self._network.calibrate():
                 # Save the raw image for calibration if requested
@@ -122,11 +109,29 @@ class CombinedDetector(DetectorBase):
             DisplayUtil.text(img_display, f"delay (ms) {delay_us/1000:2.0f}", (5, 5), 1)
             self._display1.put(img_display)
 
-    def _images(self) -> tuple[MatLike | None, MatLike | None, MatLike | None]:
+    def _images(
+        self, buffer: Buffer, decoder: Decoder
+    ) -> tuple[MatLike | None, MatLike | None, MatLike | None]:
+        """Create images for analysis and display."""
         # Images for analysis, do not modify.
         img_bgr = None
         img_mono = None
         # Image for display, ok to modify.
         img_display = None
+
+        if self._analyzer_color:
+            img_bgr = decoder.color(buffer)
+        if self._analyzer_mono:
+            if img_bgr is not None:
+                # Convert BGR to grayscale.
+                img_mono = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+                img_mono = np.ascontiguousarray(img_mono)
+            else:
+                # Decode to mono.
+                img_mono = decoder.mono(buffer)
+        if img_bgr is not None:
+            img_display = img_bgr.copy()
+        elif img_mono is not None:
+            img_display = img_mono.copy()
 
         return (img_bgr, img_mono, img_display)

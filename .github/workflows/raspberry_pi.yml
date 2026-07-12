@@ -31,6 +31,8 @@ jobs:
       - run: pip install robotpy-apriltag
       - run: pip install opencv-python
         
+      - run: pytest --forked -vv -rA --full-trace tests/analysis
+        if: ${{ always() }}
       - run: pytest --forked -vv -rA --full-trace tests/camera
         if: ${{ always() }}
       - run: pytest --forked -vv -rA --full-trace tests/config
@@ -39,7 +41,7 @@ jobs:
         if: ${{ always() }}
       - run: pytest --forked -vv -rA --full-trace tests/integration
         if: ${{ always() }}
-      - run: pytest --forked -vv -rA --full-trace tests/localization
+      - run: pytest --forked -vv -rA --full-trace tests/interpreter
         if: ${{ always() }}
       - run: pytest --forked -vv -rA --full-trace tests/network
         if: ${{ always() }}

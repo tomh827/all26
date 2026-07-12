@@ -11,9 +11,9 @@ from app.config.identity import Identity
 from app.dashboard.display_protocol import Display
 from app.dashboard.linux_display import LinuxDisplay
 from app.interpreter.interpreter_protocol import Interpreter
-from app.localization.apriltags import AprilTags
-from app.localization.blobs import Blobs
-from app.localization.combined_detector import CombinedDetector
+from app.analysis.apriltags import AprilTags
+from app.analysis.blobs import Blobs
+from app.interpreter.dual_interpreter import DualInterpreter
 from app.network.network_protocol import Network
 from app.network.real_network import RealNetwork
 from app.util.timestamps import Timestamps
@@ -48,7 +48,7 @@ class SemiRealTest(unittest.TestCase):
         display2: Display = LinuxDisplay("display2", 1100, 620)
         network: Network = RealNetwork(identity, done)
         timestamps = Timestamps(network)
-        interpreter: Interpreter = CombinedDetector(
+        interpreter: Interpreter = DualInterpreter(
             camera,
             display1,
             display2,
@@ -92,7 +92,7 @@ class SemiRealTest(unittest.TestCase):
 
         object_lower = np.array((0, 50, 100))
         object_higher = np.array((30, 255, 255))
-        interpreter: Interpreter = CombinedDetector(
+        interpreter: Interpreter = DualInterpreter(
             camera,
             display1,
             display2,
@@ -136,7 +136,7 @@ class SemiRealTest(unittest.TestCase):
 
         object_lower = np.array((0, 50, 100))
         object_higher = np.array((30, 255, 255))
-        interpreter: Interpreter = CombinedDetector(
+        interpreter: Interpreter = DualInterpreter(
             camera,
             display1,
             display2,
