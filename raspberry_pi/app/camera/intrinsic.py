@@ -54,6 +54,7 @@ class Intrinsic:
                     ]
                 )
             case Identity.FUNNEL:
+                # Calibrated 07/09/2026
                 self._mtx = np.array(
                     [
                         [381.36481, 0.0, 1382.951086],
