@@ -4,6 +4,8 @@ Revolute - Revolute
 
 A 2-DOF arm, as in 2023.
 
+<img src="../../dynamics/rr/image_rr.png">
+
 Cartesian joint positions are $P_1$ (the elbow) and $P_2$ (the end-effector).
 
 Joint configurations are $q_1$, relative to the x axis,
@@ -22,6 +24,7 @@ y_1
 =
 \begin{bmatrix}
 l_1 cos(q_1)\\
+\\
 l_1 sin(q_1)
 \end{bmatrix}
 ```
@@ -33,13 +36,15 @@ y_2
 \end{bmatrix}
 =
 \begin{bmatrix}
-x_1 + l_2 cos(q_2 + q_1)\\
-y_1 + l_2 sin(q_2 + q_1)
+x_1 + l_2 cos(q_1 + q_2)\\
+\\
+y_1 + l_2 sin(q_1 + q_2)
 \end{bmatrix}
 =
 \begin{bmatrix}
-l_1 cos(q_1) + l_2 cos(q_2 + q_1)\\
-l_1 sin(q_1) + l_2 sin(q_2 + q_1)
+l_1 cos(q_1) + l_2 cos(q_1 + q_2)\\
+\\
+l_1 sin(q_1) + l_2 sin(q_1 + q_2)
 \end{bmatrix}
 ```
 
@@ -70,4 +75,39 @@ q_2 = \alpha + \pi
 
 Differentiate the forward kinematics to get the Jacobian.
 
-TODO: finish this part
+Using end-effector coordinates $(x,y)$:
+
+```math
+J = 
+\begin{bmatrix}
+\frac{\partial x}{\partial q_1} & \frac{\partial x}{\partial q_2} \\
+\\
+\frac{\partial y}{\partial q_1} & \frac{\partial y}{\partial q_2} \\
+\end{bmatrix}
+```
+
+substituting:
+
+```math
+J =
+\begin{bmatrix}
+\frac{\partial (l_1 cos(q_1) + l_2 cos(q_1 + q_2))}{\partial q_1} & \frac{\partial (l_1 cos(q_1) + l_2 cos(q_1 + q_2))}{\partial q_2} \\
+\\
+\frac{\partial (l_1 sin(q_1) + l_2 sin(q_1 + q_2))}{\partial q_1} & \frac{\partial (l_1 sin(q_1) + l_2 sin(q_1 + q_2))}{\partial q_2} \\
+\end{bmatrix}
+```
+
+and so:
+
+```math
+J =
+\begin{bmatrix}
+ -l_1 sin(q_1) - l_2 sin(q_1+q_2) & - l_2 sin(q_1+q_2) \\
+ \\
+l_1 cos(q_1) + l_2 cos(q_1+q_2) & l_2 cos(q_1+q_2) \\
+\end{bmatrix}
+```
+
+
+
+
