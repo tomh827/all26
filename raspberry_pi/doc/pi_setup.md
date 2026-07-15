@@ -117,8 +117,10 @@ python installation, we use the python "virtual environment"
 feature.
 
 * Create a virtual environment.
+
+The env needs to see the system packages, so:
 ```
-python -m venv ./env
+python -m venv --system-site-packages ./env
 ```
 * Install required libraries in the virtual environment.
 ```
