@@ -48,7 +48,10 @@ public class PRKinematics {
         if (Double.isNaN(angle) || Double.isNaN(height))
             return null;
         return new PRConfig(height, angle);
+    }
 
+    double l() {
+        return l;
     }
 
 }
