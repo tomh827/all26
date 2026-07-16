@@ -26,17 +26,26 @@ remotes {
 ssh.settings {
     timeoutSec = 1
     knownHosts = allowAnyHosts
+    logging = 'none'
 }
 task 'Deploy Camera Code' { // pretty name for vscode
     group = 'deploy'
     description = 'zip, deploy, and restart all cameras'
     dependsOn distZip
     doLast {
-        ssh.run {
-            session(remotes) {
-                put from: file('runapp.py'), into: '/home/pi'
-                put from: distZip.archiveFile.get().asFile, into: '/home/pi'
-                execute 'supervisorctl restart app'
+        remotes.each { camera ->
+            try {
+                ssh.run {
+                    session(camera) {
+                        put from: file('runapp.py'), into: '/home/pi'
+                        put from: distZip.archiveFile.get().asFile, into: '/home/pi'
+                        execute 'supervisorctl restart app'
+                    }
+                }
+                logger.warn("\u001B[1;32mDEPLOYED\u001B[0m to ${camera.name} at ${camera.host}." +
+                    " Look at the viewfinder at ${camera.host}:1181")
+            } catch (Exception e) {
+                logger.warn("skipping ${camera.name}")
             }
         }
     }
