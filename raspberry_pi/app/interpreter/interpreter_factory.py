@@ -37,8 +37,14 @@ class InterpreterFactory:
         # get these values from changing the range till the object is highlighted
 
         # WHITE TARGET VALUES
-        object_lower: NDArray[np.int32] = np.array((0, 0, 200))
-        object_higher: NDArray[np.int32] = np.array((255, 150, 255))
+        # object_lower: NDArray[np.int32] = np.array((0, 0, 200))
+        # object_higher: NDArray[np.int32] = np.array((255, 150, 255))
+
+        # YELLOW TARGET VALUES
+        object_lower: NDArray[np.int32] = np.array((10, 90, 30))
+        object_higher: NDArray[np.int32] = np.array((40, 205, 255))
+
+        # https://medium.com/@pkusolruangchai/find-hsv-range-interactive-sliders-in-opencv-1571c4c64433
 
         match identity:
             case Identity.FUNNEL:

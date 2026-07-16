@@ -85,7 +85,7 @@ class Blobs(ColorAnalysis):
             mmnts: Moments = cv2.moments(contour)
 
             # reject too small (m00 is in pixels)
-            if mmnts["m00"] < 100:
+            if mmnts["m00"] < 5000:
                 continue
 
             cX: int = int(mmnts["m10"] / mmnts["m00"])
