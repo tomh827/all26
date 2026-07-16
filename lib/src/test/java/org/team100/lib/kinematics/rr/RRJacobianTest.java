@@ -27,9 +27,9 @@ public class RRJacobianTest {
         xdot = j.forward(new RRConfig(Math.PI / 2, -Math.PI / 2), new RRVelocity(0, 0));
         verify(0, 0, xdot);
         xdot = j.forward(new RRConfig(Math.PI / 2, -Math.PI / 2), new RRVelocity(1, 0));
-        verify(-0.707, 0.707, xdot);
+        verify(-1, 1, xdot);
         xdot = j.forward(new RRConfig(Math.PI / 2, -Math.PI / 2), new RRVelocity(0, 1));
-        verify(-1, 0, xdot);
+        verify(0, 1, xdot);
 
     }
 
