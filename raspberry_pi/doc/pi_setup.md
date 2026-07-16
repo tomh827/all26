@@ -9,35 +9,39 @@ but we don't use them, they're too slow.
 ## Burn the SD Card
 
 * Make sure your laptop is connected to the internet.
+* Choose a name for the camera.  The camera IP range is between
+  10.1.0.30 and 10.1.0.35, so a good camera name would be
+  "camera33" or "camera34".
 
 * Use the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) app.
 
-* Use the [Raspberry Pi OS Lite (64-bit) "Trixie" image](https://www.raspberrypi.com/software/operating-systems/)
+* Choose the Raspberry Pi OS Lite (64-bit) "Trixie" image.
     * The "lite" option is behind the "other" option.  Don't use the "full" image.
-    * Choose a unique name like "camera31," "camera32" etc.
+    * Use the name you selected above.
+    * fill in the localization using "los angeles"
     * add a user "pi" with password "raspberry"
     * enable SSH with password authentication
+    * don't do anything with the wifi setup
+    * do not use "raspberry pi connect"
+
+## Turn off the radios
+
+Turn off the wifi and bluetooth radios (because FRC prohibits them)
+
+* In the `bootfs` volume, find the file called `config.txt`, using Notepad, and add these lines at the top:
+
+```ini
+dtoverlay=disable-wifi-pi5
+dtoverlay=disable-bt-pi5
+```
+* Save the file with ctrl-S.
+
 
 ## Configure the network
 
 Set up the static ethernet addressing scheme.
 
-* In the `bootfs` volume, edit file called `network-config`, using Notepad.
-  * This is a file containing configuration in
-    the [format](https://docs.cloud-init.io/en/latest/reference/network-config.html) 
-    used by `cloud-init`.
-* Use an IP between 10.1.0.30 and 10.1.0.35.
-* Make the ethernet `optional` to avoid holding up the boot.
-* The robot hosts the pi needs to talk to are all on the same
-  segment, so no gateway is required for that.
-* For the part of the setup involving the internet (below),
-  you'll be bridging with your laptop, so there
-  needs to be a default gateway.  What should it be?  When you're
-  working with cameras, you're usually impersonating the RoboRIO
-  using 10.1.0.2, so we'll use that.
-* The "internet" part also needs name resolution, so we'll use Google,
-  which is `8.8.8.8`
-* The file `network-config` should look like this:
+* In the `bootfs` volume, edit file called `network-config`, using Notepad, and make it look like this: (choose an address between 10.1.0.30 and 10.1.0.35)
 
 ```yaml
 network:
@@ -54,26 +58,23 @@ network:
           via: 10.1.0.2
       optional: true
 ```
-* Save the file with ctrl-S and close Notepad.
+* Save the file with ctrl-S.
 
-## Turn off the radios
+What this means:
 
-Turn off the wifi and bluetooth radios (because FRC prohibits them)
+* 8.8.8.8 is the google nameserver
+* 10.1.0.2 is your laptop (for bridging)
+* `optional` to avoid holding up the boot.
 
-* In the `bootfs` volume, find the file called `config.txt`, using Notepad.
-  * This file uses a simple format, `name=value`
-* Add these lines at the top of `config.txt`:
-
-```ini
-dtoverlay=disable-wifi-pi5
-dtoverlay=disable-bt-pi5
-```
-* Save the file with ctrl-S and close Notepad.
 
 ## Turn on the Pi
 
-* Install the SD card, reassemble the Pi in its case, and and turn it on.
+* Close Notepad.
+* "Eject" the SD card from your laptop.
+* Install the SD card in the pi
+* Reassemble the Pi in its case
 * IMPORTANT: WRITE THE IP ADDRESS ON THE PI CASE, or you won't know what it is, later.
+* Turn it on
 
 ## Set up your laptop network
 
@@ -125,8 +126,6 @@ python -m venv --system-site-packages ./env
 * Install required libraries in the virtual environment.
 ```
 source ./env/bin/activate
-python -m ensurepip --default-pip
-python -m pip install --upgrade pip
 python -m pip install numpy
 python -m pip install opencv-python
 python -m pip install robotpy
@@ -176,8 +175,13 @@ What if the steps above don't work?
 * you can try flashing the EEPROM, using a different image from the 
   raspberry pi imager.  if it succeeds, the green LED flashes forever.
 
+* Pi can't reach 8.8.8.8.
+  * The WHS network disallows bridging.  Run the procedure
+    above on a more-friendly network (e.g. at home).
+
 ## References
 
+* [cloud-init format](https://docs.cloud-init.io/en/latest/reference/network-config.html) 
 * [Raspberry Pi doc on cloud-init](https://www.raspberrypi.com/news/cloud-init-on-raspberry-pi-os/)
 * [Raspberry Pi doc on config.txt](https://www.raspberrypi.com/documentation/computers/config_txt.html)
 * [Netplan format](https://netplan.readthedocs.io/en/latest/netplan-yaml/)
